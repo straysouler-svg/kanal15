@@ -1,0 +1,1912 @@
+{
+ "aberdeen": {
+  "lat": 57.1482429,
+  "lon": -2.0928095,
+  "display": "Aberdeen City, Scotland, United Kingdom"
+ },
+ "amsterdam": {
+  "lat": 52.3730796,
+  "lon": 4.8924534,
+  "display": "Amsterdam, North Holland, Netherlands"
+ },
+ "antwerp": {
+  "lat": 51.2211097,
+  "lon": 4.3997081,
+  "display": "Antwerp, Flanders, Belgium"
+ },
+ "berlin": {
+  "lat": 52.5173885,
+  "lon": 13.3951309,
+  "display": "Berlin, Germany"
+ },
+ "bern": {
+  "lat": 46.9484742,
+  "lon": 7.4521749,
+  "display": "Bern, Bern-Mittelland administrative district, Bernese Mittelland administrative"
+ },
+ "birmingham": {
+  "lat": 52.4948994,
+  "lon": -1.8518439,
+  "display": "Birmingham, West Midlands, England, United Kingdom"
+ },
+ "bratislava": {
+  "lat": 48.1435026,
+  "lon": 17.1082867,
+  "display": "Bratislava, Region of Bratislava, Slovakia"
+ },
+ "bremen": {
+  "lat": 53.0758196,
+  "lon": 8.8071646,
+  "display": "Bremen, Germany"
+ },
+ "brno": {
+  "lat": 49.1922443,
+  "lon": 16.6113382,
+  "display": "Brno, okres Brno-město, South Moravian Region, Czechia"
+ },
+ "brussel": {
+  "lat": 50.8551025,
+  "lon": 4.3510915,
+  "display": "Bruxelles - Brussel, Brussels, Brussels-Capital, Belgium"
+ },
+ "calais": {
+  "lat": 50.9524769,
+  "lon": 1.8538446,
+  "display": "Calais, Pas-de-Calais, Hauts-de-France, Metropolitan France, 62100, France"
+ },
+ "cambridge": {
+  "lat": 52.1975846,
+  "lon": 0.1391537,
+  "display": "Cambridge, Cambridgeshire, Cambridgeshire and Peterborough, England, United King"
+ },
+ "cardiff": {
+  "lat": 51.4816546,
+  "lon": -3.1791934,
+  "display": "Cardiff, Wales, CF10 2AF, United Kingdom"
+ },
+ "carlisle": {
+  "lat": 54.8948478,
+  "lon": -2.9362311,
+  "display": "Carlisle, Cumberland, England, United Kingdom"
+ },
+ "dijon": {
+  "lat": 47.3215806,
+  "lon": 5.0414701,
+  "display": "Dijon, Côte-d'Or, Bourgogne – Franche-Comté, Metropolitan France, 21000, France"
+ },
+ "dortmund": {
+  "lat": 51.5142273,
+  "lon": 7.4652789,
+  "display": "Dortmund, North Rhine-Westphalia, Germany"
+ },
+ "dover": {
+  "lat": 51.1251275,
+  "lon": 1.3134228,
+  "display": "Dover, Kent, England, CT16 1NB, United Kingdom"
+ },
+ "dresden": {
+  "lat": 51.0493286,
+  "lon": 13.7381437,
+  "display": "Dresden, Saxony, Germany"
+ },
+ "duisburg": {
+  "lat": 51.434999,
+  "lon": 6.759562,
+  "display": "Duisburg, North Rhine-Westphalia, Germany"
+ },
+ "dusseldorf": {
+  "lat": 51.2254018,
+  "lon": 6.7763137,
+  "display": "Dusseldorf, North Rhine-Westphalia, Germany"
+ },
+ "edinburgh": {
+  "lat": 55.9533456,
+  "lon": -3.1883749,
+  "display": "City of Edinburgh, Scotland, United Kingdom"
+ },
+ "eindhoven": {
+  "lat": 51.4485569,
+  "lon": 5.4501225,
+  "display": "Eindhoven, North Brabant, Netherlands"
+ },
+ "erfurt": {
+  "lat": 50.9777974,
+  "lon": 11.0287364,
+  "display": "Erfurt, Thuringia, Germany"
+ },
+ "europoort": {
+  "lat": 51.9328725,
+  "lon": 4.1736499,
+  "display": "Europoort, Gunvor Energy Rotterdam, Rotterdam, South Holland, Netherlands, 3198 "
+ },
+ "felixstowe": {
+  "lat": 51.9642959,
+  "lon": 1.3289938,
+  "display": "Felixstowe, Suffolk, England, United Kingdom"
+ },
+ "frankfurt": {
+  "lat": 50.1106444,
+  "lon": 8.6820917,
+  "display": "Frankfurt, Hesse, Germany"
+ },
+ "geneve": {
+  "lat": 46.2017559,
+  "lon": 6.1466014,
+  "display": "Geneva, Switzerland"
+ },
+ "glasgow": {
+  "lat": 55.861155,
+  "lon": -4.2501687,
+  "display": "Glasgow, Glasgow City, Scotland, G2 1AR, United Kingdom"
+ },
+ "graz": {
+  "lat": 47.0708678,
+  "lon": 15.4382786,
+  "display": "Graz, Styria, Austria"
+ },
+ "grimsby": {
+  "lat": 53.5671407,
+  "lon": -0.0788045,
+  "display": "Grimsby, North East Lincolnshire, Greater Lincolnshire, England, DN31 1QG, Unite"
+ },
+ "groningen": {
+  "lat": 53.2190652,
+  "lon": 6.5680077,
+  "display": "Groningen, Netherlands"
+ },
+ "hamburg": {
+  "lat": 53.5501721,
+  "lon": 10.0013165,
+  "display": "Hamburg, Germany"
+ },
+ "hannover": {
+  "lat": 52.3744779,
+  "lon": 9.7385532,
+  "display": "Hanover, Region Hannover, Lower Saxony, Germany"
+ },
+ "harwich": {
+  "lat": 51.9445801,
+  "lon": 1.2898522,
+  "display": "Harwich, Dovercourt, Tendring, Essex, England, United Kingdom"
+ },
+ "hull": {
+  "lat": 53.7623863,
+  "lon": -0.3301214,
+  "display": "Kingston upon Hull, Hull and East Yorkshire, England, United Kingdom"
+ },
+ "ijmuiden": {
+  "lat": 52.4574139,
+  "lon": 4.6116211,
+  "display": "IJmuiden, Velsen, North Holland, Netherlands"
+ },
+ "innsbruck": {
+  "lat": 47.2654296,
+  "lon": 11.3927685,
+  "display": "Innsbruck, Tyrol, Austria"
+ },
+ "kassel": {
+  "lat": 51.3157833,
+  "lon": 9.4978479,
+  "display": "Kassel, Hesse, Germany"
+ },
+ "kiel": {
+  "lat": 54.3227085,
+  "lon": 10.135555,
+  "display": "Kiel, Altenholz, Schleswig-Holstein, Germany"
+ },
+ "klagenfurt": {
+  "lat": 46.623943,
+  "lon": 14.3075976,
+  "display": "Klagenfurt, Carinthia, Austria"
+ },
+ "koln": {
+  "lat": 50.938361,
+  "lon": 6.959974,
+  "display": "Cologne, North Rhine-Westphalia, Germany"
+ },
+ "leipzig": {
+  "lat": 51.3406321,
+  "lon": 12.3747329,
+  "display": "Leipzig, Saxony, Germany"
+ },
+ "liege": {
+  "lat": 50.6450944,
+  "lon": 5.5736112,
+  "display": "Liège, Wallonia, 4000, Belgium"
+ },
+ "lille": {
+  "lat": 50.6365654,
+  "lon": 3.0635282,
+  "display": "Lille, Nord, Hauts-de-France, Metropolitan France, France"
+ },
+ "linz": {
+  "lat": 48.3059078,
+  "lon": 14.286198,
+  "display": "Linz, Upper Austria, Austria"
+ },
+ "liverpool": {
+  "lat": 53.3933411,
+  "lon": -2.9166389,
+  "display": "Liverpool, Liverpool City Region, England, United Kingdom"
+ },
+ "london": {
+  "lat": 51.5074456,
+  "lon": -0.1277653,
+  "display": "Greater London, England, United Kingdom"
+ },
+ "luxembourg": {
+  "lat": 49.8158683,
+  "lon": 6.1296751,
+  "display": "Luxembourg"
+ },
+ "lyon": {
+  "lat": 45.7578137,
+  "lon": 4.8320114,
+  "display": "Lyon, Métropole de Lyon, Rhône, Auvergne-Rhône-Alpes, Metropolitan France, Franc"
+ },
+ "magdeburg": {
+  "lat": 52.1314783,
+  "lon": 11.6400789,
+  "display": "Magdeburg, Saxony-Anhalt, Germany"
+ },
+ "manchester": {
+  "lat": 53.4424618,
+  "lon": -2.2324547,
+  "display": "Manchester, Greater Manchester, England, United Kingdom"
+ },
+ "mannheim": {
+  "lat": 49.4892913,
+  "lon": 8.4673098,
+  "display": "Mannheim, Baden-Württemberg, Germany"
+ },
+ "metz": {
+  "lat": 49.1196964,
+  "lon": 6.1763552,
+  "display": "Metz, Moselle, Grand Est, Metropolitan France, France"
+ },
+ "milano": {
+  "lat": 45.4641943,
+  "lon": 9.1896346,
+  "display": "Milan, Rodano, Milan, Lombardy, Italy"
+ },
+ "munchen": {
+  "lat": 48.1371079,
+  "lon": 11.5753822,
+  "display": "Munich, Bavaria, Germany"
+ },
+ "newcastle": {
+  "lat": 54.9738474,
+  "lon": -1.6131572,
+  "display": "Newcastle upon Tyne, Tyne and Wear, North East, England, United Kingdom"
+ },
+ "nurnberg": {
+  "lat": 49.453872,
+  "lon": 11.077298,
+  "display": "Nuremberg, Bavaria, Germany"
+ },
+ "osnabruck": {
+  "lat": 52.2719595,
+  "lon": 8.047635,
+  "display": "Osnabrück, Lower Saxony, Germany"
+ },
+ "paris": {
+  "lat": 48.8588897,
+  "lon": 2.320041,
+  "display": "Paris, Ile-de-France, Metropolitan France, France"
+ },
+ "plymouth": {
+  "lat": 50.3714122,
+  "lon": -4.1424451,
+  "display": "Plymouth, England, United Kingdom"
+ },
+ "poznan": {
+  "lat": 52.4006632,
+  "lon": 16.9197326,
+  "display": "Poznań, Poznań County, Greater Poland Voivodeship, Poland"
+ },
+ "prague": {
+  "lat": 50.0874654,
+  "lon": 14.4212535,
+  "display": "Prague, Czechia"
+ },
+ "reims": {
+  "lat": 49.2577886,
+  "lon": 4.031926,
+  "display": "Reims, Marne, Grand Est, Metropolitan France, 51100, France"
+ },
+ "rostock": {
+  "lat": 54.0886707,
+  "lon": 12.1400211,
+  "display": "Rostock, Mecklenburg-Vorpommern, Germany"
+ },
+ "rotterdam": {
+  "lat": 51.9244424,
+  "lon": 4.47775,
+  "display": "Rotterdam, South Holland, Netherlands"
+ },
+ "salzburg": {
+  "lat": 47.7981346,
+  "lon": 13.0464806,
+  "display": "Salzburg, Austria"
+ },
+ "sheffield": {
+  "lat": 53.3806626,
+  "lon": -1.4702278,
+  "display": "Sheffield, South Yorkshire, England, United Kingdom"
+ },
+ "southampton": {
+  "lat": 50.9025349,
+  "lon": -1.404189,
+  "display": "Southampton, England, United Kingdom"
+ },
+ "strasbourg": {
+  "lat": 48.584614,
+  "lon": 7.7507127,
+  "display": "Strasbourg, Bas-Rhin, European Collectivity of Alsace, Grand Est, Metropolitan F"
+ },
+ "stuttgart": {
+  "lat": 48.7784485,
+  "lon": 9.1800132,
+  "display": "Stuttgart, Baden-Württemberg, Germany"
+ },
+ "swansea": {
+  "lat": 51.6195955,
+  "lon": -3.9459248,
+  "display": "Swansea, Wales, SA1 3BN, United Kingdom"
+ },
+ "szczecin": {
+  "lat": 53.4298114,
+  "lon": 14.5928676,
+  "display": "Szczecin, West Pomeranian Voivodeship, Poland"
+ },
+ "torino": {
+  "lat": 45.0677551,
+  "lon": 7.6824892,
+  "display": "Turin, Piedmont, Italy"
+ },
+ "travemunde": {
+  "lat": 53.939609,
+  "lon": 10.8587192,
+  "display": "Travemünde, Lübeck, Schleswig-Holstein, 23570, Germany"
+ },
+ "trieste": {
+  "lat": 45.6496485,
+  "lon": 13.7772781,
+  "display": "Trieste, Friuli – Venezia Giulia, 34121-34151, Italy"
+ },
+ "venezia": {
+  "lat": 45.4371908,
+  "lon": 12.3345898,
+  "display": "Venice, Venezia, Veneto, 30121-30176, Italy"
+ },
+ "verona": {
+  "lat": 45.4424977,
+  "lon": 10.9857377,
+  "display": "Verona, Veneto, Italy"
+ },
+ "wien": {
+  "lat": 48.2083537,
+  "lon": 16.3725042,
+  "display": "Vienna, Austria"
+ },
+ "wroclaw": {
+  "lat": 51.1263106,
+  "lon": 16.9781963,
+  "display": "Wrocław, Lower Silesian Voivodeship, Poland"
+ },
+ "zurich": {
+  "lat": 47.3744489,
+  "lon": 8.5410422,
+  "display": "Zurich, District Zurich, Zurich, Switzerland"
+ },
+ "bacau": {
+  "lat": 46.5560493,
+  "lon": 26.9153557,
+  "display": "Bacău, Romania"
+ },
+ "brasov": {
+  "lat": 45.6525105,
+  "lon": 25.6105654,
+  "display": "Brasov, Zona Metropolitană Brașov, Brașov, Romania"
+ },
+ "bucuresti": {
+  "lat": 44.4361414,
+  "lon": 26.102684,
+  "display": "Bucharest, Romania"
+ },
+ "burgas": {
+  "lat": 42.4936616,
+  "lon": 27.4721276,
+  "display": "Burgas, Bulgaria"
+ },
+ "calarasi": {
+  "lat": 44.3151874,
+  "lon": 27.1390156,
+  "display": "Călărași, Romania"
+ },
+ "cernavoda": {
+  "lat": 44.3416349,
+  "lon": 28.0316248,
+  "display": "Cernavoda, Constanța, 905200, Romania"
+ },
+ "cluj_napoca": {
+  "lat": 46.769379,
+  "lon": 23.5899542,
+  "display": "Cluj-Napoca, Cluj Metropolitan Area, Cluj, Romania"
+ },
+ "constanta": {
+  "lat": 44.1767161,
+  "lon": 28.6507598,
+  "display": "Constanța, Constanta Metropolitan Area, Constanța, Romania"
+ },
+ "craiova": {
+  "lat": 44.3190159,
+  "lon": 23.7965614,
+  "display": "Craiova, Craiova Metropolitan Area, Dolj, Romania"
+ },
+ "edirne": {
+  "lat": 41.6759327,
+  "lon": 26.5587225,
+  "display": "Edirne Merkez, Edirne, Marmara Region, Turkey"
+ },
+ "galati": {
+  "lat": 45.4338215,
+  "lon": 28.0549395,
+  "display": "Galați, Romania"
+ },
+ "giurgiu": {
+  "lat": 43.8961275,
+  "lon": 25.9656448,
+  "display": "Giurgiu, Romania"
+ },
+ "hamzabeyli": {
+  "lat": 41.9650154,
+  "lon": 26.6429565,
+  "display": "Hamzabeyli, Lalapaşa, Edirne, Marmara Region, Turkey"
+ },
+ "hunedoara": {
+  "lat": 45.7954068,
+  "lon": 22.945243,
+  "display": "Hunedoara, Romania"
+ },
+ "iasi": {
+  "lat": 47.1615598,
+  "lon": 27.5837814,
+  "display": "Iași, Iași Metropolitan Area, Iași, Romania"
+ },
+ "istanbul": {
+  "lat": 41.006381,
+  "lon": 28.9758715,
+  "display": "Istanbul, Fatih, Istanbul, Marmara Region, 34122, Turkey"
+ },
+ "kapikule": {
+  "lat": 41.7193679,
+  "lon": 26.3617855,
+  "display": "Kapıkule, D-100, Kemalköy Köyü, Edirne Merkez, Edirne, Marmara Region, 22130, Tu"
+ },
+ "karlovo": {
+  "lat": 42.6358156,
+  "lon": 24.8048226,
+  "display": "Karlovo, Plovdiv, 4300, Bulgaria"
+ },
+ "kozloduy": {
+  "lat": 43.7834097,
+  "lon": 23.7589119,
+  "display": "Козлодуй, Kozloduy, Kozlodui, Vratsa, Bulgaria"
+ },
+ "mangalia": {
+  "lat": 43.8150793,
+  "lon": 28.5830306,
+  "display": "Mangalia, Constanța, Romania"
+ },
+ "nadlac": {
+  "lat": 46.2100489,
+  "lon": 20.7706042,
+  "display": "Nădlac II Border Crossing Point, A1, Nădlac, Arad, Romania"
+ },
+ "pernik": {
+  "lat": 42.628442,
+  "lon": 22.8823119,
+  "display": "Pernik, Bulgaria"
+ },
+ "pirdop": {
+  "lat": 42.7006838,
+  "lon": 24.1803328,
+  "display": "Pirdop, Sofia, 2070, Bulgaria"
+ },
+ "pitesti": {
+  "lat": 44.8572882,
+  "lon": 24.8721156,
+  "display": "Pitești, Argeș, Romania"
+ },
+ "pleven": {
+  "lat": 43.4809895,
+  "lon": 24.6060665,
+  "display": "Pleven, Bulgaria"
+ },
+ "plovdiv": {
+  "lat": 42.1418541,
+  "lon": 24.7499297,
+  "display": "Plovdiv, Tsentralen District, Plovdiv, 4000, Bulgaria"
+ },
+ "resita": {
+  "lat": 45.289027,
+  "lon": 21.887861,
+  "display": "Reșița, Caraș-Severin, Romania"
+ },
+ "ruse": {
+  "lat": 43.8480413,
+  "lon": 25.9542057,
+  "display": "Ruse, Bulgaria"
+ },
+ "sofia": {
+  "lat": 42.6977028,
+  "lon": 23.3217359,
+  "display": "Sofia, Sredets District, Stolichna, Sofia-City, Bulgaria"
+ },
+ "targu_mures": {
+  "lat": 46.5446253,
+  "lon": 24.561196,
+  "display": "Târgu Mureș, Targu Mures Metropolitan Area, Mureș, Romania"
+ },
+ "tekirdag": {
+  "lat": 41.0731403,
+  "lon": 27.4102013,
+  "display": "Tekirdağ, Marmara Region, Turkey"
+ },
+ "timisoara": {
+  "lat": 45.7538355,
+  "lon": 21.2257474,
+  "display": "Timișoara, Timiș, Romania"
+ },
+ "varna": {
+  "lat": 43.2073873,
+  "lon": 27.9166653,
+  "display": "Varna, Odessos District, Varna, Bulgaria"
+ },
+ "veli_tarnovo": {
+  "lat": 43.0820584,
+  "lon": 25.6321312,
+  "display": "Veliko Tarnovo, Bulgaria"
+ },
+ "banja_luka": {
+  "lat": 44.7720845,
+  "lon": 17.1917651,
+  "display": "Banja Luka, City of Banja Luka, Republika Srpska, Bosnia and Herzegovina"
+ },
+ "beograd": {
+  "lat": 44.8153318,
+  "lon": 20.4456588,
+  "display": "Belgrade, City of Belgrade, Central Serbia, Serbia"
+ },
+ "bihac": {
+  "lat": 44.8146563,
+  "lon": 15.86896,
+  "display": "Bihać, City of Bihać, Una-Sana Canton, Federation of Bosnia and Herzegovina, Bos"
+ },
+ "bijelo_polje": {
+  "lat": 43.0341595,
+  "lon": 19.7473559,
+  "display": "Bijelo Polje, Bijelo Polje Municipality, 84000, Montenegro"
+ },
+ "bitola": {
+  "lat": 41.0316005,
+  "lon": 21.3302511,
+  "display": "Bitola, Municipality of Bitola, 7000, North Macedonia"
+ },
+ "durres": {
+  "lat": 41.313255,
+  "lon": 19.4462348,
+  "display": "Bashkia Durrës, Durrës County, Albania"
+ },
+ "fier": {
+  "lat": 40.7251118,
+  "lon": 19.5582079,
+  "display": "Fier, Bashkia Fier, Fier County, Albania"
+ },
+ "karakaj": {
+  "lat": 44.4136034,
+  "lon": 19.121313,
+  "display": "Karakaj, City of Zvornik, Republika Srpska, Bosnia and Herzegovina"
+ },
+ "koper": {
+  "lat": 45.5479864,
+  "lon": 13.7304781,
+  "display": "Koper / Capodistria, Upravna enota Koper / Unità amministrativa Capodistria, 600"
+ },
+ "kragujevac": {
+  "lat": 44.0131786,
+  "lon": 20.9196353,
+  "display": "Kragujevac, City of Kragujevac, Sumadija Administrative District, Central Serbia"
+ },
+ "ljubljana": {
+  "lat": 46.0500268,
+  "lon": 14.5069289,
+  "display": "Ljubljana, Upravna Enota Ljubljana, 1000, Slovenia"
+ },
+ "maribor": {
+  "lat": 46.5576439,
+  "lon": 15.6455854,
+  "display": "Maribor, 2000, Slovenia"
+ },
+ "mostar": {
+  "lat": 43.3435855,
+  "lon": 17.8076584,
+  "display": "Mostar, Local community Centar II, City of Mostar, Herzegovina-Neretva County, F"
+ },
+ "niksic": {
+  "lat": 42.7739388,
+  "lon": 18.9488097,
+  "display": "Nikšić, Nikšić Municipality, Montenegro"
+ },
+ "nis": {
+  "lat": 43.3162736,
+  "lon": 21.9212335,
+  "display": "Ниш (Медијана), Градска општина Медијана, City of Niš, Nisava Administrative Dis"
+ },
+ "novi_sad": {
+  "lat": 45.2658353,
+  "lon": 19.8291172,
+  "display": "Нови Сад, Ђорђа Дере, МЗ Раднички, Novi Sad, City of Novi Sad, South Backa Admin"
+ },
+ "novo_mesto": {
+  "lat": 45.8040475,
+  "lon": 15.1696684,
+  "display": "Novo Mesto, Novo mesto, 8000, Slovenia"
+ },
+ "osijek": {
+  "lat": 45.5548793,
+  "lon": 18.6953685,
+  "display": "Osijek, Grad Osijek, Osijek-Baranja County, Croatia"
+ },
+ "podgorica": {
+  "lat": 42.4415238,
+  "lon": 19.2621081,
+  "display": "Podgorica, Podgorica Capital City, Montenegro"
+ },
+ "pristina": {
+  "lat": 42.6638771,
+  "lon": 21.1640849,
+  "display": "Pristina, Municipality of Pristina, District of Prishtina, 10000, Kosovo"
+ },
+ "rijeka": {
+  "lat": 45.3267976,
+  "lon": 14.442208,
+  "display": "Grad Rijeka, Primorje-Gorski Kotar County, Croatia"
+ },
+ "sarajevo": {
+  "lat": 43.8570713,
+  "lon": 18.4126147,
+  "display": "Sarajevo, Mjesna zajednica Trg oslobođenja-Centar, Centar Municipality, City of "
+ },
+ "skopje": {
+  "lat": 41.9962054,
+  "lon": 21.4318881,
+  "display": "Skopje, City of Skopje, North Macedonia"
+ },
+ "split": {
+  "lat": 43.5116383,
+  "lon": 16.4399659,
+  "display": "Split, Grad Split, Split-Dalmatia County, Croatia"
+ },
+ "tirana": {
+  "lat": 41.3283781,
+  "lon": 19.8179825,
+  "display": "Tirana, Tirana Municipality, Tirana County, 1001-1028, Albania"
+ },
+ "tuzla": {
+  "lat": 44.539298,
+  "lon": 18.6749337,
+  "display": "Tuzla, City of Tuzla, Tuzla Canton, Federation of Bosnia and Herzegovina, 75000,"
+ },
+ "vlore": {
+  "lat": 40.4707602,
+  "lon": 19.4912716,
+  "display": "Vlora, Bashkia Vlorë, Vlorë County, 9401-9403, Albania"
+ },
+ "zadar": {
+  "lat": 44.1168594,
+  "lon": 15.2353257,
+  "display": "Zadar, Grad Zadar, Zadar County, Croatia"
+ },
+ "zagreb": {
+  "lat": 45.8130967,
+  "lon": 15.9772795,
+  "display": "City of Zagreb, Croatia"
+ },
+ "zenica": {
+  "lat": 44.199828,
+  "lon": 17.9093012,
+  "display": "Zenica, City of Zenica, Zenica-Doboj Canton, Federation of Bosnia and Herzegovin"
+ },
+ "daugavpils": {
+  "lat": 55.8712267,
+  "lon": 26.5159337,
+  "display": "Daugavpils, Latvia"
+ },
+ "helsinki": {
+  "lat": 60.1666204,
+  "lon": 24.9435408,
+  "display": "Helsinki, Helsinki sub-region, Uusimaa, Mainland Finland, Finland"
+ },
+ "kaliningrad": {
+  "lat": 54.710128,
+  "lon": 20.5105838,
+  "display": "Kaliningrad, Northwestern Federal District, Russia"
+ },
+ "kaunas": {
+  "lat": 54.8982139,
+  "lon": 23.9044817,
+  "display": "Kaunas, Kauno miesto savivaldybė, Kaunas County, Lithuania"
+ },
+ "klaipeda": {
+  "lat": 55.7127529,
+  "lon": 21.1350469,
+  "display": "Klaipėda, Klaipėda City Municipality, Klaipėda County, Lithuania"
+ },
+ "kotka": {
+  "lat": 60.4672673,
+  "lon": 26.9459462,
+  "display": "Kotka, Kotka-Hamina sub-region, Kymenlaakso, Mainland Finland, Finland"
+ },
+ "kouvola": {
+  "lat": 60.8679237,
+  "lon": 26.7041116,
+  "display": "Kouvola, Kouvola sub-region, Kymenlaakso, Mainland Finland, Finland"
+ },
+ "kunda": {
+  "lat": 59.5055414,
+  "lon": 26.5292222,
+  "display": "Kunda linn, Viru-Nigula vald, Lääne-Viru County, Estonia"
+ },
+ "lahti": {
+  "lat": 60.982628,
+  "lon": 25.6613418,
+  "display": "Lahti, Lahti sub-region, Päijät-Häme, Mainland Finland, Finland"
+ },
+ "liepaja": {
+  "lat": 56.5048435,
+  "lon": 21.0070903,
+  "display": "Liepaja, Latvia"
+ },
+ "loviisa": {
+  "lat": 60.4570123,
+  "lon": 26.2256448,
+  "display": "Loviisa, Loviisa sub-region, Uusimaa, Mainland Finland, Finland"
+ },
+ "luga": {
+  "lat": 58.735699,
+  "lon": 29.8475013,
+  "display": "Luga, Лужское городское поселение, Luzhsky District, Leningrad Oblast, Northwest"
+ },
+ "mazeikiai": {
+  "lat": 56.3110483,
+  "lon": 22.3484725,
+  "display": "Mažeikiai, Mažeikių seniūnija, Mažeikių rajono savivaldybė, Telšiai County, Lith"
+ },
+ "naantali": {
+  "lat": 60.4688687,
+  "lon": 22.0291149,
+  "display": "Naantali, Turku sub-region, Southwest Finland, Mainland Finland, Finland"
+ },
+ "narva": {
+  "lat": 59.3767458,
+  "lon": 28.1919315,
+  "display": "Narva, Narva linn, Ida-Viru County, Estonia"
+ },
+ "olkiluoto": {
+  "lat": 61.2340637,
+  "lon": 21.4907507,
+  "display": "Olkiluoto, Eurajoki, Rauma sub-region, Satakunta, Mainland Finland, 27160, Finla"
+ },
+ "paldiski": {
+  "lat": 59.349089,
+  "lon": 24.0801736,
+  "display": "Paldiski, Lääne-Harju vald, Harju County, Estonia"
+ },
+ "panevezys": {
+  "lat": 55.7344985,
+  "lon": 24.3578055,
+  "display": "Panevėžys, Panevėžio miesto savivaldybė, Panevėžys County, Lithuania"
+ },
+ "parnu": {
+  "lat": 58.3870659,
+  "lon": 24.5026059,
+  "display": "Pärnu linn, Pärnu County, Estonia"
+ },
+ "petersburg": {
+  "lat": 59.9606739,
+  "lon": 30.1586551,
+  "display": "Saint Petersburg, Northwestern Federal District, Russia"
+ },
+ "pori": {
+  "lat": 61.4866126,
+  "lon": 21.7972071,
+  "display": "Pori, Pori sub-region, Satakunta, Mainland Finland, Finland"
+ },
+ "pskov": {
+  "lat": 57.8173923,
+  "lon": 28.3343465,
+  "display": "Pskov, Pskov Oblast, Northwestern Federal District, Russia"
+ },
+ "rezekne": {
+  "lat": 56.506281,
+  "lon": 27.3306623,
+  "display": "Rezekne, LV-4601, Latvia"
+ },
+ "riga": {
+  "lat": 56.9493977,
+  "lon": 24.1051846,
+  "display": "Riga, Latvia"
+ },
+ "siauliai": {
+  "lat": 55.9340823,
+  "lon": 23.3157775,
+  "display": "Šiauliai, Šiaulių miesto savivaldybė, Šiauliai County, Lithuania"
+ },
+ "sosnovy_bor": {
+  "lat": 59.8968655,
+  "lon": 29.0765628,
+  "display": "Sosnoviy Bor, Sosnovy Bor, Leningrad Oblast, Northwestern Federal District, Russ"
+ },
+ "tallinn": {
+  "lat": 59.437242,
+  "lon": 24.7572693,
+  "display": "Tallinn, Harju County, Estonia"
+ },
+ "tampere": {
+  "lat": 61.4977988,
+  "lon": 23.7616335,
+  "display": "Tampere, Tampere sub-region, Pirkanmaa, Mainland Finland, Finland"
+ },
+ "tartu": {
+  "lat": 58.3779528,
+  "lon": 26.7290023,
+  "display": "Tartu, Tartu linn, Tartu County, Estonia"
+ },
+ "turku": {
+  "lat": 60.4515932,
+  "lon": 22.2669991,
+  "display": "Turku, Turku sub-region, Southwest Finland, Mainland Finland, Finland"
+ },
+ "utena": {
+  "lat": 55.4984381,
+  "lon": 25.6025772,
+  "display": "Utena, Utenos miesto seniūnija, Utenos rajono savivaldybė, Utena County, Lithuan"
+ },
+ "valmiera": {
+  "lat": 57.5389148,
+  "lon": 25.4261688,
+  "display": "Valmiera, Valmieras novads, Latvia"
+ },
+ "ventspils": {
+  "lat": 57.3903918,
+  "lon": 21.5635991,
+  "display": "Ventspils, Latvia"
+ },
+ "vilnius": {
+  "lat": 54.6870458,
+  "lon": 25.2829111,
+  "display": "Vilnius, Vilnius city municipality, Vilnius County, Lithuania"
+ },
+ "vyborg": {
+  "lat": 60.709217,
+  "lon": 28.744051,
+  "display": "Vyborg, Выборгское городское поселение, Vyborgsky District, Leningrad Oblast, No"
+ },
+ "bialystok": {
+  "lat": 53.127505,
+  "lon": 23.1470509,
+  "display": "Białystok, Białystok County, Podlachia Voivodeship, Poland"
+ },
+ "budapest": {
+  "lat": 47.481849,
+  "lon": 19.1449053,
+  "display": "Budapest, Hungary"
+ },
+ "bystrica": {
+  "lat": 48.735429,
+  "lon": 19.1457338,
+  "display": "Banská Bystrica, District of Banská Bystrica, Region of Banská Bystrica, Slovaki"
+ },
+ "debrecen": {
+  "lat": 47.531399,
+  "lon": 21.6259782,
+  "display": "Debrecen, Debreceni járás, Hajdú-Bihar, North Great Plain, Great Plain and North"
+ },
+ "gdansk": {
+  "lat": 54.4288032,
+  "lon": 18.798327,
+  "display": "Gdańsk, Pomeranian Voivodeship, Poland"
+ },
+ "gdyne": {
+  "lat": 54.5164982,
+  "lon": 18.5402738,
+  "display": "Gdynia, Pomeranian Voivodeship, Poland"
+ },
+ "katowice": {
+  "lat": 50.2598987,
+  "lon": 19.0215852,
+  "display": "Katowice, Metropolis GZM, Silesian Voivodeship, Poland"
+ },
+ "kosice": {
+  "lat": 48.7172272,
+  "lon": 21.2496774,
+  "display": "Košice, Region of Košice, Slovakia"
+ },
+ "krakow": {
+  "lat": 50.0619474,
+  "lon": 19.9368564,
+  "display": "Krakow, Lesser Poland Voivodeship, Poland"
+ },
+ "lodz": {
+  "lat": 51.7687323,
+  "lon": 19.4569911,
+  "display": "Łódź, Łódź Voivodeship, Poland"
+ },
+ "lublin": {
+  "lat": 51.250559,
+  "lon": 22.5701022,
+  "display": "Lublin, Lublin Voivodeship, Poland"
+ },
+ "olsztyn": {
+  "lat": 53.7766839,
+  "lon": 20.476507,
+  "display": "Olsztyn, Warmian-Masurian Voivodeship, Poland"
+ },
+ "ostrava": {
+  "lat": 49.8354045,
+  "lon": 18.292978,
+  "display": "Ostrava, okres Ostrava-město, Moravian-Silesian Region, Czechia"
+ },
+ "pecs": {
+  "lat": 46.0765092,
+  "lon": 18.2280317,
+  "display": "Pécs, Pécsi járás, Baranya, Transdanubia, Hungary"
+ },
+ "szeged": {
+  "lat": 46.2546312,
+  "lon": 20.1486016,
+  "display": "Szeged, Szegedi járás, Csongrád-Csanád, Great Plain and North, Hungary"
+ },
+ "warszawa": {
+  "lat": 52.2333742,
+  "lon": 21.0711489,
+  "display": "Warsaw, Masovian Voivodeship, Poland"
+ },
+ "ajaccio": {
+  "lat": 41.9263991,
+  "lon": 8.7376029,
+  "display": "Ajaccio, South Corsica, Corsica, Metropolitan France, France"
+ },
+ "alban": {
+  "lat": 45.4243,
+  "lon": 4.76,
+  "display": "Saint-Alban-du-Rhône, Vienne, Isère, Auvergne-Rhône-Alpes, Metropolitan France, "
+ },
+ "bastia": {
+  "lat": 42.6974612,
+  "lon": 9.4497707,
+  "display": "Bastia, Upper Corsica, Corsica, Metropolitan France, France"
+ },
+ "bayonne": {
+  "lat": 43.4945144,
+  "lon": -1.4736657,
+  "display": "Bayonne, Pyrénées-Atlantiques, Nouvelle-Aquitaine, Metropolitan France, 64100, F"
+ },
+ "bonifacio": {
+  "lat": 41.3872348,
+  "lon": 9.1590609,
+  "display": "Bonifacio / Bunifaziu, Sartène, South Corsica, Corsica, Metropolitan France, 201"
+ },
+ "bordeaux": {
+  "lat": 44.841225,
+  "lon": -0.5800364,
+  "display": "Bordeaux, Gironde, Nouvelle-Aquitaine, Metropolitan France, France"
+ },
+ "bourges": {
+  "lat": 47.0811658,
+  "lon": 2.399125,
+  "display": "Bourges, Cher, Centre-Val de Loire, Metropolitan France, 18000, France"
+ },
+ "brest": {
+  "lat": 48.3912324,
+  "lon": -4.4851141,
+  "display": "Brest, Finistère, Brittany, Metropolitan France, 29200, France"
+ },
+ "calvi": {
+  "lat": 42.5676644,
+  "lon": 8.7588704,
+  "display": "Calvi, Upper Corsica, Corsica, Metropolitan France, 20260, France"
+ },
+ "civaux": {
+  "lat": 46.4448144,
+  "lon": 0.6646452,
+  "display": "Civaux, Montmorillon, Vienne, Nouvelle-Aquitaine, Metropolitan France, 86320, Fr"
+ },
+ "clermont": {
+  "lat": 45.7774551,
+  "lon": 3.0819427,
+  "display": "Clermont-Ferrand, Puy-de-Dôme, Auvergne-Rhône-Alpes, Metropolitan France, France"
+ },
+ "golfech": {
+  "lat": 44.1147222,
+  "lon": 0.8519444,
+  "display": "Golfech, Castelsarrasin, Tarn-et-Garonne, Occitania, Metropolitan France, 82400,"
+ },
+ "lacq": {
+  "lat": 43.4247479,
+  "lon": -0.6137677,
+  "display": "Lacq, Pau, Pyrénées-Atlantiques, Nouvelle-Aquitaine, Metropolitan France, 64170,"
+ },
+ "larochelle": {
+  "lat": 46.159732,
+  "lon": -1.1515951,
+  "display": "La Rochelle, Charente-Maritime, Nouvelle-Aquitaine, Metropolitan France, 17000, "
+ },
+ "laurent": {
+  "lat": 43.3253,
+  "lon": 0.79977,
+  "display": "Saint-Laurent, Saint-Gaudens, Haute-Garonne, Occitania, Metropolitan France, 312"
+ },
+ "lehavre": {
+  "lat": 49.4938975,
+  "lon": 0.1079732,
+  "display": "Le Havre, Seine-Maritime, Normandy, Metropolitan France, France"
+ },
+ "lemans": {
+  "lat": 48.0073849,
+  "lon": 0.1967849,
+  "display": "Le Mans, Sarthe, Pays de la Loire, Metropolitan France, France"
+ },
+ "lile_rousse": {
+  "lat": 42.6344797,
+  "lon": 8.9381367,
+  "display": "L'Île-Rousse, Calvi, Upper Corsica, Corsica, Metropolitan France, 20220, France"
+ },
+ "limoges": {
+  "lat": 45.8354243,
+  "lon": 1.2644847,
+  "display": "Limoges, Haute-Vienne, Nouvelle-Aquitaine, Metropolitan France, France"
+ },
+ "marseille": {
+  "lat": 43.2963986,
+  "lon": 5.3777888,
+  "display": "Marseille, Bouches-du-Rhône, Provence-Alpes-Côte d'Azur, Metropolitan France, Fr"
+ },
+ "montpellier": {
+  "lat": 43.6112422,
+  "lon": 3.8767337,
+  "display": "Montpellier, Hérault, Occitania, Metropolitan France, France"
+ },
+ "nantes": {
+  "lat": 47.2186371,
+  "lon": -1.5541362,
+  "display": "Nantes, Loire-Atlantique, Pays de la Loire, Metropolitan France, France"
+ },
+ "nice": {
+  "lat": 43.7009358,
+  "lon": 7.2683912,
+  "display": "Nice, Maritime Alps, Provence-Alpes-Côte d'Azur, Metropolitan France, France"
+ },
+ "paluel": {
+  "lat": 49.8324987,
+  "lon": 0.6294445,
+  "display": "Paluel, Dieppe, Seine-Maritime, Normandy, Metropolitan France, 76450, France"
+ },
+ "porto_vecchi": {
+  "lat": 41.5911382,
+  "lon": 9.2794469,
+  "display": "Porto-Vecchio, Sartène, South Corsica, Corsica, Metropolitan France, 20137, Fran"
+ },
+ "rennes": {
+  "lat": 48.1113387,
+  "lon": -1.6800198,
+  "display": "Rennes, Ille-et-Vilaine, Brittany, Metropolitan France, France"
+ },
+ "roscoff": {
+  "lat": 48.7255816,
+  "lon": -3.9828983,
+  "display": "Roscoff, Morlaix, Finistère, Brittany, Metropolitan France, 29680, France"
+ },
+ "toulouse": {
+  "lat": 43.6044638,
+  "lon": 1.4442433,
+  "display": "Toulouse, Haute-Garonne, Occitania, Metropolitan France, France"
+ },
+ "argostoli": {
+  "lat": 38.1756733,
+  "lon": 20.4878796,
+  "display": "Argostoli, Argostoli Municipality, Kefallonia Regional Unit, Ioanian Islands, Pe"
+ },
+ "athens": {
+  "lat": 37.9755648,
+  "lon": 23.7348324,
+  "display": "Athens, Municipality of Athens, Regional Unit of Central Athens, Attica, 105 57,"
+ },
+ "chania": {
+  "lat": 35.5120831,
+  "lon": 24.0191544,
+  "display": "Chania, Municipality of Chania, Chania Regional Unit, Region of Crete, 731 35, G"
+ },
+ "chios": {
+  "lat": 38.3758132,
+  "lon": 26.0646552,
+  "display": "Chios, Chios Regional Unit, Northern Aegean, Aegean, Greece"
+ },
+ "heraklion": {
+  "lat": 35.33908,
+  "lon": 25.1332843,
+  "display": "Heraklion, Heraklion Municipal Unit, Municipality of Heraklion, Heraklion Region"
+ },
+ "ioannina": {
+  "lat": 39.6639818,
+  "lon": 20.8522784,
+  "display": "Ioannina, Δημοτική Ενότητα Ιωαννιτών, Ioannina Municipality, Ioannina Regional U"
+ },
+ "kalamata": {
+  "lat": 37.0372714,
+  "lon": 22.110707,
+  "display": "Kalamata, Municipality of Kalamata, Messenia Regional Unit, Peloponnese Region, "
+ },
+ "kavala": {
+  "lat": 40.9369224,
+  "lon": 24.4122766,
+  "display": "Kavala, Kavala Municipality, Kavala Regional Unit, Eastern Macedonia and Thrace,"
+ },
+ "lamia": {
+  "lat": 38.8993832,
+  "lon": 22.433582,
+  "display": "Lamia, Municipal Unit of Lamia, Lamia Municipality, Phthiotis Regional Unit, Cen"
+ },
+ "larissa": {
+  "lat": 39.6383092,
+  "lon": 22.4160706,
+  "display": "Larissa, Municipal Unit of Larissa, Municipality of Larissa, Larisa Regional Uni"
+ },
+ "mitilini": {
+  "lat": 39.1037355,
+  "lon": 26.554788,
+  "display": "Mytilene, Mytilene Municipal Unit, Municipality of Mytilene, Lesbos Regional Uni"
+ },
+ "patras": {
+  "lat": 38.246242,
+  "lon": 21.7350847,
+  "display": "Patras, Municipal Unit of Patras, Municipality of Patras, Achaia Regional Unit, "
+ },
+ "rhodes": {
+  "lat": 36.1724049,
+  "lon": 27.9194815,
+  "display": "Rhodes, Aegean, Greece"
+ },
+ "thessaloniki": {
+  "lat": 40.6403167,
+  "lon": 22.9352716,
+  "display": "Thessaloniki, Thessaloniki Municipal Unit, Municipality of Thessaloniki, Thessal"
+ },
+ "trikala": {
+  "lat": 39.5560869,
+  "lon": 21.7678844,
+  "display": "Trikala, 2, Trikala Municipality, Trikala Regional Unit, Thessaly, Thessaly and "
+ },
+ "a_coruna": {
+  "lat": 43.3454621,
+  "lon": -8.4138519,
+  "display": "A Coruña, Galicia, Spain"
+ },
+ "albacete": {
+  "lat": 38.9950921,
+  "lon": -1.8559154,
+  "display": "Albacete, Castile-La Mancha, Spain"
+ },
+ "algeciras": {
+  "lat": 36.1311725,
+  "lon": -5.4473991,
+  "display": "Algeciras, Campo de Gibraltar, Cádiz, Andalusia, Spain"
+ },
+ "almaraz": {
+  "lat": 39.8027746,
+  "lon": -5.6732834,
+  "display": "Almaraz, Cáceres, Extremadura, 10350, Spain"
+ },
+ "almeria": {
+  "lat": 36.8685739,
+  "lon": -2.3120282,
+  "display": "Almeria, Andalusia, Spain"
+ },
+ "badajoz": {
+  "lat": 38.878187,
+  "lon": -6.9701115,
+  "display": "Badajoz, Extremadura, Spain"
+ },
+ "bailen": {
+  "lat": 38.096787,
+  "lon": -3.7765601,
+  "display": "Bailén, Jaén, Andalusia, 23710, Spain"
+ },
+ "barcelona": {
+  "lat": 41.3825802,
+  "lon": 2.177073,
+  "display": "Barcelona, Barcelonès, Barcelona, Catalonia, Spain"
+ },
+ "beja": {
+  "lat": 38.0154479,
+  "lon": -7.8650368,
+  "display": "Beja, Portugal"
+ },
+ "bilbao": {
+  "lat": 43.2630018,
+  "lon": -2.9350039,
+  "display": "Bilbao, Biscay, Autonomous Community of the Basque Country, Spain"
+ },
+ "burgos": {
+  "lat": 42.3448498,
+  "lon": -3.6812477,
+  "display": "Burgos, Castile and León, Spain"
+ },
+ "ciudad_real": {
+  "lat": 38.9597347,
+  "lon": -3.8828744,
+  "display": "Ciudad Real, Castile-La Mancha, Spain"
+ },
+ "coimbra": {
+  "lat": 40.2111874,
+  "lon": -8.4291478,
+  "display": "Coimbra, Portugal"
+ },
+ "cordoba": {
+  "lat": 37.8845813,
+  "lon": -4.7760138,
+  "display": "Córdoba, Andalusia, Spain"
+ },
+ "corticadas": {
+  "lat": 38.8046638,
+  "lon": -8.4060587,
+  "display": "Cortiçadas de Lavre, Montemor-o-Novo, Évora, Portugal"
+ },
+ "el_ejido": {
+  "lat": 36.7743863,
+  "lon": -2.8124886,
+  "display": "El Ejido, Almeria, Andalusia, Spain"
+ },
+ "evora": {
+  "lat": 38.5707742,
+  "lon": -7.9092808,
+  "display": "Évora, Portugal"
+ },
+ "faro": {
+  "lat": 37.0162944,
+  "lon": -7.935182,
+  "display": "Faro, Portugal"
+ },
+ "gijon": {
+  "lat": 43.5449422,
+  "lon": -5.66275,
+  "display": "Gijón, Asturias, Spain"
+ },
+ "granada": {
+  "lat": 37.1734995,
+  "lon": -3.5995337,
+  "display": "Granada, Comarca de la Vega de Granada, Granada, Andalusia, Spain"
+ },
+ "guarda": {
+  "lat": 40.7046066,
+  "lon": -7.1951392,
+  "display": "Guarda, Portugal"
+ },
+ "huelva": {
+  "lat": 37.2575874,
+  "lon": -6.9484945,
+  "display": "Huelva, Comarca Metropolitana de Huelva, Huelva, Andalusia, Spain"
+ },
+ "leon": {
+  "lat": 42.6341451,
+  "lon": -5.9714151,
+  "display": "León, Castile and León, Spain"
+ },
+ "lisboa": {
+  "lat": 38.7077507,
+  "lon": -9.1365919,
+  "display": "Lisbon, Portugal"
+ },
+ "lleida": {
+  "lat": 41.6147605,
+  "lon": 0.6267842,
+  "display": "Lleida, Segrià, Lleida, Catalonia, Spain"
+ },
+ "madrid": {
+  "lat": 40.416782,
+  "lon": -3.703507,
+  "display": "Madrid, Community of Madrid, Spain"
+ },
+ "malaga": {
+  "lat": 36.7647913,
+  "lon": -4.4422005,
+  "display": "Málaga, Málaga-Costa del Sol, Malaga, Andalusia, Spain"
+ },
+ "mengibar": {
+  "lat": 37.9680499,
+  "lon": -3.8087804,
+  "display": "Mengíbar, Jaén, Andalusia, 23620, Spain"
+ },
+ "murcia": {
+  "lat": 37.9347521,
+  "lon": -1.1131029,
+  "display": "Murcia, Área Metropolitana de Murcia, Region of Murcia, Spain"
+ },
+ "navia": {
+  "lat": 43.5275049,
+  "lon": -6.6755155,
+  "display": "Navia, Asturias, Spain"
+ },
+ "o_barco": {
+  "lat": 42.421476,
+  "lon": -6.9763967,
+  "display": "O Barco, O Barco de Valdeorras, Valdeorras, Ourense, Galicia, 32300, Spain"
+ },
+ "olhao": {
+  "lat": 37.0270369,
+  "lon": -7.8411287,
+  "display": "Olhão, Faro, Portugal"
+ },
+ "pamplona": {
+  "lat": 42.815686,
+  "lon": -1.6522353,
+  "display": "Pamplona, Iruñerria, Navarre, Spain"
+ },
+ "ponte_de_sor": {
+  "lat": 39.2519303,
+  "lon": -8.008997,
+  "display": "Ponte de Sor, Portalegre, Portugal"
+ },
+ "port_sagunt": {
+  "lat": 39.6631732,
+  "lon": -0.2208575,
+  "display": "el Port de Sagunt, Sagunto, el Camp de Morvedre, Valencia, Valencian Community, "
+ },
+ "porto": {
+  "lat": 41.1502195,
+  "lon": -8.6103497,
+  "display": "Porto, Portugal"
+ },
+ "puertollano": {
+  "lat": 38.6852161,
+  "lon": -4.1111749,
+  "display": "Puertollano, Ciudad Real, Castile-La Mancha, 13500, Spain"
+ },
+ "salamanca": {
+  "lat": 40.9651572,
+  "lon": -5.6640182,
+  "display": "Salamanca, Castile and León, Spain"
+ },
+ "santander": {
+  "lat": 43.4618932,
+  "lon": -3.8100255,
+  "display": "Santander, Cantabria, Spain"
+ },
+ "setubal": {
+  "lat": 38.5241783,
+  "lon": -8.8932341,
+  "display": "Setúbal, Portugal"
+ },
+ "sevilla": {
+  "lat": 37.3886303,
+  "lon": -5.9953403,
+  "display": "Seville, Sevilla, Andalusia, Spain"
+ },
+ "sines": {
+  "lat": 37.956549,
+  "lon": -8.8689639,
+  "display": "Sines, Setúbal, Portugal"
+ },
+ "soria": {
+  "lat": 41.6012505,
+  "lon": -2.721938,
+  "display": "Soria, Castile and León, Spain"
+ },
+ "tarragona": {
+  "lat": 41.1172364,
+  "lon": 1.2546057,
+  "display": "Tarragona, Tarragonès, Tarragona, Catalonia, Spain"
+ },
+ "teruel": {
+  "lat": 40.6005259,
+  "lon": -0.9229282,
+  "display": "Teruel, Aragon, Spain"
+ },
+ "valencia": {
+  "lat": 39.4697065,
+  "lon": -0.3763353,
+  "display": "Valencia, Comarca de València, Valencia, Valencian Community, Spain"
+ },
+ "valladolid": {
+  "lat": 41.6200024,
+  "lon": -4.7259906,
+  "display": "Valladolid, Castile and León, Spain"
+ },
+ "vandellos": {
+  "lat": 40.9985238,
+  "lon": 0.8493534,
+  "display": "Vandellòs i l'Hospitalet de l'Infant, Baix Camp, Tarragona, Catalonia, Spain"
+ },
+ "vigo": {
+  "lat": 42.1986395,
+  "lon": -8.727956,
+  "display": "Vigo, Pontevedra, Galicia, Spain"
+ },
+ "villarreal": {
+  "lat": 39.9372616,
+  "lon": -0.1004465,
+  "display": "Vila-real, la Plana Baixa, Castelló / Castellón, Valencian Community, 12540, Spa"
+ },
+ "zaragoza": {
+  "lat": 41.6915847,
+  "lon": -0.9101268,
+  "display": "Zaragoza, Aragon, Spain"
+ },
+ "ancona": {
+  "lat": 43.4801189,
+  "lon": 13.2187279,
+  "display": "Ancona, Marche, Italy"
+ },
+ "bari": {
+  "lat": 41.1257843,
+  "lon": 16.8620293,
+  "display": "Bari, Apulia, Italy"
+ },
+ "bologna": {
+  "lat": 44.4938203,
+  "lon": 11.3426327,
+  "display": "Bologna, Emilia-Romagna, Italy"
+ },
+ "cagliari": {
+  "lat": 39.2171994,
+  "lon": 9.113311,
+  "display": "Cagliari, Casteddu/Cagliari, Sardinia, Italy"
+ },
+ "cassino": {
+  "lat": 41.4925576,
+  "lon": 13.8305297,
+  "display": "Cassino, Frosinone, Lazio, Italy"
+ },
+ "catania": {
+  "lat": 37.5023612,
+  "lon": 15.0873718,
+  "display": "Catania, Sicily, Italy"
+ },
+ "catanzaro": {
+  "lat": 38.8299603,
+  "lon": 16.4315569,
+  "display": "Catanzaro, Calabria, Italy"
+ },
+ "firenze": {
+  "lat": 43.7697955,
+  "lon": 11.2556404,
+  "display": "Florence, Tuscany, Italy"
+ },
+ "genova": {
+  "lat": 44.40726,
+  "lon": 8.9338624,
+  "display": "Genoa, Liguria, Italy"
+ },
+ "livorno": {
+  "lat": 42.7902379,
+  "lon": 10.3402239,
+  "display": "Livorno, Tuscany, Italy"
+ },
+ "messina": {
+  "lat": 38.1937571,
+  "lon": 15.5542082,
+  "display": "Messina, Sicily, Italy"
+ },
+ "napoli": {
+  "lat": 40.8358846,
+  "lon": 14.2487679,
+  "display": "Naples, Campania, Italy"
+ },
+ "olbia": {
+  "lat": 40.9232659,
+  "lon": 9.5027442,
+  "display": "Olbia, Gallura Nord-Est Sardegna, Sardinia, 07026, Italy"
+ },
+ "palermo": {
+  "lat": 38.1112268,
+  "lon": 13.3524434,
+  "display": "Palermo, Sicily, Italy"
+ },
+ "parma": {
+  "lat": 44.6952006,
+  "lon": 10.0979869,
+  "display": "Parma, Emilia-Romagna, Italy"
+ },
+ "pescara": {
+  "lat": 42.3097631,
+  "lon": 13.9579989,
+  "display": "Pescara, Abruzzo, Italy"
+ },
+ "roma": {
+  "lat": 41.8933203,
+  "lon": 12.4829321,
+  "display": "Rome, Roma Capitale, Lazio, Italy"
+ },
+ "sangiovanni": {
+  "lat": 38.2180591,
+  "lon": 15.638486,
+  "display": "Villa San Giovanni, Reggio Calabria, Calabria, 89018, Italy"
+ },
+ "sassari": {
+  "lat": 40.7234746,
+  "lon": 8.5612674,
+  "display": "Tàttari/Sassari, Sardinia, 07100, Italy"
+ },
+ "suzzara": {
+  "lat": 44.992038,
+  "lon": 10.7432134,
+  "display": "Suzzara, Mantua, Lombardy, 46029, Italy"
+ },
+ "taranto": {
+  "lat": 40.5488156,
+  "lon": 17.0805801,
+  "display": "Taranto, Apulia, Italy"
+ },
+ "terni": {
+  "lat": 42.6539486,
+  "lon": 12.4396528,
+  "display": "Terni, Umbria, Italy"
+ },
+ "aalborg": {
+  "lat": 57.0462626,
+  "lon": 9.9215263,
+  "display": "Aalborg, Aalborg Municipality, North Denmark Region, 9000, Denmark"
+ },
+ "aarhus": {
+  "lat": 56.1496278,
+  "lon": 10.2134046,
+  "display": "Aarhus, Aarhus Municipality, Central Denmark Region, 8000, Denmark"
+ },
+ "bergen": {
+  "lat": 60.3943055,
+  "lon": 5.3259192,
+  "display": "Bergen, Vestland, Norway"
+ },
+ "esbjerg": {
+  "lat": 55.4664892,
+  "lon": 8.4520751,
+  "display": "Esbjerg, Esbjerg Municipality, Region of Southern Denmark, 6700, Denmark"
+ },
+ "frederikshv": {
+  "lat": 57.4412134,
+  "lon": 10.5336225,
+  "display": "Frederikshavn, Frederikshavn Municipality, North Denmark Region, 9900, Denmark"
+ },
+ "gedser": {
+  "lat": 54.5770446,
+  "lon": 11.9313561,
+  "display": "Gedser, Guldborgsund Municipality, Region Zealand, 4874, Denmark"
+ },
+ "goteborg": {
+  "lat": 57.7072326,
+  "lon": 11.9670171,
+  "display": "Gothenburg, Göteborgs Stad, Västra Götaland County, 411 10, Sweden"
+ },
+ "helsingborg": {
+  "lat": 56.0442098,
+  "lon": 12.703706,
+  "display": "Helsingborg, Helsingborgs kommun, Skåne County, 252 68, Sweden"
+ },
+ "hirtshals": {
+  "lat": 57.5908031,
+  "lon": 9.9649737,
+  "display": "Hirtshals, Hjørring Municipality, North Denmark Region, 9850, Denmark"
+ },
+ "jonkoping": {
+  "lat": 57.7825634,
+  "lon": 14.165719,
+  "display": "Jönköping, Jönköpings kommun, Jönköping County, 551 86, Sweden"
+ },
+ "kalmar": {
+  "lat": 56.6628826,
+  "lon": 16.3662382,
+  "display": "Kalmar, Kalmar kommun, Kalmar County, 392 31, Sweden"
+ },
+ "kapellskar": {
+  "lat": 59.7203711,
+  "lon": 19.0607758,
+  "display": "Kapellskär, Norrtälje kommun, Stockholm County, 760 15, Sweden"
+ },
+ "karlskrona": {
+  "lat": 56.1621073,
+  "lon": 15.5866422,
+  "display": "Karlskrona, Karlskrona kommun, Blekinge County, 371 30, Sweden"
+ },
+ "karlstad": {
+  "lat": 59.3809146,
+  "lon": 13.5027631,
+  "display": "Karlstad, Karlstads kommun, Värmland County, 652 24, Sweden"
+ },
+ "kobenhavn": {
+  "lat": 55.6867243,
+  "lon": 12.5700724,
+  "display": "Copenhagen, Copenhagen Municipality, Capital Region of Denmark, 1357, Denmark"
+ },
+ "kristiansand": {
+  "lat": 58.0856276,
+  "lon": 7.931858,
+  "display": "Kristiansand, Agder, Norway"
+ },
+ "linkoping": {
+  "lat": 58.4098135,
+  "lon": 15.6245252,
+  "display": "Linköping, Linköpings kommun, Östergötland County, 582 19, Sweden"
+ },
+ "malmo": {
+  "lat": 55.6052931,
+  "lon": 13.0001566,
+  "display": "Malmö, Malmö kommun, Skåne County, Sweden"
+ },
+ "nynashamn": {
+  "lat": 58.9056457,
+  "lon": 17.9470987,
+  "display": "Nynäshamn, Nynäshamns kommun, Stockholm County, 149 32, Sweden"
+ },
+ "odense": {
+  "lat": 55.3997225,
+  "lon": 10.3852104,
+  "display": "Odense, Odense Municipality, Region of Southern Denmark, 5000, Denmark"
+ },
+ "orebro": {
+  "lat": 59.2747287,
+  "lon": 15.2151181,
+  "display": "Örebro, Örebro kommun, Örebro County, 703 61, Sweden"
+ },
+ "oslo": {
+  "lat": 59.9133301,
+  "lon": 10.7389701,
+  "display": "Oslo, Norway"
+ },
+ "sodertalje": {
+  "lat": 59.1964289,
+  "lon": 17.6271663,
+  "display": "Södertälje, Södertälje kommun, Stockholm County, 151 72, Sweden"
+ },
+ "stavanger": {
+  "lat": 58.9699675,
+  "lon": 5.7318101,
+  "display": "Stavanger, Rogaland, Norway"
+ },
+ "stockholm": {
+  "lat": 59.3251172,
+  "lon": 18.0710935,
+  "display": "Stockholm, Stockholm Municipality, Stockholm County, 111 29, Sweden"
+ },
+ "trelleborg": {
+  "lat": 55.37592,
+  "lon": 13.1461522,
+  "display": "Trelleborg, Trelleborgs kommun, Skåne County, 231 61, Sweden"
+ },
+ "uppsala": {
+  "lat": 59.8586126,
+  "lon": 17.6387436,
+  "display": "Uppsala, Uppsala kommun, Uppsala County, 753 20, Sweden"
+ },
+ "vasteraas": {
+  "lat": 59.6110992,
+  "lon": 16.5463679,
+  "display": "Västerås, Västerås kommun, Västmanland County, 721 01, Sweden"
+ },
+ "vaxjo": {
+  "lat": 56.8787183,
+  "lon": 14.8094385,
+  "display": "Växjö, Växjö kommun, Kronoberg County, 352 30, Sweden"
+ },
+ "alesund": {
+  "lat": 62.4802364,
+  "lon": 6.5550739,
+  "display": "Ålesund, Møre og Romsdal, Norway"
+ },
+ "alta": {
+  "lat": 69.9666046,
+  "lon": 23.2733282,
+  "display": "Alta, Finnmark, Norway"
+ },
+ "andenes": {
+  "lat": 69.3122989,
+  "lon": 16.1057085,
+  "display": "Andenes, Vestbyen, Merket, Andenes, Andøy, Nordland, Norway"
+ },
+ "arvidsjaur": {
+  "lat": 65.666667,
+  "lon": 19.25,
+  "display": "Arvidsjaurs kommun, Norrbotten County, Sweden"
+ },
+ "bodo": {
+  "lat": 67.2844313,
+  "lon": 14.3817503,
+  "display": "Bodø, Nordland, Norway"
+ },
+ "borlange": {
+  "lat": 60.4856426,
+  "lon": 15.4234561,
+  "display": "Borlänge, Borlänge kommun, Dalarna County, 784 31, Sweden"
+ },
+ "dombas": {
+  "lat": 62.0755539,
+  "lon": 9.1278983,
+  "display": "Dombås, Dovre, Innlandet, 2660, Norway"
+ },
+ "falun": {
+  "lat": 60.6070068,
+  "lon": 15.6323059,
+  "display": "Falun, Falu kommun, Dalarna County, 791 71, Sweden"
+ },
+ "gavle": {
+  "lat": 60.6750132,
+  "lon": 17.1467019,
+  "display": "Gävle, Gävle kommun, Gävleborg County, Sweden"
+ },
+ "hamar": {
+  "lat": 61.0014937,
+  "lon": 11.1647964,
+  "display": "Hamar, Innlandet, Norway"
+ },
+ "haparanda": {
+  "lat": 65.835667,
+  "lon": 24.1357213,
+  "display": "Haparanda, Haparanda kommun, Norrbotten County, 953 32, Sweden"
+ },
+ "honningsvag": {
+  "lat": 70.9802638,
+  "lon": 25.977841,
+  "display": "Honningsvåg, Nordkapp, Finnmark, 9750, Norway"
+ },
+ "ivalo": {
+  "lat": 68.6588185,
+  "lon": 27.5348114,
+  "display": "Ivalo, Inari, Northern Lapland, Lapland, Mainland Finland, Finland"
+ },
+ "joensuu": {
+  "lat": 62.6006375,
+  "lon": 29.7619759,
+  "display": "Joensuu, Joensuu sub-region, North Karelia, Mainland Finland, Finland"
+ },
+ "jyvaskyla": {
+  "lat": 62.241672,
+  "lon": 25.7495806,
+  "display": "Jyväskylä, Jyväskylä sub-region, Central Finland, Mainland Finland, Finland"
+ },
+ "kajaani": {
+  "lat": 64.2246862,
+  "lon": 27.7339281,
+  "display": "Kajaani, Kajaani sub-region, Kainuu, Mainland Finland, Finland"
+ },
+ "karesuando": {
+  "lat": 68.4405054,
+  "lon": 22.4743151,
+  "display": "Karesuando, Kiruna kommun, Norrbotten County, 980 16, Sweden"
+ },
+ "kiruna": {
+  "lat": 67.8496111,
+  "lon": 20.30625,
+  "display": "Kiruna, Kiruna kommun, Norrbotten County, 981 30, Sweden"
+ },
+ "kokkola": {
+  "lat": 63.8391421,
+  "lon": 23.1336845,
+  "display": "Kokkola, Kokkola sub-region, Central Ostrobothnia, Mainland Finland, Finland"
+ },
+ "kristiansund": {
+  "lat": 63.2168194,
+  "lon": 7.545259,
+  "display": "Kristiansund, Møre og Romsdal, Norway"
+ },
+ "kuopio": {
+  "lat": 62.8924628,
+  "lon": 27.6783603,
+  "display": "Kuopio, Kuopio sub-region, North Savo, Mainland Finland, Finland"
+ },
+ "kuusamo": {
+  "lat": 65.9645637,
+  "lon": 29.1883283,
+  "display": "Kuusamo, Koillismaa sub-region, North Ostrobothnia, Mainland Finland, Finland"
+ },
+ "lappeenranta": {
+  "lat": 61.0583417,
+  "lon": 28.1862293,
+  "display": "Lappeenranta, Lappeenranta sub-region, South Karelia, Mainland Finland, Finland"
+ },
+ "lillehammer": {
+  "lat": 61.1333408,
+  "lon": 10.4265855,
+  "display": "Lillehammer, Innlandet, Norway"
+ },
+ "lulea": {
+  "lat": 65.5831187,
+  "lon": 22.1459535,
+  "display": "Luleå, Luleå kommun, Norrbotten County, 971 28, Sweden"
+ },
+ "mikkeli": {
+  "lat": 61.6877823,
+  "lon": 27.2731918,
+  "display": "Mikkeli, Mikkeli sub-region, South Savo, Mainland Finland, Finland"
+ },
+ "mo_i_rana": {
+  "lat": 66.3110969,
+  "lon": 14.1386991,
+  "display": "Mo i Rana, Rana, Nordland, 8624, Norway"
+ },
+ "narvik": {
+  "lat": 68.4383796,
+  "lon": 17.4271978,
+  "display": "Narvik, Nordland, 8517, Norway"
+ },
+ "ornskoldsvik": {
+  "lat": 63.2888613,
+  "lon": 18.7160209,
+  "display": "Örnsköldsvik, Örnsköldsviks kommun, Västernorrland County, Sweden"
+ },
+ "ostersund": {
+  "lat": 63.1793655,
+  "lon": 14.6357061,
+  "display": "Östersund, Östersunds kommun, Jämtland County, 831 86, Sweden"
+ },
+ "oulu": {
+  "lat": 65.0117914,
+  "lon": 25.4701973,
+  "display": "Oulu, Oulu sub-region, North Ostrobothnia, Mainland Finland, Finland"
+ },
+ "rovaniemi": {
+  "lat": 66.5025537,
+  "lon": 25.7303912,
+  "display": "Rovaniemi, Rovaniemi sub-region, Lapland, Mainland Finland, Finland"
+ },
+ "skelleftea": {
+  "lat": 64.7520185,
+  "lon": 20.959339,
+  "display": "Skellefteå, Skellefteå kommun, Västerbotten County, Sweden"
+ },
+ "steinkjer": {
+  "lat": 64.050737,
+  "lon": 11.481909,
+  "display": "Steinkjer, Trøndelag, Norway"
+ },
+ "sundsvall": {
+  "lat": 62.3907552,
+  "lon": 17.3071024,
+  "display": "Sundsvall, Sundsvall Municipality, Västernorrland County, Sweden"
+ },
+ "svolvaer": {
+  "lat": 68.2321709,
+  "lon": 14.5646019,
+  "display": "Svolvær, Vågan, Nordland, 8300, Norway"
+ },
+ "tornio": {
+  "lat": 65.8457589,
+  "lon": 24.1464,
+  "display": "Tornio, Kemi-Tornio sub-region, Lapland, Mainland Finland, Finland"
+ },
+ "tromso": {
+  "lat": 69.6516345,
+  "lon": 18.9558585,
+  "display": "Tromsø, Troms, Norway"
+ },
+ "trondheim": {
+  "lat": 63.4304475,
+  "lon": 10.3952118,
+  "display": "Trondheim, Trøndelag, Norway"
+ },
+ "umea": {
+  "lat": 63.8256568,
+  "lon": 20.2630745,
+  "display": "Umeå, Umeå kommun, Västerbotten County, Sweden"
+ },
+ "vaasa": {
+  "lat": 63.0957722,
+  "lon": 21.6159187,
+  "display": "Vaasa, Vaasa sub-region, Ostrobothnia, Mainland Finland, Finland"
+ },
+ "artand": {
+  "lat": 47.1252992,
+  "lon": 21.7572321,
+  "display": "Ártánd, Berettyóújfalui járás, Hajdú-Bihar megye, Észak-Alföld, Alföld és Észak,"
+ }
+}

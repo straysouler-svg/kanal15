@@ -1,0 +1,40 @@
+{
+    "gap_min_s": 120,
+    "gap_max_s": 300,
+    "first_after_s": [
+        30,
+        90
+    ],
+    "volume": 0.8,
+    "device": null,
+    "require_engine_on": true,
+    "lock_port": 47819,
+    "kerchunk_gap_s": [
+        60,
+        160
+    ],
+    "ptt": {
+        "device": "R5 Base",
+        "button": 22
+    },
+    "greet_reply_chance": 0.85,
+    "ptt_sounds": {
+        "press": "beep",
+        "release": "roger",
+        "volume": 0.5
+    },
+    "mic": {
+        "enabled": true,
+        "device": "Микрофон (fifine SC3)",
+        "model": "small"
+    },
+    "world": {
+        "enabled": true,
+        "range_m": 12000,
+        "spawn_after_quiet_s": 150,
+        "cooldown_s": 3600,
+        "companion_chance": 0.25
+    },
+    "enter_cue": true,
+    "air": "normal"
+}

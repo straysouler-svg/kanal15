@@ -1,0 +1,3068 @@
+{
+ "aberdeen": {
+  "name": "Aberdeen",
+  "country": "uk",
+  "x": -38846.7,
+  "z": -55270.3,
+  "src": "verified",
+  "population": 230000
+ },
+ "amsterdam": {
+  "name": "Amsterdam",
+  "country": "netherlands",
+  "x": -19042.1,
+  "z": -11308.3,
+  "src": "verified",
+  "population": 820000
+ },
+ "antwerp": {
+  "name": "Antwerpen",
+  "country": "belgium",
+  "x": -21700.7,
+  "z": -5680.8,
+  "src": "verified",
+  "population": 500000
+ },
+ "berlin": {
+  "name": "Berlin",
+  "country": "germany",
+  "x": 10070.2,
+  "z": -9774.4,
+  "src": "verified",
+  "population": 3650000
+ },
+ "bern": {
+  "name": "Bern",
+  "country": "switzerland",
+  "x": -12304.0,
+  "z": 20488.1,
+  "src": "verified",
+  "population": 130000
+ },
+ "birmingham": {
+  "name": "Birmingham",
+  "country": "uk",
+  "x": -45951.1,
+  "z": -20423.0,
+  "src": "verified",
+  "population": 1150000
+ },
+ "bratislava": {
+  "name": "Bratislava",
+  "country": "slovakia",
+  "x": 24823.3,
+  "z": 14831.0,
+  "src": "verified",
+  "population": 425000
+ },
+ "bremen": {
+  "name": "Bremen",
+  "country": "germany",
+  "x": -5184.6,
+  "z": -14018.4,
+  "src": "verified",
+  "population": 570000
+ },
+ "brno": {
+  "name": "Brno",
+  "country": "czech",
+  "x": 22273.8,
+  "z": 8964.9,
+  "src": "verified",
+  "population": 380000
+ },
+ "brussel": {
+  "name": "Brussel",
+  "country": "belgium",
+  "x": -22100.2,
+  "z": -2415.1,
+  "src": "verified",
+  "population": 1200000
+ },
+ "calais": {
+  "name": "Calais",
+  "country": "france",
+  "x": -30340.4,
+  "z": -4985.6,
+  "src": "verified",
+  "population": 76000
+ },
+ "cambridge": {
+  "name": "Cambridge",
+  "country": "uk",
+  "x": -36822.7,
+  "z": -16119.4,
+  "src": "verified",
+  "population": 145000
+ },
+ "cardiff": {
+  "name": "Cardiff",
+  "country": "uk",
+  "x": -54005.3,
+  "z": -14698.4,
+  "src": "verified",
+  "population": 490000
+ },
+ "carlisle": {
+  "name": "Carlisle",
+  "country": "uk",
+  "x": -45889.2,
+  "z": -39573.5,
+  "src": "verified",
+  "population": 110000
+ },
+ "dijon": {
+  "name": "Dijon",
+  "country": "france",
+  "x": -22470.0,
+  "z": 16655.5,
+  "src": "verified",
+  "population": 155000
+ },
+ "dortmund": {
+  "name": "Dortmund",
+  "country": "germany",
+  "x": -10883.4,
+  "z": -6378.8,
+  "src": "verified",
+  "population": 590000
+ },
+ "dover": {
+  "name": "Dover",
+  "country": "uk",
+  "x": -33321.9,
+  "z": -7884.4,
+  "src": "verified",
+  "population": 120000
+ },
+ "dresden": {
+  "name": "Dresden",
+  "country": "germany",
+  "x": 11634.9,
+  "z": -1841.9,
+  "src": "verified",
+  "population": 555000
+ },
+ "duisburg": {
+  "name": "Duisburg",
+  "country": "germany",
+  "x": -12825.8,
+  "z": -5438.2,
+  "src": "fit",
+  "population": 500000
+ },
+ "dusseldorf": {
+  "name": "Düsseldorf",
+  "country": "germany",
+  "x": -13576.8,
+  "z": -4598.7,
+  "src": "verified",
+  "population": 620000
+ },
+ "edinburgh": {
+  "name": "Edinburgh",
+  "country": "uk",
+  "x": -44900.7,
+  "z": -47219.7,
+  "src": "verified",
+  "population": 510000
+ },
+ "eindhoven": {
+  "name": "Eindhoven",
+  "country": "netherlands",
+  "x": -17554.5,
+  "z": -6868.1,
+  "src": "verified",
+  "population": 250000
+ },
+ "erfurt": {
+  "name": "Erfurt",
+  "country": "germany",
+  "x": 2824.2,
+  "z": -2012.9,
+  "src": "verified",
+  "population": 210000
+ },
+ "europoort": {
+  "name": "Europoort",
+  "country": "netherlands",
+  "x": -21573.9,
+  "z": -9403.8,
+  "src": "fit",
+  "population": 0,
+  "no_company": true
+ },
+ "felixstowe": {
+  "name": "Felixstowe",
+  "country": "uk",
+  "x": -31664.6,
+  "z": -13837.2,
+  "src": "verified",
+  "population": 24000
+ },
+ "frankfurt": {
+  "name": "Frankfurt am Main",
+  "country": "germany",
+  "x": -5583.6,
+  "z": 2517.2,
+  "src": "verified",
+  "population": 750000
+ },
+ "geneve": {
+  "name": "Genève",
+  "country": "switzerland",
+  "x": -18366.9,
+  "z": 23772.4,
+  "src": "fit",
+  "population": 200000
+ },
+ "glasgow": {
+  "name": "Glasgow",
+  "country": "uk",
+  "x": -50384.7,
+  "z": -48471.6,
+  "src": "verified",
+  "population": 630000
+ },
+ "graz": {
+  "name": "Graz",
+  "country": "austria",
+  "x": 18665.1,
+  "z": 20411.8,
+  "src": "verified",
+  "population": 280000
+ },
+ "grimsby": {
+  "name": "Grimsby",
+  "country": "uk",
+  "x": -36117.9,
+  "z": -26575.2,
+  "src": "verified",
+  "population": 85000
+ },
+ "groningen": {
+  "name": "Groningen",
+  "country": "netherlands",
+  "x": -12662.1,
+  "z": -15700.7,
+  "src": "verified",
+  "population": 200000
+ },
+ "hamburg": {
+  "name": "Hamburg",
+  "country": "germany",
+  "x": -1689.9,
+  "z": -16335.5,
+  "src": "verified",
+  "population": 1850000
+ },
+ "hannover": {
+  "name": "Hannover",
+  "country": "germany",
+  "x": -2003.6,
+  "z": -9065.2,
+  "src": "verified",
+  "population": 530000
+ },
+ "harwich": {
+  "name": "Harwich",
+  "country": "uk",
+  "x": -32086.8,
+  "z": -13423.0,
+  "src": "fit",
+  "population": 18000,
+  "no_company": true
+ },
+ "hull": {
+  "name": "Hull",
+  "country": "uk",
+  "x": -36729.5,
+  "z": -28467.9,
+  "src": "fit",
+  "population": 260000,
+  "no_company": true
+ },
+ "ijmuiden": {
+  "name": "IJmuiden",
+  "country": "netherlands",
+  "x": -19623.2,
+  "z": -12150.6,
+  "src": "fit",
+  "population": 30000,
+  "no_company": true
+ },
+ "innsbruck": {
+  "name": "Innsbruck",
+  "country": "austria",
+  "x": 2511.0,
+  "z": 19602.6,
+  "src": "verified",
+  "population": 310000
+ },
+ "kassel": {
+  "name": "Kassel",
+  "country": "germany",
+  "x": -3419.8,
+  "z": -3727.4,
+  "src": "verified",
+  "population": 200000
+ },
+ "kiel": {
+  "name": "Kiel",
+  "country": "germany",
+  "x": 1137.5,
+  "z": -21589.1,
+  "src": "verified",
+  "population": 250000
+ },
+ "klagenfurt": {
+  "name": "Klagenfurt am Wörthersee",
+  "country": "austria",
+  "x": 14047.1,
+  "z": 23307.7,
+  "src": "verified",
+  "population": 100000
+ },
+ "koln": {
+  "name": "Köln",
+  "country": "germany",
+  "x": -12548.6,
+  "z": -2434.2,
+  "src": "verified",
+  "population": 1100000
+ },
+ "leipzig": {
+  "name": "Leipzig",
+  "country": "germany",
+  "x": 7000.5,
+  "z": -3572.1,
+  "src": "verified",
+  "population": 590000
+ },
+ "liege": {
+  "name": "Liège",
+  "country": "belgium",
+  "x": -17144.4,
+  "z": -844.1,
+  "src": "verified",
+  "population": 200000
+ },
+ "lille": {
+  "name": "Lille",
+  "country": "france",
+  "x": -26539.4,
+  "z": -2460.3,
+  "src": "verified",
+  "population": 230000
+ },
+ "linz": {
+  "name": "Linz",
+  "country": "austria",
+  "x": 13636.4,
+  "z": 13925.5,
+  "src": "verified",
+  "population": 200000
+ },
+ "liverpool": {
+  "name": "Liverpool",
+  "country": "uk",
+  "x": -48871.7,
+  "z": -29091.8,
+  "src": "verified",
+  "population": 500000
+ },
+ "london": {
+  "name": "London",
+  "country": "uk",
+  "x": -39546.9,
+  "z": -11564.2,
+  "src": "verified",
+  "population": 8800000
+ },
+ "luxembourg": {
+  "name": "Luxembourg",
+  "country": "luxembourg",
+  "x": -16128.4,
+  "z": 3447.8,
+  "src": "fit",
+  "population": 110000
+ },
+ "lyon": {
+  "name": "Lyon",
+  "country": "france",
+  "x": -23877.8,
+  "z": 25578.0,
+  "src": "verified",
+  "population": 510000
+ },
+ "magdeburg": {
+  "name": "Magdeburg",
+  "country": "germany",
+  "x": 4449.2,
+  "z": -8166.2,
+  "src": "verified",
+  "population": 240000
+ },
+ "manchester": {
+  "name": "Manchester",
+  "country": "uk",
+  "x": -45548.7,
+  "z": -27815.0,
+  "src": "verified",
+  "population": 550000
+ },
+ "mannheim": {
+  "name": "Mannheim",
+  "country": "germany",
+  "x": -7936.7,
+  "z": 6001.2,
+  "src": "verified",
+  "population": 310000
+ },
+ "metz": {
+  "name": "Metz",
+  "country": "france",
+  "x": -16294.5,
+  "z": 7463.7,
+  "src": "verified",
+  "population": 120000
+ },
+ "milano": {
+  "name": "Milano",
+  "country": "italy",
+  "x": -6816.4,
+  "z": 29438.7,
+  "src": "verified",
+  "population": 1350000
+ },
+ "munchen": {
+  "name": "München",
+  "country": "germany",
+  "x": 3782.2,
+  "z": 14647.1,
+  "src": "verified",
+  "population": 1500000
+ },
+ "newcastle": {
+  "name": "Newcastle-upon-Tyne",
+  "country": "uk",
+  "x": -39778.0,
+  "z": -38787.7,
+  "src": "verified",
+  "population": 280000
+ },
+ "nurnberg": {
+  "name": "Nürnberg",
+  "country": "germany",
+  "x": 1849.2,
+  "z": 6518.7,
+  "src": "verified",
+  "population": 520000
+ },
+ "osnabruck": {
+  "name": "Osnabrück",
+  "country": "germany",
+  "x": -7930.9,
+  "z": -9745.8,
+  "src": "verified",
+  "population": 165000
+ },
+ "paris": {
+  "name": "Paris",
+  "country": "france",
+  "x": -30427.3,
+  "z": 6886.2,
+  "src": "verified",
+  "population": 2100000
+ },
+ "plymouth": {
+  "name": "Plymouth",
+  "country": "uk",
+  "x": -60041.4,
+  "z": -7882.3,
+  "src": "verified",
+  "population": 265000
+ },
+ "poznan": {
+  "name": "Poznań",
+  "country": "poland",
+  "x": 22863.4,
+  "z": -9112.2,
+  "src": "verified",
+  "population": 540000
+ },
+ "prague": {
+  "name": "Praha",
+  "country": "czech",
+  "x": 14299.7,
+  "z": 3979.0,
+  "src": "verified",
+  "population": 1350000
+ },
+ "reims": {
+  "name": "Reims",
+  "country": "france",
+  "x": -24054.8,
+  "z": 5680.1,
+  "src": "verified",
+  "population": 185000
+ },
+ "rostock": {
+  "name": "Rostock",
+  "country": "germany",
+  "x": 6554.9,
+  "z": -19012.9,
+  "src": "verified",
+  "population": 210000
+ },
+ "rotterdam": {
+  "name": "Rotterdam",
+  "country": "netherlands",
+  "x": -18992.0,
+  "z": -9455.9,
+  "src": "verified",
+  "population": 620000
+ },
+ "salzburg": {
+  "name": "Salzburg",
+  "country": "austria",
+  "x": 9146.4,
+  "z": 16039.6,
+  "src": "verified",
+  "population": 150000
+ },
+ "sheffield": {
+  "name": "Sheffield",
+  "country": "uk",
+  "x": -42688.8,
+  "z": -26687.6,
+  "src": "verified",
+  "population": 560000
+ },
+ "southampton": {
+  "name": "Southampton",
+  "country": "uk",
+  "x": -46338.7,
+  "z": -7523.2,
+  "src": "verified",
+  "population": 255000
+ },
+ "strasbourg": {
+  "name": "Strasbourg",
+  "country": "france",
+  "x": -10786.9,
+  "z": 11198.7,
+  "src": "verified",
+  "population": 280000
+ },
+ "stuttgart": {
+  "name": "Stuttgart",
+  "country": "germany",
+  "x": -4636.7,
+  "z": 10059.0,
+  "src": "verified",
+  "population": 630000
+ },
+ "swansea": {
+  "name": "Swansea",
+  "country": "uk",
+  "x": -56896.0,
+  "z": -16881.9,
+  "src": "verified",
+  "population": 240000
+ },
+ "szczecin": {
+  "name": "Szczecin",
+  "country": "poland",
+  "x": 15052.7,
+  "z": -15049.8,
+  "src": "verified",
+  "population": 400000
+ },
+ "torino": {
+  "name": "Torino",
+  "country": "italy",
+  "x": -12697.2,
+  "z": 30932.0,
+  "src": "verified",
+  "population": 890000
+ },
+ "travemunde": {
+  "name": "Travemünde",
+  "country": "germany",
+  "x": 3057.5,
+  "z": -19152.9,
+  "src": "verified",
+  "population": 13200
+ },
+ "trieste": {
+  "name": "Trieste",
+  "country": "italy",
+  "x": 10593.8,
+  "z": 27566.8,
+  "src": "verified",
+  "population": 200000
+ },
+ "venezia": {
+  "name": "Venezia",
+  "country": "italy",
+  "x": 5089.9,
+  "z": 30078.9,
+  "src": "verified",
+  "population": 260000
+ },
+ "verona": {
+  "name": "Verona",
+  "country": "italy",
+  "x": 39.1,
+  "z": 29453.3,
+  "src": "verified",
+  "population": 260000
+ },
+ "wien": {
+  "name": "Wien",
+  "country": "austria",
+  "x": 20824.8,
+  "z": 13986.0,
+  "src": "verified",
+  "population": 1900000
+ },
+ "wroclaw": {
+  "name": "Wrocław",
+  "country": "poland",
+  "x": 23502.9,
+  "z": -1951.0,
+  "src": "verified",
+  "population": 640000
+ },
+ "zurich": {
+  "name": "Zürich",
+  "country": "switzerland",
+  "x": -8744.9,
+  "z": 17643.1,
+  "src": "verified",
+  "population": 400000
+ },
+ "artand": {
+  "name": "Artand Border Crossing",
+  "country": "romania",
+  "x": 42517.3,
+  "z": 18794.7,
+  "src": "fit",
+  "population": 0,
+  "no_company": true
+ },
+ "bacau": {
+  "name": "Bacău",
+  "country": "romania",
+  "x": 62137.4,
+  "z": 18494.0,
+  "src": "confirmed",
+  "population": 180000
+ },
+ "brasov": {
+  "name": "Brașov",
+  "country": "romania",
+  "x": 58252.4,
+  "z": 23552.8,
+  "src": "confirmed",
+  "population": 240000
+ },
+ "bucuresti": {
+  "name": "București",
+  "country": "romania",
+  "x": 61121.0,
+  "z": 31703.6,
+  "src": "confirmed",
+  "population": 2000000
+ },
+ "burgas": {
+  "name": "Бургас",
+  "country": "bulgaria",
+  "x": 68297.2,
+  "z": 40880.7,
+  "src": "confirmed",
+  "population": 210000
+ },
+ "calarasi": {
+  "name": "Călărași",
+  "country": "romania",
+  "x": 66074.6,
+  "z": 31257.8,
+  "src": "confirmed",
+  "population": 70000
+ },
+ "cernavoda": {
+  "name": "Cernavodă",
+  "country": "romania",
+  "x": 69579.5,
+  "z": 30015.4,
+  "src": "confirmed",
+  "population": 20000
+ },
+ "cluj_napoca": {
+  "name": "Cluj-Napoca",
+  "country": "romania",
+  "x": 49739.5,
+  "z": 19936.5,
+  "src": "fit",
+  "population": 310000
+ },
+ "constanta": {
+  "name": "Constanța",
+  "country": "romania",
+  "x": 71731.7,
+  "z": 30870.9,
+  "src": "confirmed",
+  "population": 280000
+ },
+ "craiova": {
+  "name": "Craiova",
+  "country": "romania",
+  "x": 51918.5,
+  "z": 33228.5,
+  "src": "confirmed",
+  "population": 300000
+ },
+ "edirne": {
+  "name": "Edirne",
+  "country": "turkey",
+  "x": 65096.0,
+  "z": 46829.2,
+  "src": "confirmed",
+  "population": 140000
+ },
+ "galati": {
+  "name": "Galați",
+  "country": "romania",
+  "x": 68071.4,
+  "z": 24460.4,
+  "src": "fit",
+  "population": 280000
+ },
+ "giurgiu": {
+  "name": "Giurgiu Border Crossing",
+  "country": "romania",
+  "x": 61424.7,
+  "z": 34406.9,
+  "src": "fit",
+  "population": 60000,
+  "no_company": true
+ },
+ "hamzabeyli": {
+  "name": "Hamzabeyli Border Crossing",
+  "country": "turkey",
+  "x": 66064.0,
+  "z": 44538.0,
+  "src": "fit",
+  "population": 200,
+  "no_company": true
+ },
+ "hunedoara": {
+  "name": "Hunedoara",
+  "country": "romania",
+  "x": 49016.9,
+  "z": 26114.8,
+  "src": "confirmed",
+  "population": 70000
+ },
+ "iasi": {
+  "name": "Iași",
+  "country": "romania",
+  "x": 64746.4,
+  "z": 14963.9,
+  "src": "confirmed",
+  "population": 320000
+ },
+ "istanbul": {
+  "name": "İstanbul",
+  "country": "turkey",
+  "x": 75753.5,
+  "z": 47644.0,
+  "src": "confirmed",
+  "population": 11000000
+ },
+ "kapikule": {
+  "name": "Kapikule Andreevo Border Crossing",
+  "country": "turkey",
+  "x": 65146.9,
+  "z": 46094.1,
+  "src": "fit",
+  "population": 0,
+  "no_company": true
+ },
+ "karlovo": {
+  "name": "Карлово",
+  "country": "bulgaria",
+  "x": 58056.4,
+  "z": 42057.7,
+  "src": "confirmed",
+  "population": 26000
+ },
+ "kozloduy": {
+  "name": "Козлодуй",
+  "country": "bulgaria",
+  "x": 52658.2,
+  "z": 36247.3,
+  "src": "confirmed",
+  "population": 14000
+ },
+ "mangalia": {
+  "name": "Mangalia",
+  "country": "romania",
+  "x": 71923.4,
+  "z": 32891.5,
+  "src": "fit",
+  "population": 40000
+ },
+ "nadlac": {
+  "name": "Nadlac Border Crossing",
+  "country": "romania",
+  "x": 39231.4,
+  "z": 24274.8,
+  "src": "fit",
+  "population": 8500,
+  "no_company": true
+ },
+ "pernik": {
+  "name": "Перник",
+  "country": "bulgaria",
+  "x": 49945.1,
+  "z": 43251.1,
+  "src": "fit",
+  "population": 85000
+ },
+ "pirdop": {
+  "name": "Пирдоп",
+  "country": "bulgaria",
+  "x": 55937.9,
+  "z": 42161.1,
+  "src": "confirmed",
+  "population": 8000
+ },
+ "pitesti": {
+  "name": "Pitești",
+  "country": "romania",
+  "x": 56247.5,
+  "z": 29912.5,
+  "src": "confirmed",
+  "population": 170000
+ },
+ "pleven": {
+  "name": "Плевен",
+  "country": "bulgaria",
+  "x": 57594.6,
+  "z": 37457.6,
+  "src": "confirmed",
+  "population": 120000
+ },
+ "plovdiv": {
+  "name": "Пловдив",
+  "country": "bulgaria",
+  "x": 58234.8,
+  "z": 46169.4,
+  "src": "confirmed",
+  "population": 340000
+ },
+ "resita": {
+  "name": "Reșița",
+  "country": "romania",
+  "x": 43990.4,
+  "z": 29154.6,
+  "src": "confirmed",
+  "population": 80000
+ },
+ "ruse": {
+  "name": "Русе",
+  "country": "bulgaria",
+  "x": 61454.0,
+  "z": 35069.8,
+  "src": "confirmed",
+  "population": 160000
+ },
+ "sofia": {
+  "name": "София",
+  "country": "bulgaria",
+  "x": 51154.8,
+  "z": 42490.6,
+  "src": "confirmed",
+  "population": 1200000
+ },
+ "targu_mures": {
+  "name": "Târgu Mureș",
+  "country": "romania",
+  "x": 53959.7,
+  "z": 20157.2,
+  "src": "confirmed",
+  "population": 150000
+ },
+ "tekirdag": {
+  "name": "Tekirdağ",
+  "country": "turkey",
+  "x": 70186.2,
+  "z": 48835.3,
+  "src": "fit",
+  "population": 140000
+ },
+ "timisoara": {
+  "name": "Timișoara",
+  "country": "romania",
+  "x": 41402.3,
+  "z": 27290.1,
+  "src": "confirmed",
+  "population": 320000
+ },
+ "varna": {
+  "name": "Варна",
+  "country": "bulgaria",
+  "x": 70093.4,
+  "z": 36462.2,
+  "src": "confirmed",
+  "population": 320000
+ },
+ "veli_tarnovo": {
+  "name": "Велико Търново",
+  "country": "bulgaria",
+  "x": 60763.4,
+  "z": 38859.5,
+  "src": "confirmed",
+  "population": 70000
+ },
+ "banja_luka": {
+  "name": "Бања Лука",
+  "country": "bosnia",
+  "x": 26087.2,
+  "z": 33233.3,
+  "src": "confirmed",
+  "population": 150000
+ },
+ "beograd": {
+  "name": "Београд",
+  "country": "serbia",
+  "x": 39346.9,
+  "z": 32075.3,
+  "src": "confirmed",
+  "population": 1400000
+ },
+ "bihac": {
+  "name": "Бихаћ",
+  "country": "bosnia",
+  "x": 21009.6,
+  "z": 32936.1,
+  "src": "confirmed",
+  "population": 43000
+ },
+ "bijelo_polje": {
+  "name": "Бијело Поље",
+  "country": "montenegro",
+  "x": 36723.8,
+  "z": 42334.2,
+  "src": "fit",
+  "population": 16000
+ },
+ "bitola": {
+  "name": "Битола",
+  "country": "macedonia",
+  "x": 45069.1,
+  "z": 52784.6,
+  "src": "confirmed",
+  "population": 75000
+ },
+ "durres": {
+  "name": "Durrës",
+  "country": "albania",
+  "x": 36191.7,
+  "z": 52037.7,
+  "src": "confirmed",
+  "population": 206000
+ },
+ "fier": {
+  "name": "Fier",
+  "country": "albania",
+  "x": 38304.8,
+  "z": 55012.8,
+  "src": "confirmed",
+  "population": 85000
+ },
+ "karakaj": {
+  "name": "Каракај",
+  "country": "bosnia",
+  "x": 33540.2,
+  "z": 34833.6,
+  "src": "fit",
+  "population": 6000
+ },
+ "koper": {
+  "name": "Koper",
+  "country": "slovenia",
+  "x": 11233.9,
+  "z": 29456.7,
+  "src": "confirmed",
+  "population": 24000
+ },
+ "kragujevac": {
+  "name": "Крагујевац",
+  "country": "serbia",
+  "x": 40681.2,
+  "z": 36682.6,
+  "src": "confirmed",
+  "population": 150000
+ },
+ "ljubljana": {
+  "name": "Ljubljana",
+  "country": "slovenia",
+  "x": 15398.1,
+  "z": 25965.2,
+  "src": "confirmed",
+  "population": 280000
+ },
+ "maribor": {
+  "name": "Maribor",
+  "country": "slovenia",
+  "x": 19137.2,
+  "z": 23466.8,
+  "src": "fit",
+  "population": 96000
+ },
+ "mostar": {
+  "name": "Мостар",
+  "country": "bosnia",
+  "x": 28483.8,
+  "z": 41005.8,
+  "src": "verified",
+  "population": 60000
+ },
+ "niksic": {
+  "name": "Никшић",
+  "country": "montenegro",
+  "x": 33522.5,
+  "z": 44036.0,
+  "src": "fit",
+  "population": 58000
+ },
+ "nis": {
+  "name": "Ниш",
+  "country": "serbia",
+  "x": 45301.3,
+  "z": 39664.2,
+  "src": "confirmed",
+  "population": 180000
+ },
+ "novi_sad": {
+  "name": "Нови Сад",
+  "country": "serbia",
+  "x": 35999.5,
+  "z": 29862.3,
+  "src": "fit",
+  "population": 250000
+ },
+ "novo_mesto": {
+  "name": "Novo Mesto",
+  "country": "slovenia",
+  "x": 16812.7,
+  "z": 27789.4,
+  "src": "confirmed",
+  "population": 23000
+ },
+ "osijek": {
+  "name": "Osijek",
+  "country": "croatia",
+  "x": 31383.4,
+  "z": 28573.5,
+  "src": "fit",
+  "population": 84000
+ },
+ "podgorica": {
+  "name": "Подгорица",
+  "country": "montenegro",
+  "x": 34978.1,
+  "z": 45796.4,
+  "src": "fit",
+  "population": 140000
+ },
+ "pristina": {
+  "name": "Prishtinë",
+  "country": "kosovo",
+  "x": 42673.6,
+  "z": 43605.8,
+  "src": "confirmed",
+  "population": 400000
+ },
+ "rijeka": {
+  "name": "Rijeka",
+  "country": "croatia",
+  "x": 14366.3,
+  "z": 30236.3,
+  "src": "confirmed",
+  "population": 130000
+ },
+ "sarajevo": {
+  "name": "Сарајево",
+  "country": "bosnia",
+  "x": 30877.3,
+  "z": 38133.1,
+  "src": "fit",
+  "population": 280000
+ },
+ "skopje": {
+  "name": "Скопје",
+  "country": "macedonia",
+  "x": 43657.4,
+  "z": 48230.5,
+  "src": "confirmed",
+  "population": 470000
+ },
+ "split": {
+  "name": "Split",
+  "country": "croatia",
+  "x": 22115.1,
+  "z": 40582.7,
+  "src": "confirmed",
+  "population": 170000
+ },
+ "tirana": {
+  "name": "Tiranë",
+  "country": "albania",
+  "x": 38274.9,
+  "z": 51343.2,
+  "src": "confirmed",
+  "population": 520000
+ },
+ "tuzla": {
+  "name": "Тузла",
+  "country": "bosnia",
+  "x": 32062.7,
+  "z": 33987.6,
+  "src": "confirmed",
+  "population": 80000
+ },
+ "vlore": {
+  "name": "Vlorë",
+  "country": "albania",
+  "x": 36884.7,
+  "z": 56715.7,
+  "src": "fit",
+  "population": 124000
+ },
+ "zadar": {
+  "name": "Zadar",
+  "country": "croatia",
+  "x": 17622.1,
+  "z": 36990.1,
+  "src": "confirmed",
+  "population": 70000
+ },
+ "zagreb": {
+  "name": "Zagreb",
+  "country": "croatia",
+  "x": 20549.5,
+  "z": 27614.1,
+  "src": "fit",
+  "population": 810000
+ },
+ "zenica": {
+  "name": "Зеница",
+  "country": "bosnia",
+  "x": 28703.4,
+  "z": 36336.4,
+  "src": "fit",
+  "population": 70000
+ },
+ "daugavpils": {
+  "name": "Daugavpils",
+  "country": "latvia",
+  "x": 52607.4,
+  "z": -32393.9,
+  "src": "fit",
+  "population": 80000
+ },
+ "helsinki": {
+  "name": "Helsinki",
+  "country": "finland",
+  "x": 44575.0,
+  "z": -56159.6,
+  "src": "fit",
+  "population": 600000
+ },
+ "kaliningrad": {
+  "name": "Калининград",
+  "country": "russia",
+  "x": 34277.4,
+  "z": -23405.1,
+  "src": "fit",
+  "population": 490000
+ },
+ "kaunas": {
+  "name": "Kaunas",
+  "country": "lithuania",
+  "x": 45118.7,
+  "z": -25654.6,
+  "src": "fit",
+  "population": 300000
+ },
+ "klaipeda": {
+  "name": "Klaipėda",
+  "country": "lithuania",
+  "x": 35835.2,
+  "z": -29286.0,
+  "src": "fit",
+  "population": 160000
+ },
+ "kotka": {
+  "name": "Kotka",
+  "country": "finland",
+  "x": 49902.6,
+  "z": -58779.4,
+  "src": "fit",
+  "population": 50000
+ },
+ "kouvola": {
+  "name": "Kouvola",
+  "country": "finland",
+  "x": 48897.4,
+  "z": -60975.1,
+  "src": "fit",
+  "population": 50000
+ },
+ "kunda": {
+  "name": "Kunda",
+  "country": "estonia",
+  "x": 49554.4,
+  "z": -53054.9,
+  "src": "fit",
+  "population": 3000
+ },
+ "lahti": {
+  "name": "Lahti",
+  "country": "finland",
+  "x": 45957.5,
+  "z": -61175.8,
+  "src": "fit",
+  "population": 100000
+ },
+ "liepaja": {
+  "name": "Liepāja",
+  "country": "latvia",
+  "x": 35075.2,
+  "z": -33770.1,
+  "src": "fit",
+  "population": 70000
+ },
+ "loviisa": {
+  "name": "Loviisa",
+  "country": "finland",
+  "x": 47921.1,
+  "z": -58384.6,
+  "src": "fit",
+  "population": 15000
+ },
+ "luga": {
+  "name": "Луга",
+  "country": "russia",
+  "x": 59748.4,
+  "z": -50496.6,
+  "src": "fit",
+  "population": 35000
+ },
+ "mazeikiai": {
+  "name": "Mažeikiai",
+  "country": "lithuania",
+  "x": 39339.8,
+  "z": -33078.6,
+  "src": "fit",
+  "population": 40000
+ },
+ "naantali": {
+  "name": "Naantali",
+  "country": "finland",
+  "x": 36241.5,
+  "z": -56906.7,
+  "src": "fit",
+  "population": 15000
+ },
+ "narva": {
+  "name": "Narva",
+  "country": "estonia",
+  "x": 54380.0,
+  "z": -53169.4,
+  "src": "fit",
+  "population": 60000
+ },
+ "olkiluoto": {
+  "name": "Olkiluoto",
+  "country": "finland",
+  "x": 34396.2,
+  "z": -61223.6,
+  "src": "fit",
+  "population": 1
+ },
+ "paldiski": {
+  "name": "Paldiski",
+  "country": "estonia",
+  "x": 42688.6,
+  "z": -51105.8,
+  "src": "fit",
+  "population": 4000
+ },
+ "panevezys": {
+  "name": "Panevėžys",
+  "country": "lithuania",
+  "x": 45977.6,
+  "z": -30580.9,
+  "src": "fit",
+  "population": 100000
+ },
+ "parnu": {
+  "name": "Pärnu",
+  "country": "estonia",
+  "x": 44562.7,
+  "z": -45746.8,
+  "src": "fit",
+  "population": 40000
+ },
+ "petersburg": {
+  "name": "Санкт-Петербург",
+  "country": "russia",
+  "x": 59280.1,
+  "z": -57638.5,
+  "src": "fit",
+  "population": 4800000
+ },
+ "pori": {
+  "name": "Pori",
+  "country": "finland",
+  "x": 35118.3,
+  "z": -62781.2,
+  "src": "fit",
+  "population": 80000
+ },
+ "pskov": {
+  "name": "Псков",
+  "country": "russia",
+  "x": 56309.2,
+  "z": -44391.6,
+  "src": "fit",
+  "population": 200000
+ },
+ "rezekne": {
+  "name": "Rēzekne",
+  "country": "latvia",
+  "x": 54549.0,
+  "z": -36416.7,
+  "src": "fit",
+  "population": 28000
+ },
+ "riga": {
+  "name": "Rīga",
+  "country": "latvia",
+  "x": 44357.9,
+  "z": -37373.8,
+  "src": "fit",
+  "population": 630000
+ },
+ "siauliai": {
+  "name": "Šiauliai",
+  "country": "lithuania",
+  "x": 42579.3,
+  "z": -31284.9,
+  "src": "fit",
+  "population": 100000
+ },
+ "sosnovy_bor": {
+  "name": "Сосновый Бор",
+  "country": "russia",
+  "x": 56345.4,
+  "z": -56632.0,
+  "src": "fit",
+  "population": 60000
+ },
+ "tallinn": {
+  "name": "Tallinn",
+  "country": "estonia",
+  "x": 44565.7,
+  "z": -51879.5,
+  "src": "fit",
+  "population": 400000
+ },
+ "tampere": {
+  "name": "Tampere",
+  "country": "finland",
+  "x": 40439.4,
+  "z": -63444.3,
+  "src": "fit",
+  "population": 210000
+ },
+ "tartu": {
+  "name": "Tartu",
+  "country": "estonia",
+  "x": 51086.8,
+  "z": -46708.5,
+  "src": "fit",
+  "population": 100000
+ },
+ "turku": {
+  "name": "Turku",
+  "country": "finland",
+  "x": 36915.0,
+  "z": -56875.2,
+  "src": "fit",
+  "population": 180000
+ },
+ "utena": {
+  "name": "Utena",
+  "country": "lithuania",
+  "x": 50063.8,
+  "z": -29824.3,
+  "src": "fit",
+  "population": 30000
+ },
+ "valmiera": {
+  "name": "Valmiera",
+  "country": "latvia",
+  "x": 47921.2,
+  "z": -41304.1,
+  "src": "fit",
+  "population": 25000
+ },
+ "ventspils": {
+  "name": "Ventspils",
+  "country": "latvia",
+  "x": 36374.2,
+  "z": -38999.3,
+  "src": "fit",
+  "population": 35000
+ },
+ "vilnius": {
+  "name": "Vilnius",
+  "country": "lithuania",
+  "x": 49691.1,
+  "z": -25093.9,
+  "src": "fit",
+  "population": 540000
+ },
+ "vyborg": {
+  "name": "Выборг",
+  "country": "russia",
+  "x": 54609.1,
+  "z": -61093.3,
+  "src": "fit",
+  "population": 80000
+ },
+ "bialystok": {
+  "name": "Białystok",
+  "country": "poland",
+  "x": 43803.5,
+  "z": -15353.0,
+  "src": "fit",
+  "population": 300000
+ },
+ "budapest": {
+  "name": "Budapest",
+  "country": "hungary",
+  "x": 32393.6,
+  "z": 17678.2,
+  "src": "fit",
+  "population": 1780000
+ },
+ "bystrica": {
+  "name": "Banská Bystrica",
+  "country": "slovakia",
+  "x": 31917.0,
+  "z": 10654.4,
+  "src": "fit",
+  "population": 80000
+ },
+ "debrecen": {
+  "name": "Debrecen",
+  "country": "hungary",
+  "x": 41782.0,
+  "z": 16583.9,
+  "src": "fit",
+  "population": 204000
+ },
+ "gdansk": {
+  "name": "Gdańsk",
+  "country": "poland",
+  "x": 28793.7,
+  "z": -21405.0,
+  "src": "fit",
+  "population": 465000
+ },
+ "gdyne": {
+  "name": "Gdynia",
+  "country": "poland",
+  "x": 27923.6,
+  "z": -21855.4,
+  "src": "fit",
+  "population": 247000,
+  "no_company": true
+ },
+ "katowice": {
+  "name": "Katowice",
+  "country": "poland",
+  "x": 30908.3,
+  "z": 2122.8,
+  "src": "fit",
+  "population": 300000
+ },
+ "kosice": {
+  "name": "Košice",
+  "country": "slovakia",
+  "x": 39715.5,
+  "z": 10106.8,
+  "src": "fit",
+  "population": 240000
+ },
+ "krakow": {
+  "name": "Kraków",
+  "country": "poland",
+  "x": 34279.6,
+  "z": 2997.4,
+  "src": "fit",
+  "population": 750000
+ },
+ "lodz": {
+  "name": "Łódź",
+  "country": "poland",
+  "x": 31903.2,
+  "z": -6481.4,
+  "src": "fit",
+  "population": 670000
+ },
+ "lublin": {
+  "name": "Lublin",
+  "country": "poland",
+  "x": 43003.9,
+  "z": -4577.8,
+  "src": "fit",
+  "population": 340000
+ },
+ "olsztyn": {
+  "name": "Olsztyn",
+  "country": "poland",
+  "x": 34563.4,
+  "z": -18099.6,
+  "src": "fit",
+  "population": 170000
+ },
+ "ostrava": {
+  "name": "Ostrava",
+  "country": "czech",
+  "x": 28413.2,
+  "z": 4670.4,
+  "src": "fit",
+  "population": 290000
+ },
+ "pecs": {
+  "name": "Pécs",
+  "country": "hungary",
+  "x": 29357.2,
+  "z": 25768.1,
+  "src": "fit",
+  "population": 145000
+ },
+ "szeged": {
+  "name": "Szeged",
+  "country": "hungary",
+  "x": 36789.4,
+  "z": 24240.9,
+  "src": "fit",
+  "population": 162000
+ },
+ "warszawa": {
+  "name": "Warszawa",
+  "country": "poland",
+  "x": 37444.9,
+  "z": -9435.8,
+  "src": "confirmed",
+  "population": 1800000
+ },
+ "ajaccio": {
+  "name": "Ajaccio",
+  "country": "france",
+  "x": -9789.5,
+  "z": 48742.1,
+  "src": "fit",
+  "population": 75000
+ },
+ "alban": {
+  "name": "Saint-Alban-du-Rhône",
+  "country": "france",
+  "x": -24426.4,
+  "z": 27464.4,
+  "src": "fit",
+  "population": 900
+ },
+ "bastia": {
+  "name": "Bastia",
+  "country": "france",
+  "x": -6476.8,
+  "z": 44612.9,
+  "src": "fit",
+  "population": 50000
+ },
+ "bayonne": {
+  "name": "Bayonne",
+  "country": "france",
+  "x": -51803.5,
+  "z": 33814.3,
+  "src": "fit",
+  "population": 53000
+ },
+ "bonifacio": {
+  "name": "Bonifacio",
+  "country": "france",
+  "x": -8158.9,
+  "z": 51894.7,
+  "src": "fit",
+  "population": 3300
+ },
+ "bordeaux": {
+  "name": "Bordeaux",
+  "country": "france",
+  "x": -46538.3,
+  "z": 27112.7,
+  "src": "fit",
+  "population": 270000
+ },
+ "bourges": {
+  "name": "Bourges",
+  "country": "france",
+  "x": -32386.7,
+  "z": 16818.2,
+  "src": "fit",
+  "population": 63000
+ },
+ "brest": {
+  "name": "Brest",
+  "country": "france",
+  "x": -57027.7,
+  "z": 3902.7,
+  "src": "fit",
+  "population": 370000
+ },
+ "calvi": {
+  "name": "Calvi",
+  "country": "france",
+  "x": -9456.2,
+  "z": 45146.8,
+  "src": "fit",
+  "population": 6000
+ },
+ "civaux": {
+  "name": "Civaux",
+  "country": "france",
+  "x": -39794.0,
+  "z": 19170.8,
+  "src": "fit",
+  "population": 1200
+ },
+ "clermont": {
+  "name": "Clermont-Ferrand",
+  "country": "france",
+  "x": -30868.8,
+  "z": 24534.6,
+  "src": "fit",
+  "population": 150000
+ },
+ "golfech": {
+  "name": "Golfech",
+  "country": "france",
+  "x": -41486.6,
+  "z": 32287.9,
+  "src": "fit",
+  "population": 1000
+ },
+ "lacq": {
+  "name": "Lacq",
+  "country": "france",
+  "x": -48309.3,
+  "z": 34951.3,
+  "src": "fit",
+  "population": 700
+ },
+ "larochelle": {
+  "name": "La Rochelle",
+  "country": "france",
+  "x": -47261.2,
+  "z": 19314.5,
+  "src": "fit",
+  "population": 75000
+ },
+ "laurent": {
+  "name": "Saint-Laurent",
+  "country": "france",
+  "x": -42518.9,
+  "z": 36644.7,
+  "src": "fit",
+  "population": 4300
+ },
+ "lehavre": {
+  "name": "Le Havre",
+  "country": "france",
+  "x": -38558.2,
+  "z": 1760.7,
+  "src": "fit",
+  "population": 160000
+ },
+ "lemans": {
+  "name": "Le Mans",
+  "country": "france",
+  "x": -39897.4,
+  "z": 10116.2,
+  "src": "fit",
+  "population": 140000
+ },
+ "lile_rousse": {
+  "name": "L'Île-Rousse",
+  "country": "france",
+  "x": -8669.5,
+  "z": 44824.9,
+  "src": "fit",
+  "population": 3200
+ },
+ "limoges": {
+  "name": "Limoges",
+  "country": "france",
+  "x": -38056.3,
+  "z": 23003.7,
+  "src": "fit",
+  "population": 130000
+ },
+ "marseille": {
+  "name": "Marseille",
+  "country": "france",
+  "x": -23362.2,
+  "z": 39701.3,
+  "src": "fit",
+  "population": 870000
+ },
+ "montpellier": {
+  "name": "Montpellier",
+  "country": "france",
+  "x": -29412.5,
+  "z": 37125.3,
+  "src": "fit",
+  "population": 310000
+ },
+ "nantes": {
+  "name": "Nantes",
+  "country": "france",
+  "x": -47525.6,
+  "z": 13097.4,
+  "src": "fit",
+  "population": 330000
+ },
+ "nice": {
+  "name": "Nice",
+  "country": "france",
+  "x": -15223.8,
+  "z": 38269.9,
+  "src": "fit",
+  "population": 340000
+ },
+ "paluel": {
+  "name": "Paluel",
+  "country": "france",
+  "x": -36269.8,
+  "z": 246.2,
+  "src": "fit",
+  "population": 400
+ },
+ "porto_vecchi": {
+  "name": "Porto-Vecchio",
+  "country": "france",
+  "x": -7568.7,
+  "z": 50782.3,
+  "src": "fit",
+  "population": 11000
+ },
+ "rennes": {
+  "name": "Rennes",
+  "country": "france",
+  "x": -46881.9,
+  "z": 8036.9,
+  "src": "fit",
+  "population": 230000
+ },
+ "roscoff": {
+  "name": "Roscoff",
+  "country": "france",
+  "x": -54665.7,
+  "z": 2550.1,
+  "src": "fit",
+  "population": 3300
+ },
+ "toulouse": {
+  "name": "Toulouse",
+  "country": "france",
+  "x": -39549.6,
+  "z": 35569.8,
+  "src": "fit",
+  "population": 500000
+ },
+ "argostoli": {
+  "name": "Αργοστόλι",
+  "country": "greece",
+  "x": 42541.9,
+  "z": 69136.6,
+  "src": "fit",
+  "population": 11000
+ },
+ "athens": {
+  "name": "Αθήνα",
+  "country": "greece",
+  "x": 57270.9,
+  "z": 68535.5,
+  "src": "fit",
+  "population": 650000
+ },
+ "chania": {
+  "name": "Χανιά",
+  "country": "greece",
+  "x": 60723.7,
+  "z": 82015.8,
+  "src": "fit",
+  "population": 89000
+ },
+ "chios": {
+  "name": "Χίος",
+  "country": "greece",
+  "x": 67241.3,
+  "z": 64699.8,
+  "src": "fit",
+  "population": 27000
+ },
+ "heraklion": {
+  "name": "Ηράκλειο",
+  "country": "greece",
+  "x": 66072.0,
+  "z": 82176.2,
+  "src": "fit",
+  "population": 211000
+ },
+ "ioannina": {
+  "name": "Ιωάννινα",
+  "country": "greece",
+  "x": 43268.6,
+  "z": 60684.5,
+  "src": "fit",
+  "population": 66000
+ },
+ "kalamata": {
+  "name": "Καλαμάτα",
+  "country": "greece",
+  "x": 50667.4,
+  "z": 74697.7,
+  "src": "fit",
+  "population": 55000
+ },
+ "kavala": {
+  "name": "Καβάλα",
+  "country": "greece",
+  "x": 57693.9,
+  "z": 51730.2,
+  "src": "fit",
+  "population": 49000
+ },
+ "lamia": {
+  "name": "Λαμία",
+  "country": "greece",
+  "x": 50749.5,
+  "z": 64169.3,
+  "src": "fit",
+  "population": 52000
+ },
+ "larissa": {
+  "name": "Λάρισα",
+  "country": "greece",
+  "x": 50132.3,
+  "z": 60075.9,
+  "src": "fit",
+  "population": 150000
+ },
+ "mitilini": {
+  "name": "Μυτιλήνη",
+  "country": "greece",
+  "x": 68634.3,
+  "z": 60316.5,
+  "src": "fit",
+  "population": 36000
+ },
+ "patras": {
+  "name": "Πάτρα",
+  "country": "greece",
+  "x": 48104.2,
+  "z": 68163.8,
+  "src": "fit",
+  "population": 167000
+ },
+ "rhodes": {
+  "name": "Ρόδος",
+  "country": "greece",
+  "x": 77957.7,
+  "z": 75253.2,
+  "src": "fit",
+  "population": 51000
+ },
+ "thessaloniki": {
+  "name": "Θεσσαλονίκη",
+  "country": "greece",
+  "x": 51637.6,
+  "z": 54239.5,
+  "src": "fit",
+  "population": 325000
+ },
+ "trikala": {
+  "name": "Τρίκαλα",
+  "country": "greece",
+  "x": 47353.5,
+  "z": 60862.4,
+  "src": "fit",
+  "population": 47000
+ },
+ "a_coruna": {
+  "name": "A Coruña",
+  "country": "spain",
+  "x": -80687.2,
+  "z": 27002.5,
+  "src": "fit",
+  "population": 240000
+ },
+ "albacete": {
+  "name": "Albacete",
+  "country": "spain",
+  "x": -58968.7,
+  "z": 58426.7,
+  "src": "fit",
+  "population": 170000
+ },
+ "algeciras": {
+  "name": "Algeciras",
+  "country": "spain",
+  "x": -79534.8,
+  "z": 70341.0,
+  "src": "fit",
+  "population": 120000
+ },
+ "almaraz": {
+  "name": "Almaraz",
+  "country": "spain",
+  "x": -74928.1,
+  "z": 49803.9,
+  "src": "fit",
+  "population": 1500
+ },
+ "almeria": {
+  "name": "Almería",
+  "country": "spain",
+  "x": -63715.7,
+  "z": 69807.3,
+  "src": "fit",
+  "population": 200000
+ },
+ "badajoz": {
+  "name": "Badajoz",
+  "country": "spain",
+  "x": -82188.3,
+  "z": 53262.5,
+  "src": "fit",
+  "population": 150000
+ },
+ "bailen": {
+  "name": "Bailén",
+  "country": "spain",
+  "x": -68890.6,
+  "z": 61414.6,
+  "src": "fit",
+  "population": 20000
+ },
+ "barcelona": {
+  "name": "Barcelona",
+  "country": "spain",
+  "x": -38531.7,
+  "z": 48492.4,
+  "src": "fit",
+  "population": 1600000
+ },
+ "beja": {
+  "name": "Beja",
+  "country": "portugal",
+  "x": -87692.1,
+  "z": 56798.4,
+  "src": "fit",
+  "population": 35000
+ },
+ "bilbao": {
+  "name": "Bilbao",
+  "country": "spain",
+  "x": -58176.3,
+  "z": 33721.0,
+  "src": "fit",
+  "population": 350000
+ },
+ "burgos": {
+  "name": "Burgos",
+  "country": "spain",
+  "x": -62563.5,
+  "z": 38034.1,
+  "src": "fit",
+  "population": 175000
+ },
+ "ciudad_real": {
+  "name": "Ciudad Real",
+  "country": "spain",
+  "x": -68172.7,
+  "z": 56517.9,
+  "src": "fit",
+  "population": 75000
+ },
+ "coimbra": {
+  "name": "Coimbra",
+  "country": "portugal",
+  "x": -86347.2,
+  "z": 44032.6,
+  "src": "fit",
+  "population": 100000
+ },
+ "cordoba": {
+  "name": "Córdoba",
+  "country": "spain",
+  "x": -73780.3,
+  "z": 61448.9,
+  "src": "fit",
+  "population": 320000
+ },
+ "corticadas": {
+  "name": "Cortiçadas de Lavre",
+  "country": "portugal",
+  "x": -88748.3,
+  "z": 51735.9,
+  "src": "fit",
+  "population": 800
+ },
+ "el_ejido": {
+  "name": "El Ejido",
+  "country": "spain",
+  "x": -66189.3,
+  "z": 69808.4,
+  "src": "fit",
+  "population": 85000
+ },
+ "evora": {
+  "name": "Évora",
+  "country": "portugal",
+  "x": -86929.9,
+  "z": 53697.7,
+  "src": "fit",
+  "population": 55000
+ },
+ "faro": {
+  "name": "Faro",
+  "country": "portugal",
+  "x": -89745.7,
+  "z": 62179.1,
+  "src": "fit",
+  "population": 60000
+ },
+ "gijon": {
+  "name": "Gijón",
+  "country": "spain",
+  "x": -69055.7,
+  "z": 29271.6,
+  "src": "fit",
+  "population": 270000
+ },
+ "granada": {
+  "name": "Granada",
+  "country": "spain",
+  "x": -69343.5,
+  "z": 66733.7,
+  "src": "fit",
+  "population": 230000
+ },
+ "guarda": {
+  "name": "Guarda",
+  "country": "portugal",
+  "x": -80132.6,
+  "z": 42970.0,
+  "src": "fit",
+  "population": 44000
+ },
+ "huelva": {
+  "name": "Huelva",
+  "country": "spain",
+  "x": -84771.2,
+  "z": 62193.6,
+  "src": "fit",
+  "population": 145000
+ },
+ "leon": {
+  "name": "León",
+  "country": "spain",
+  "x": -71771.1,
+  "z": 33907.5,
+  "src": "fit",
+  "population": 125000
+ },
+ "lisboa": {
+  "name": "Lisboa",
+  "country": "portugal",
+  "x": -92191.6,
+  "z": 51232.2,
+  "src": "fit",
+  "population": 540000
+ },
+ "lleida": {
+  "name": "Lleida",
+  "country": "spain",
+  "x": -45024.0,
+  "z": 46038.1,
+  "src": "fit",
+  "population": 140000
+ },
+ "madrid": {
+  "name": "Madrid",
+  "country": "spain",
+  "x": -65397.7,
+  "z": 48721.1,
+  "src": "confirmed",
+  "population": 3600000
+ },
+ "malaga": {
+  "name": "Málaga",
+  "country": "spain",
+  "x": -73858.9,
+  "z": 68042.2,
+  "src": "fit",
+  "population": 580000
+ },
+ "mengibar": {
+  "name": "Mengíbar",
+  "country": "spain",
+  "x": -69217.1,
+  "z": 62092.5,
+  "src": "fit",
+  "population": 10000
+ },
+ "murcia": {
+  "name": "Murcia",
+  "country": "spain",
+  "x": -56840.5,
+  "z": 65042.6,
+  "src": "fit",
+  "population": 410000
+ },
+ "navia": {
+  "name": "Navia",
+  "country": "spain",
+  "x": -73245.2,
+  "z": 28183.5,
+  "src": "fit",
+  "population": 9000
+ },
+ "o_barco": {
+  "name": "O Barco",
+  "country": "spain",
+  "x": -76326.4,
+  "z": 33861.3,
+  "src": "fit",
+  "population": 14000
+ },
+ "olhao": {
+  "name": "Olhão",
+  "country": "portugal",
+  "x": -89291.5,
+  "z": 62250.8,
+  "src": "fit",
+  "population": 41000
+ },
+ "pamplona": {
+  "name": "Pamplona",
+  "country": "spain",
+  "x": -53382.1,
+  "z": 37415.5,
+  "src": "fit",
+  "population": 200000
+ },
+ "ponte_de_sor": {
+  "name": "Ponte de Sor",
+  "country": "portugal",
+  "x": -86190.4,
+  "z": 49837.9,
+  "src": "fit",
+  "population": 18000
+ },
+ "port_sagunt": {
+  "name": "Port de Sagunt",
+  "country": "spain",
+  "x": -50832.8,
+  "z": 56210.8,
+  "src": "fit",
+  "population": 40000
+ },
+ "porto": {
+  "name": "Porto",
+  "country": "portugal",
+  "x": -85448.0,
+  "z": 38674.3,
+  "src": "fit",
+  "population": 1300000
+ },
+ "puertollano": {
+  "name": "Puertollano",
+  "country": "spain",
+  "x": -69591.4,
+  "z": 57783.2,
+  "src": "fit",
+  "population": 50000
+ },
+ "salamanca": {
+  "name": "Salamanca",
+  "country": "spain",
+  "x": -73083.0,
+  "z": 43426.0,
+  "src": "fit",
+  "population": 140000
+ },
+ "santander": {
+  "name": "Santander",
+  "country": "spain",
+  "x": -61534.4,
+  "z": 31740.5,
+  "src": "fit",
+  "population": 170000
+ },
+ "setubal": {
+  "name": "Setúbal",
+  "country": "portugal",
+  "x": -91436.5,
+  "z": 52580.9,
+  "src": "fit",
+  "population": 120000
+ },
+ "sevilla": {
+  "name": "Sevilla",
+  "country": "spain",
+  "x": -80153.4,
+  "z": 62703.6,
+  "src": "fit",
+  "population": 700000
+ },
+ "sines": {
+  "name": "Sines",
+  "country": "portugal",
+  "x": -92358.1,
+  "z": 55712.8,
+  "src": "fit",
+  "population": 136000
+ },
+ "soria": {
+  "name": "Soria",
+  "country": "spain",
+  "x": -59478.0,
+  "z": 43119.7,
+  "src": "fit",
+  "population": 40000
+ },
+ "tarragona": {
+  "name": "Tarragona",
+  "country": "spain",
+  "x": -42799.7,
+  "z": 49299.9,
+  "src": "fit",
+  "population": 130000
+ },
+ "teruel": {
+  "name": "Teruel",
+  "country": "spain",
+  "x": -52891.5,
+  "z": 50373.8,
+  "src": "fit",
+  "population": 36000
+ },
+ "valencia": {
+  "name": "València",
+  "country": "spain",
+  "x": -51743.3,
+  "z": 57153.8,
+  "src": "fit",
+  "population": 800000
+ },
+ "valladolid": {
+  "name": "Valladolid",
+  "country": "spain",
+  "x": -68052.4,
+  "z": 40902.3,
+  "src": "fit",
+  "population": 320000
+ },
+ "vandellos": {
+  "name": "Vandellòs",
+  "country": "spain",
+  "x": -44688.5,
+  "z": 49649.0,
+  "src": "fit",
+  "population": 6000
+ },
+ "vigo": {
+  "name": "Vigo",
+  "country": "spain",
+  "x": -84053.0,
+  "z": 32817.2,
+  "src": "fit",
+  "population": 300000
+ },
+ "villarreal": {
+  "name": "Vila-real",
+  "country": "spain",
+  "x": -49995.9,
+  "z": 54786.7,
+  "src": "fit",
+  "population": 50000
+ },
+ "zaragoza": {
+  "name": "Zaragoza",
+  "country": "spain",
+  "x": -51568.8,
+  "z": 44321.3,
+  "src": "fit",
+  "population": 650000
+ },
+ "ancona": {
+  "name": "Ancona",
+  "country": "italy",
+  "x": 9498.2,
+  "z": 40790.4,
+  "src": "fit",
+  "population": 100000
+ },
+ "bari": {
+  "name": "Bari",
+  "country": "italy",
+  "x": 25243.4,
+  "z": 53743.7,
+  "src": "fit",
+  "population": 320000
+ },
+ "bologna": {
+  "name": "Bologna",
+  "country": "italy",
+  "x": 1870.0,
+  "z": 34913.5,
+  "src": "fit",
+  "population": 390000
+ },
+ "cagliari": {
+  "name": "Cagliari",
+  "country": "italy",
+  "x": -9076.7,
+  "z": 64084.7,
+  "src": "fit",
+  "population": 150000
+ },
+ "cassino": {
+  "name": "Cassino",
+  "country": "italy",
+  "x": 12095.3,
+  "z": 51960.2,
+  "src": "fit",
+  "population": 35000
+ },
+ "catania": {
+  "name": "Catania",
+  "country": "italy",
+  "x": 18138.5,
+  "z": 74320.8,
+  "src": "fit",
+  "population": 315000
+ },
+ "catanzaro": {
+  "name": "Catanzaro",
+  "country": "italy",
+  "x": 23975.0,
+  "z": 66684.5,
+  "src": "fit",
+  "population": 90000
+ },
+ "firenze": {
+  "name": "Firenze",
+  "country": "italy",
+  "x": 1373.7,
+  "z": 38967.2,
+  "src": "fit",
+  "population": 380000
+ },
+ "genova": {
+  "name": "Genova",
+  "country": "italy",
+  "x": -8024.5,
+  "z": 34867.6,
+  "src": "fit",
+  "population": 600000
+ },
+ "livorno": {
+  "name": "Livorno",
+  "country": "italy",
+  "x": -2678.9,
+  "z": 44301.8,
+  "src": "fit",
+  "population": 160000
+ },
+ "messina": {
+  "name": "Messina",
+  "country": "italy",
+  "x": 20149.4,
+  "z": 70383.6,
+  "src": "fit",
+  "population": 240000
+ },
+ "napoli": {
+  "name": "Napoli",
+  "country": "italy",
+  "x": 13947.3,
+  "z": 55640.9,
+  "src": "fit",
+  "population": 1000000
+ },
+ "olbia": {
+  "name": "Olbia",
+  "country": "italy",
+  "x": -6807.8,
+  "z": 54595.2,
+  "src": "fit",
+  "population": 50000
+ },
+ "palermo": {
+  "name": "Palermo",
+  "country": "italy",
+  "x": 10082.9,
+  "z": 70959.1,
+  "src": "fit",
+  "population": 650000
+ },
+ "parma": {
+  "name": "Parma",
+  "country": "italy",
+  "x": -3164.9,
+  "z": 33548.4,
+  "src": "fit",
+  "population": 200000
+ },
+ "pescara": {
+  "name": "Pescara",
+  "country": "italy",
+  "x": 12610.8,
+  "z": 47373.7,
+  "src": "fit",
+  "population": 120000
+ },
+ "roma": {
+  "name": "Roma",
+  "country": "italy",
+  "x": 6303.6,
+  "z": 49653.5,
+  "src": "fit",
+  "population": 2900000
+ },
+ "sangiovanni": {
+  "name": "Villa San Giovanni",
+  "country": "italy",
+  "x": 20528.7,
+  "z": 70236.8,
+  "src": "fit",
+  "population": 14000
+ },
+ "sassari": {
+  "name": "Sassari",
+  "country": "italy",
+  "x": -11011.7,
+  "z": 55446.1,
+  "src": "fit",
+  "population": 130000
+ },
+ "suzzara": {
+  "name": "Suzzara",
+  "country": "italy",
+  "x": -462.6,
+  "z": 32012.6,
+  "src": "fit",
+  "population": 20000
+ },
+ "taranto": {
+  "name": "Taranto",
+  "country": "italy",
+  "x": 26359.9,
+  "z": 56932.4,
+  "src": "fit",
+  "population": 200000
+ },
+ "terni": {
+  "name": "Terni",
+  "country": "italy",
+  "x": 6180.2,
+  "z": 45378.4,
+  "src": "fit",
+  "population": 110000
+ },
+ "aalborg": {
+  "name": "Aalborg",
+  "country": "denmark",
+  "x": 599.9,
+  "z": -36521.6,
+  "src": "fit",
+  "population": 210000
+ },
+ "aarhus": {
+  "name": "Aarhus",
+  "country": "denmark",
+  "x": 1150.3,
+  "z": -31300.8,
+  "src": "fit",
+  "population": 290000
+ },
+ "bergen": {
+  "name": "Bergen",
+  "country": "norway",
+  "x": -10943.7,
+  "z": -57329.0,
+  "src": "fit",
+  "population": 286000
+ },
+ "esbjerg": {
+  "name": "Esbjerg",
+  "country": "denmark",
+  "x": -4796.6,
+  "z": -27809.2,
+  "src": "fit",
+  "population": 116000
+ },
+ "frederikshv": {
+  "name": "Frederikshavn",
+  "country": "denmark",
+  "x": 2647.0,
+  "z": -38679.0,
+  "src": "fit",
+  "population": 23000
+ },
+ "gedser": {
+  "name": "Gedser",
+  "country": "denmark",
+  "x": 6208.7,
+  "z": -22007.5,
+  "src": "fit",
+  "population": 720
+ },
+ "goteborg": {
+  "name": "Göteborg",
+  "country": "sweden",
+  "x": 7117.6,
+  "z": -39996.8,
+  "src": "fit",
+  "population": 580000
+ },
+ "helsingborg": {
+  "name": "Helsingborg",
+  "country": "sweden",
+  "x": 9026.0,
+  "z": -30332.7,
+  "src": "fit",
+  "population": 112000
+ },
+ "hirtshals": {
+  "name": "Hirtshals",
+  "country": "denmark",
+  "x": 964.8,
+  "z": -39655.1,
+  "src": "fit",
+  "population": 5500
+ },
+ "jonkoping": {
+  "name": "Jönköping",
+  "country": "sweden",
+  "x": 13821.8,
+  "z": -40269.0,
+  "src": "fit",
+  "population": 94000
+ },
+ "kalmar": {
+  "name": "Kalmar",
+  "country": "sweden",
+  "x": 20589.1,
+  "z": -33860.7,
+  "src": "fit",
+  "population": 36000
+ },
+ "kapellskar": {
+  "name": "Kapellskär",
+  "country": "sweden",
+  "x": 28117.1,
+  "z": -51874.0,
+  "src": "fit",
+  "population": 1
+ },
+ "karlskrona": {
+  "name": "Karlskrona",
+  "country": "sweden",
+  "x": 18171.2,
+  "z": -30939.0,
+  "src": "fit",
+  "population": 67000
+ },
+ "karlstad": {
+  "name": "Karlstad",
+  "country": "sweden",
+  "x": 12058.0,
+  "z": -49576.9,
+  "src": "fit",
+  "population": 60000
+ },
+ "kobenhavn": {
+  "name": "København",
+  "country": "denmark",
+  "x": 8528.9,
+  "z": -28292.5,
+  "src": "fit",
+  "population": 600000
+ },
+ "kristiansand": {
+  "name": "Kristiansand",
+  "country": "norway",
+  "x": -4960.6,
+  "z": -43029.0,
+  "src": "fit",
+  "population": 115000
+ },
+ "linkoping": {
+  "name": "Linköping",
+  "country": "sweden",
+  "x": 18241.2,
+  "z": -43906.9,
+  "src": "fit",
+  "population": 105000
+ },
+ "malmo": {
+  "name": "Malmö",
+  "country": "sweden",
+  "x": 9893.8,
+  "z": -27788.5,
+  "src": "fit",
+  "population": 344000
+ },
+ "nynashamn": {
+  "name": "Nynäshamn",
+  "country": "sweden",
+  "x": 25068.9,
+  "z": -46973.4,
+  "src": "fit",
+  "population": 13500
+ },
+ "odense": {
+  "name": "Odense",
+  "country": "denmark",
+  "x": 1415.1,
+  "z": -26963.8,
+  "src": "fit",
+  "population": 181000
+ },
+ "orebro": {
+  "name": "Örebro",
+  "country": "sweden",
+  "x": 17040.8,
+  "z": -48921.8,
+  "src": "fit",
+  "population": 158000
+ },
+ "oslo": {
+  "name": "Oslo",
+  "country": "norway",
+  "x": 4206.3,
+  "z": -53000.0,
+  "src": "fit",
+  "population": 634000
+ },
+ "sodertalje": {
+  "name": "Södertälje",
+  "country": "sweden",
+  "x": 24082.2,
+  "z": -48622.4,
+  "src": "fit",
+  "population": 73000
+ },
+ "stavanger": {
+  "name": "Stavanger",
+  "country": "norway",
+  "x": -10913.5,
+  "z": -48895.7,
+  "src": "fit",
+  "population": 131000
+ },
+ "stockholm": {
+  "name": "Stockholm",
+  "country": "sweden",
+  "x": 25351.3,
+  "z": -49425.2,
+  "src": "fit",
+  "population": 980000
+ },
+ "trelleborg": {
+  "name": "Trelleborg",
+  "country": "sweden",
+  "x": 10327.3,
+  "z": -26462.8,
+  "src": "fit",
+  "population": 43000
+ },
+ "uppsala": {
+  "name": "Uppsala",
+  "country": "sweden",
+  "x": 24011.7,
+  "z": -52477.8,
+  "src": "fit",
+  "population": 177000
+ },
+ "vasteraas": {
+  "name": "Västerås",
+  "country": "sweden",
+  "x": 20898.0,
+  "z": -50936.4,
+  "src": "fit",
+  "population": 128000
+ },
+ "vaxjo": {
+  "name": "Växjö",
+  "country": "sweden",
+  "x": 15738.7,
+  "z": -35043.9,
+  "src": "fit",
+  "population": 66000
+ },
+ "alesund": {
+  "name": "Ålesund",
+  "country": "norway",
+  "x": -5921.3,
+  "z": -69128.7,
+  "src": "fit",
+  "population": 43000
+ },
+ "alta": {
+  "name": "Alta",
+  "country": "norway",
+  "x": 34506.0,
+  "z": -114293.7,
+  "src": "fit",
+  "population": 18500
+ },
+ "andenes": {
+  "name": "Andenes",
+  "country": "norway",
+  "x": 19741.9,
+  "z": -109281.9,
+  "src": "fit",
+  "population": 2700
+ },
+ "arvidsjaur": {
+  "name": "Arvidsjaur",
+  "country": "sweden",
+  "x": 27150.2,
+  "z": -87119.0,
+  "src": "fit",
+  "population": 4700
+ },
+ "bodo": {
+  "name": "Bodø",
+  "country": "norway",
+  "x": 15703.3,
+  "z": -96720.8,
+  "src": "fit",
+  "population": 50000
+ },
+ "borlange": {
+  "name": "Borlänge",
+  "country": "sweden",
+  "x": 17671.7,
+  "z": -55997.1,
+  "src": "fit",
+  "population": 50000
+ },
+ "dombas": {
+  "name": "Dombås",
+  "country": "norway",
+  "x": 720.3,
+  "z": -66024.1,
+  "src": "fit",
+  "population": 1200
+ },
+ "falun": {
+  "name": "Falun",
+  "country": "sweden",
+  "x": 18262.2,
+  "z": -56713.2,
+  "src": "fit",
+  "population": 55000
+ },
+ "gavle": {
+  "name": "Gävle",
+  "country": "sweden",
+  "x": 22510.4,
+  "z": -57199.6,
+  "src": "fit",
+  "population": 100000
+ },
+ "hamar": {
+  "name": "Hamar",
+  "country": "norway",
+  "x": 5823.2,
+  "z": -59307.3,
+  "src": "fit",
+  "population": 30000
+ },
+ "haparanda": {
+  "name": "Haparanda",
+  "country": "sweden",
+  "x": 38734.6,
+  "z": -89228.7,
+  "src": "fit",
+  "population": 4800
+ },
+ "honningsvag": {
+  "name": "Honningsvåg",
+  "country": "norway",
+  "x": 39275.7,
+  "z": -121370.1,
+  "src": "fit",
+  "population": 2500
+ },
+ "ivalo": {
+  "name": "Ivalo",
+  "country": "finland",
+  "x": 44296.5,
+  "z": -107506.6,
+  "src": "fit",
+  "population": 3000
+ },
+ "joensuu": {
+  "name": "Joensuu",
+  "country": "finland",
+  "x": 55362.8,
+  "z": -72551.0,
+  "src": "fit",
+  "population": 77000
+ },
+ "jyvaskyla": {
+  "name": "Jyväskylä",
+  "country": "finland",
+  "x": 45236.4,
+  "z": -68531.9,
+  "src": "fit",
+  "population": 149000
+ },
+ "kajaani": {
+  "name": "Kajaani",
+  "country": "finland",
+  "x": 48656.0,
+  "z": -81010.1,
+  "src": "fit",
+  "population": 36000
+ },
+ "karesuando": {
+  "name": "Karesuando",
+  "country": "sweden",
+  "x": 33567.7,
+  "z": -104638.6,
+  "src": "fit",
+  "population": 470
+ },
+ "kiruna": {
+  "name": "Kiruna",
+  "country": "sweden",
+  "x": 29027.5,
+  "z": -100583.3,
+  "src": "fit",
+  "population": 23000
+ },
+ "kokkola": {
+  "name": "Kokkola",
+  "country": "finland",
+  "x": 37437.3,
+  "z": -77012.7,
+  "src": "fit",
+  "population": 48000
+ },
+ "kristiansund": {
+  "name": "Kristiansund",
+  "country": "norway",
+  "x": -2782.4,
+  "z": -73190.7,
+  "src": "fit",
+  "population": 23000
+ },
+ "kuopio": {
+  "name": "Kuopio",
+  "country": "finland",
+  "x": 49715.5,
+  "z": -73178.8,
+  "src": "fit",
+  "population": 120000
+ },
+ "kuusamo": {
+  "name": "Kuusamo",
+  "country": "finland",
+  "x": 50489.5,
+  "z": -91975.4,
+  "src": "fit",
+  "population": 15000
+ },
+ "lappeenranta": {
+  "name": "Lappeenranta",
+  "country": "finland",
+  "x": 52754.9,
+  "z": -62802.6,
+  "src": "fit",
+  "population": 60000
+ },
+ "lillehammer": {
+  "name": "Lillehammer",
+  "country": "norway",
+  "x": 3821.5,
+  "z": -60205.1,
+  "src": "fit",
+  "population": 26000
+ },
+ "lulea": {
+  "name": "Luleå",
+  "country": "sweden",
+  "x": 34128.9,
+  "z": -87165.8,
+  "src": "fit",
+  "population": 73000
+ },
+ "mikkeli": {
+  "name": "Mikkeli",
+  "country": "finland",
+  "x": 49727.6,
+  "z": -65984.3,
+  "src": "fit",
+  "population": 34000
+ },
+ "mo_i_rana": {
+  "name": "Mo i Rana",
+  "country": "norway",
+  "x": 14958.9,
+  "z": -90774.8,
+  "src": "fit",
+  "population": 20000
+ },
+ "narvik": {
+  "name": "Narvik",
+  "country": "norway",
+  "x": 22578.5,
+  "z": -103895.8,
+  "src": "fit",
+  "population": 20000
+ },
+ "ornskoldsvik": {
+  "name": "Örnsköldsvik",
+  "country": "sweden",
+  "x": 26332.1,
+  "z": -72796.6,
+  "src": "fit",
+  "population": 50000
+ },
+ "ostersund": {
+  "name": "Östersund",
+  "country": "sweden",
+  "x": 15719.4,
+  "z": -71903.2,
+  "src": "fit",
+  "population": 60000
+ },
+ "oulu": {
+  "name": "Oulu",
+  "country": "finland",
+  "x": 42480.2,
+  "z": -84747.2,
+  "src": "fit",
+  "population": 130000
+ },
+ "rovaniemi": {
+  "name": "Rovaniemi",
+  "country": "finland",
+  "x": 42013.7,
+  "z": -93765.0,
+  "src": "fit",
+  "population": 60000
+ },
+ "skelleftea": {
+  "name": "Skellefteå",
+  "country": "sweden",
+  "x": 31585.9,
+  "z": -81911.1,
+  "src": "fit",
+  "population": 70000
+ },
+ "steinkjer": {
+  "name": "Steinkjer",
+  "country": "norway",
+  "x": 7802.0,
+  "z": -77347.3,
+  "src": "fit",
+  "population": 21000
+ },
+ "sundsvall": {
+  "name": "Sundsvall",
+  "country": "sweden",
+  "x": 22766.8,
+  "z": -67313.9,
+  "src": "fit",
+  "population": 50000
+ },
+ "svolvaer": {
+  "name": "Svolvær",
+  "country": "norway",
+  "x": 16283.1,
+  "z": -102561.5,
+  "src": "fit",
+  "population": 2000
+ },
+ "tornio": {
+  "name": "Tornio",
+  "country": "finland",
+  "x": 38753.7,
+  "z": -89292.6,
+  "src": "fit",
+  "population": 21000
+ },
+ "tromso": {
+  "name": "Tromsø",
+  "country": "norway",
+  "x": 25706.0,
+  "z": -111588.2,
+  "src": "fit",
+  "population": 60000
+ },
+ "trondheim": {
+  "name": "Trondheim",
+  "country": "norway",
+  "x": 4751.9,
+  "z": -73808.6,
+  "src": "fit",
+  "population": 190000
+ },
+ "umea": {
+  "name": "Umeå",
+  "country": "sweden",
+  "x": 30162.4,
+  "z": -76241.1,
+  "src": "fit",
+  "population": 110000
+ },
+ "vaasa": {
+  "name": "Vaasa",
+  "country": "finland",
+  "x": 33914.7,
+  "z": -72202.0,
+  "src": "fit",
+  "population": 60000
+ }
+}

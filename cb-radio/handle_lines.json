@@ -1,0 +1,497 @@
+[
+[
+"scenes/zhelezyaka/01",
+"mihalych",
+"[calling out] Железяка, Железяка, ты на канале? Приём."
+],
+[
+"reactions/intent/bye/02",
+"ten",
+"(тихо) Давай, Железяка. До связи."
+],
+[
+"reactions/intent/bye/03",
+"vitek",
+"Пока-пока, Железяка! Если что, я на свадьбу!"
+],
+[
+"reactions/intent/bye/04",
+"soroka",
+"Пока, Железяака! Береги себя, хорошо?"
+],
+[
+"reactions/intent/bye/05",
+"lisa",
+"Пока, Железяка. Не скучай."
+],
+[
+"reactions/intent/bye/06",
+"sova",
+"Хорошей дороги, Железяка. Береги себя."
+],
+[
+"reactions/intent/how_are_you/26",
+"ment",
+"Нормально, Железяка. Без происшествий. Как у нас говорили: обстановка спокойная."
+],
+[
+"reactions/intent/police/01",
+"ten",
+"(тихо) Полосатые на заправке стояли. С радаром. Сбрось, Железяка."
+],
+[
+"reactions/intent/police/06",
+"lisa",
+"Камера на выезде, Железяка. Я тебе ничего не говорила."
+],
+[
+"reactions/intent/weather/05",
+"sova",
+"Туман ложится, Железяка. Ближний включи, дальний только мешает."
+],
+[
+"reactions/intent/radio_check/01",
+"ten",
+"(тихо) Слышу тебя на пятёрку, Железяка."
+],
+[
+"reactions/intent/radio_check/04",
+"soroka",
+"Железяака, слышу тебя хорошо!"
+],
+[
+"reactions/intent/help/02",
+"ten",
+"Держись, Железяка. Аварийку включи, знак выставь. Кто ближе, подъедет."
+],
+[
+"reactions/player/greet/01",
+"mihalych",
+"[warmly] О, Железяка! Здорово, родной. Михалыч на приёме."
+],
+[
+"reactions/player/greet/02",
+"stas",
+"[excited] Железяка, здорово! Стасян на связи, приём."
+],
+[
+"reactions/player/greet/03",
+"yanek",
+"[calm] Добрый день, Железяка. Слышу тебя хорошо."
+],
+[
+"reactions/player/greet/04",
+"lastochka",
+"[playful] Привет, Железяка! Ласточка тебя слышит."
+],
+[
+"reactions/player/greet/05",
+"boroda",
+"[loud] Здорово, Железяка! Борода на канале, приём."
+],
+[
+"reactions/player/greet/06",
+"soroka",
+"Ой, Железяака! Привет-привет! Сорока тебя слышит."
+],
+[
+"reactions/player/greet/07",
+"student",
+"Ой, Железяка! Привет! (смущённо) А ты... давно ездишь? Я вот первый раз."
+],
+[
+"reactions/player/greet/08",
+"professor",
+"Добрый вечер, Железяка. (тепло) Рад слышать, коллега."
+],
+[
+"reactions/player/greet/09",
+"petrovna",
+"Железяка, сынок, здравствуй! (заботливо) Поел сегодня?"
+],
+[
+"reactions/player/greet/10",
+"ten",
+"(тихо) Железяка... Слышу тебя. Тоже не спишь, значит."
+],
+[
+"reactions/player/greet/11",
+"vitek",
+"Железяка, привет! Слушай, сколько до границы, не знаешь? (нервно смеётся) Горю!"
+],
+[
+"reactions/player/greet/12",
+"sova",
+"Железяка, доброй ночи! Сова тебя слышит."
+],
+[
+"reactions/player/greet/13",
+"ment",
+"Железяка, Палыч на приёме. Документы при себе? (смеётся)"
+],
+[
+"reactions/player/greet/14",
+"kardan",
+"О, Железяка! Ночная смена пополнилась!"
+],
+[
+"reactions/player/greet/15",
+"lisa",
+"Железяка, привет! Ночью не спится, да?"
+],
+[
+"reactions/player/greet/16",
+"student",
+"Привет, Железяка! Ты на связи, ура! А то я один тут."
+],
+[
+"reactions/player/greet/17",
+"student",
+"Железяка, здрасьте! Ой, то есть привет. Я Студент, помнишь?"
+],
+[
+"reactions/player/greet/18",
+"student",
+"О, Железяка в эфире! Э-э... как дела?"
+],
+[
+"reactions/player/greet/19",
+"professor",
+"Железяка, приветствую! Рад слышать знакомый позывной."
+],
+[
+"reactions/player/greet/20",
+"professor",
+"Добрый день, коллега Железяка. Как ваш рейс?"
+],
+[
+"reactions/player/greet/21",
+"professor",
+"Железяка, моё почтение. Слышу вас прекрасно."
+],
+[
+"reactions/player/greet/22",
+"petrovna",
+"Ой, Железяка! Сыночек, здравствуй!"
+],
+[
+"reactions/player/greet/23",
+"petrovna",
+"Железяка, привет-привет! Не замёрз там?"
+],
+[
+"reactions/player/greet/24",
+"petrovna",
+"Здравствуй, Железяка. Как доехал, всё хорошо?"
+],
+[
+"reactions/player/greet/25",
+"ten",
+"...Железяка. Здравствуй."
+],
+[
+"reactions/player/greet/26",
+"ten",
+"Слышу тебя, Железяка. Ночь сегодня разговорчивая."
+],
+[
+"reactions/player/greet/27",
+"ten",
+"Железяка. (пауза) Я так и думал, что ты появишься."
+],
+[
+"reactions/player/greet/28",
+"vitek",
+"Железяка, здорово! Тороплюсь, но для тебя минутка есть!"
+],
+[
+"reactions/player/greet/29",
+"vitek",
+"Привет, Железяка! Как сам? Я лечу!"
+],
+[
+"reactions/player/greet/30",
+"vitek",
+"О, Железяка! Слышу тебя, брат!"
+],
+[
+"reactions/player/greet/31",
+"sova",
+"Здравствуй, Железяка. Тоже не спится?"
+],
+[
+"reactions/player/greet/32",
+"sova",
+"Железяка, милый, слышу тебя. Как ночь?"
+],
+[
+"reactions/player/greet/33",
+"sova",
+"Доброй ночи, Железяка. Рада слышать."
+],
+[
+"reactions/player/greet/34",
+"ment",
+"Железяка, здравия желаю. Ой, то есть здорово. Привычка."
+],
+[
+"reactions/player/greet/35",
+"ment",
+"Палыч на связи, Железяка. Слышу тебя чётко."
+],
+[
+"reactions/player/greet/36",
+"ment",
+"Железяка, приветствую. Как обстановка на маршруте?"
+],
+[
+"reactions/player/greet/37",
+"kardan",
+"Железяка, здорово, брат! Рок-н-ролл!"
+],
+[
+"reactions/player/greet/38",
+"kardan",
+"О, Железяка! Сделаю потише, чтобы тебя слышать."
+],
+[
+"reactions/player/greet/39",
+"kardan",
+"Железяка в эфире! Ночь становится лучше!"
+],
+[
+"reactions/player/greet/40",
+"lisa",
+"Железяка, приветик. Скучал?"
+],
+[
+"reactions/player/greet/41",
+"lisa",
+"О, Железяка. Ну здравствуй, здравствуй."
+],
+[
+"reactions/player/greet/42",
+"lisa",
+"Привет, Железяка! Ты сегодня разговорчивый."
+],
+[
+"reactions/player/greet/43",
+"soroka",
+"Привет, Железяака! Рада тебя слышать!"
+],
+[
+"reactions/player/greet/44",
+"soroka",
+"Железяака, ой, привет! Как дорога?"
+],
+[
+"reactions/player/greet/45",
+"student",
+"Ой, Железяка! Я как раз думал, кто бы мне подсказал дорогу!"
+],
+[
+"reactions/player/greet/46",
+"professor",
+"А, Железяка! Как раз о вас вспоминал, коллега."
+],
+[
+"reactions/player/greet/47",
+"petrovna",
+"Железяка, родной, а я уж думала, куда ты пропал!"
+],
+[
+"reactions/player/greet/48",
+"ten",
+"Ночь привела тебя, Железяка. (пауза) Говори."
+],
+[
+"reactions/player/greet/49",
+"vitek",
+"Железяка! Скажи, что я успею, а? (нервно смеётся)"
+],
+[
+"reactions/player/greet/50",
+"sova",
+"Железяка, а я как раз чай наливаю. Здравствуй."
+],
+[
+"reactions/player/greet/51",
+"ment",
+"Железяка, приветствую. Нарушений нет? (смеётся) Шучу."
+],
+[
+"reactions/player/greet/52",
+"kardan",
+"Железяка! Ты прямо под припев попал! Здорово!"
+],
+[
+"reactions/player/greet/53",
+"lisa",
+"О, Железяка. А я думаю, кто это так громко дышит в эфир. (смеётся)"
+],
+[
+"reactions/player/greet/54",
+"soroka",
+"Железяака! Ой, как хорошо, что ты на связи!"
+],
+[
+"reactions/player/ack/01",
+"mihalych",
+"[calm] Принял тебя, Железяка. Добро."
+],
+[
+"reactions/player/ack/02",
+"stas",
+"[cheerful] Понял, Железяка, понял!"
+],
+[
+"reactions/player/ack/04",
+"lastochka",
+"[warmly] Поняла тебя, Железяка."
+],
+[
+"reactions/player/ack/06",
+"soroka",
+"Поняла, Железяака!"
+],
+[
+"reactions/player/ack/14",
+"ment",
+"Принято, Железяка."
+],
+[
+"reactions/player/ack/16",
+"lisa",
+"Поняла, Железяка."
+],
+[
+"reactions/player/ack/39",
+"sova",
+"Слышу тебя, Железяка."
+],
+[
+"reactions/player/ack/42",
+"ment",
+"Понял, Железяка."
+],
+[
+"reactions/player/ack/47",
+"kardan",
+"Окей, Железяка!"
+],
+[
+"reactions/player/ack/53",
+"soroka",
+"Хорошо, Железяака!"
+],
+[
+"reactions/player/ack/65",
+"mihalych",
+"[calm] Понял, Железяка, понял."
+],
+[
+"reactions/player/ack/67",
+"yanek",
+"[calm] Добро, Железяка."
+],
+[
+"reactions/player/not_heard/01",
+"mihalych",
+"[squinting] Железяка, не разобрал. Повтори, приём."
+],
+[
+"reactions/player/not_heard/02",
+"stas",
+"[confused] Чё? Железяка, тебя ни хрена не слышно. Повтори."
+],
+[
+"reactions/player/not_heard/03",
+"yanek",
+"[calm] Железяка, пропадаешь. Повтори."
+],
+[
+"reactions/player/not_heard/05",
+"student",
+"Э-э, Железяка, не расслышал, повтори?"
+],
+[
+"reactions/player/not_heard/11",
+"ment",
+"Повторите, Железяка, не разобрал."
+],
+[
+"reactions/player/interrupt/01",
+"mihalych",
+"[annoyed] Железяка, не перебивай, ёп твою мать. Дай договорить."
+],
+[
+"reactions/player/interrupt/02",
+"stas",
+"[laughing] Эй, Железяка, ты мне на тангенту наступил!"
+],
+[
+"reactions/player/dunno/20",
+"ment",
+"Не знаю, Железяка. Не моя смена."
+],
+[
+"reactions/world/meet_again/01",
+"student",
+"Ой, Железяка! Опять ты! Я тебя помню! (смеётся)"
+],
+[
+"reactions/world/meet_again/03",
+"petrovna",
+"Железяка, сынок, опять ты! Как доехал-то в прошлый раз?"
+],
+[
+"reactions/world/meet_again/04",
+"ten",
+"...Снова ты, Железяка. (пауза) Значит, не случайно."
+],
+[
+"reactions/world/meet_again/05",
+"vitek",
+"Железяка! Опять мы! Слушай, я до сих пор не успеваю!"
+],
+[
+"reactions/world/meet_again/06",
+"sova",
+"Железяка, милый, снова встретились. Рада тебя слышать."
+],
+[
+"reactions/world/meet_again/07",
+"ment",
+"Железяка, опять ты на моём участке? (смеётся) Здорово!"
+],
+[
+"reactions/world/meet_again/08",
+"kardan",
+"Железяка, брат! Снова вместе в ночном эфире!"
+],
+[
+"reactions/world/meet_again/09",
+"lisa",
+"Опять Железяка? Ты что, за мной ездишь? (смеётся)"
+],
+[
+"reactions/world/meet_again/10",
+"soroka",
+"Ой, Железяака! Опять встретились! Как ты?"
+],
+[
+"reactions/world/police_yes/01",
+"ment",
+"Стоят, Железяка. Я мимо них проехал, за городом. С радаром."
+],
+[
+"reactions/world/police_yes/03",
+"lisa",
+"Есть, Железяка. У заправки засели. Я их видела."
+],
+[
+"reactions/world/police_no/01",
+"ment",
+"Чисто, Железяка. Я только оттуда, никого нет."
+]
+]

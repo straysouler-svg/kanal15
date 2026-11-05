@@ -1,0 +1,59 @@
+# «Канал 15» — в репозитории ТОЛЬКО исходники: код, тексты реплик, инструменты, документы.
+# Звук, модели, сборки, ключи и личное состояние сюда не попадают:
+#   звук и записи актёров — облако; обновления для игроков — Object Storage (манифест + файлы).
+# Принцип: всё запрещено, разрешено только перечисленное (белый список).
+
+/*
+!/.gitignore
+!/README.md
+!/MODLOG.md
+!/cb-radio/
+!/build/
+!/promo/
+
+# ---------------------------------------------------------------- рация
+/cb-radio/*
+!/cb-radio/*.py
+!/cb-radio/*.md
+!/cb-radio/*.cmd
+!/cb-radio/config.json
+!/cb-radio/version.json
+!/cb-radio/handle_lines.json
+!/cb-radio/phrases/
+!/cb-radio/tools/
+!/cb-radio/installer_art/
+!/cb-radio/map/
+/cb-radio/map/extracted/
+/cb-radio/map/*.log
+!/cb-radio/music/
+/cb-radio/music/*
+!/cb-radio/music/CREDITS.md
+
+# ---------------------------------------------------------------- сборка: только рукописные файлы
+/build/*
+!/build/radio.spec
+!/build/cb_radio.ico
+
+# ---------------------------------------------------------------- продвижение: тексты и скрипты, без медиа
+/promo/**/media/
+/promo/shorts/work/
+/promo/shorts/out/
+/promo/**/*.wav
+/promo/**/*.ogg
+/promo/**/*.mp3
+/promo/**/*.mp4
+/promo/**/*.pdf
+
+# ---------------------------------------------------------------- никогда
+*key*.txt
+bot_token.txt
+*.before*
+__pycache__/
+*.pyc
+*.log
+state.json
+world_state*.json
+crash.log
+last_ptt*.wav
+probe_job.txt
+*.dmp

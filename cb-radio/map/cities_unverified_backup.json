@@ -1,0 +1,975 @@
+{
+ "berlin": {
+  "name": "Berlin",
+  "country": "germany",
+  "x": 10070.2,
+  "y": 90.7,
+  "z": -9774.4
+ },
+ "warszawa": {
+  "name": "Warszawa",
+  "country": "poland",
+  "x": 37444.9,
+  "y": 93.0,
+  "z": -9435.8
+ },
+ "madrid": {
+  "name": "Madrid",
+  "country": "spain",
+  "x": -65397.7,
+  "y": 83.0,
+  "z": 48721.1
+ },
+ "aberdeen": {
+  "name": "Aberdeen",
+  "country": "uk",
+  "x": -38846.7,
+  "y": 144.0,
+  "z": -55270.3
+ },
+ "amsterdam": {
+  "name": "Amsterdam",
+  "country": "netherlands",
+  "x": -19042.1,
+  "y": 54.4,
+  "z": -11308.3
+ },
+ "bern": {
+  "name": "Bern",
+  "country": "switzerland",
+  "x": -21700.7,
+  "y": 97.2,
+  "z": -5680.8
+ },
+ "birmingham": {
+  "name": "Birmingham",
+  "country": "uk",
+  "x": -45951.1,
+  "y": 109.6,
+  "z": -20423.0
+ },
+ "bratislava": {
+  "name": "Bratislava",
+  "country": "slovakia",
+  "x": 24823.3,
+  "y": 125.1,
+  "z": 14831.0
+ },
+ "bremen": {
+  "name": "Bremen",
+  "country": "germany",
+  "x": -5184.6,
+  "y": 76.3,
+  "z": -14018.4
+ },
+ "brno": {
+  "name": "Brno",
+  "country": "czech",
+  "x": -38266.4,
+  "y": 83.0,
+  "z": 48093.5
+ },
+ "brussel": {
+  "name": "Brussel",
+  "country": "belgium",
+  "x": -22100.2,
+  "y": 85.1,
+  "z": -2415.1
+ },
+ "calais": {
+  "name": "Calais",
+  "country": "france",
+  "x": 66074.6,
+  "y": 70.0,
+  "z": 31257.8
+ },
+ "cambridge": {
+  "name": "Cambridge",
+  "country": "uk",
+  "x": -36822.7,
+  "y": 171.2,
+  "z": -16119.4
+ },
+ "cardiff": {
+  "name": "Cardiff",
+  "country": "uk",
+  "x": -54005.3,
+  "y": 171.4,
+  "z": -14698.4
+ },
+ "carlisle": {
+  "name": "Carlisle",
+  "country": "uk",
+  "x": -45889.2,
+  "y": 153.0,
+  "z": -39573.5
+ },
+ "dijon": {
+  "name": "Dijon",
+  "country": "france",
+  "x": -22470.0,
+  "y": 97.4,
+  "z": 16655.5
+ },
+ "dortmund": {
+  "name": "Dortmund",
+  "country": "germany",
+  "x": -10883.4,
+  "y": 101.9,
+  "z": -6378.8
+ },
+ "dover": {
+  "name": "Dover",
+  "country": "uk",
+  "x": -10883.4,
+  "y": 101.9,
+  "z": -6378.8
+ },
+ "dresden": {
+  "name": "Dresden",
+  "country": "germany",
+  "x": 11634.9,
+  "y": 91.4,
+  "z": -1841.9
+ },
+ "duisburg": {
+  "name": "Duisburg",
+  "country": "germany",
+  "x": -10883.4,
+  "y": 101.9,
+  "z": -6378.8
+ },
+ "dusseldorf": {
+  "name": "Düsseldorf",
+  "country": "germany",
+  "x": -13576.8,
+  "y": 119.3,
+  "z": -4598.7
+ },
+ "edinburgh": {
+  "name": "Edinburgh",
+  "country": "uk",
+  "x": -44900.7,
+  "y": 139.0,
+  "z": -47219.7
+ },
+ "eindhoven": {
+  "name": "Eindhoven",
+  "country": "netherlands",
+  "x": -17554.5,
+  "y": 82.7,
+  "z": -6868.1
+ },
+ "europoort": {
+  "name": "Europoort",
+  "country": "netherlands",
+  "x": 2824.2,
+  "y": 95.4,
+  "z": -2012.9
+ },
+ "felixstowe": {
+  "name": "Felixstowe",
+  "country": "uk",
+  "x": -31664.6,
+  "y": 101.4,
+  "z": -13837.2
+ },
+ "geneve": {
+  "name": "Genève",
+  "country": "switzerland",
+  "x": -5583.6,
+  "y": 115.3,
+  "z": 2517.2
+ },
+ "glasgow": {
+  "name": "Glasgow",
+  "country": "uk",
+  "x": -50384.7,
+  "y": 139.0,
+  "z": -48471.6
+ },
+ "graz": {
+  "name": "Graz",
+  "country": "austria",
+  "x": 18665.1,
+  "y": 99.0,
+  "z": 20411.8
+ },
+ "grimsby": {
+  "name": "Grimsby",
+  "country": "uk",
+  "x": -36117.9,
+  "y": 124.7,
+  "z": -26575.2
+ },
+ "groningen": {
+  "name": "Groningen",
+  "country": "netherlands",
+  "x": -12662.1,
+  "y": 72.3,
+  "z": -15700.7
+ },
+ "hamburg": {
+  "name": "Hamburg",
+  "country": "germany",
+  "x": -1689.9,
+  "y": 68.9,
+  "z": -16335.5
+ },
+ "ijmuiden": {
+  "name": "IJmuiden",
+  "country": "netherlands",
+  "x": -2003.6,
+  "y": 59.2,
+  "z": -9065.2
+ },
+ "innsbruck": {
+  "name": "Innsbruck",
+  "country": "austria",
+  "x": 2511.0,
+  "y": 62.4,
+  "z": 19602.6
+ },
+ "kassel": {
+  "name": "Kassel",
+  "country": "germany",
+  "x": -3419.8,
+  "y": 70.0,
+  "z": -3727.4
+ },
+ "kiel": {
+  "name": "Kiel",
+  "country": "germany",
+  "x": 1137.5,
+  "y": 58.6,
+  "z": -21589.1
+ },
+ "klagenfurt": {
+  "name": "Klagenfurt am Wörthersee",
+  "country": "austria",
+  "x": 14047.1,
+  "y": 53.0,
+  "z": 23307.7
+ },
+ "koln": {
+  "name": "Köln",
+  "country": "germany",
+  "x": -12548.6,
+  "y": 106.1,
+  "z": -2434.2
+ },
+ "leipzig": {
+  "name": "Leipzig",
+  "country": "germany",
+  "x": 7000.5,
+  "y": 102.9,
+  "z": -3572.1
+ },
+ "liege": {
+  "name": "Liège",
+  "country": "belgium",
+  "x": 35329.5,
+  "y": 66.4,
+  "z": -33299.9
+ },
+ "lille": {
+  "name": "Lille",
+  "country": "france",
+  "x": -26539.4,
+  "y": 92.6,
+  "z": -2460.3
+ },
+ "linz": {
+  "name": "Linz",
+  "country": "austria",
+  "x": 13636.4,
+  "y": 115.9,
+  "z": 13925.5
+ },
+ "liverpool": {
+  "name": "Liverpool",
+  "country": "uk",
+  "x": -48871.7,
+  "y": 146.1,
+  "z": -29091.8
+ },
+ "london": {
+  "name": "London",
+  "country": "uk",
+  "x": -39546.9,
+  "y": 171.4,
+  "z": -11564.2
+ },
+ "erfurt": {
+  "name": "Erfurt",
+  "country": "germany",
+  "x": 2824.2,
+  "y": 95.4,
+  "z": -2012.9
+ },
+ "frankfurt": {
+  "name": "Frankfurt am Main",
+  "country": "germany",
+  "x": -5583.6,
+  "y": 115.3,
+  "z": 2517.2
+ },
+ "hull": {
+  "name": "Hull",
+  "country": "uk",
+  "x": -2003.6,
+  "y": 59.2,
+  "z": -9065.2
+ },
+ "luxembourg": {
+  "name": "Luxembourg",
+  "country": "luxembourg",
+  "x": -23877.8,
+  "y": 139.3,
+  "z": 25578.0
+ },
+ "lyon": {
+  "name": "Lyon",
+  "country": "france",
+  "x": -23877.8,
+  "y": 139.3,
+  "z": 25578.0
+ },
+ "magdeburg": {
+  "name": "Magdeburg",
+  "country": "germany",
+  "x": 4449.2,
+  "y": 72.7,
+  "z": -8166.2
+ },
+ "manchester": {
+  "name": "Manchester",
+  "country": "uk",
+  "x": -45548.7,
+  "y": 108.7,
+  "z": -27815.0
+ },
+ "mannheim": {
+  "name": "Mannheim",
+  "country": "germany",
+  "x": -7936.7,
+  "y": 50.0,
+  "z": 6001.2
+ },
+ "milano": {
+  "name": "Milano",
+  "country": "italy",
+  "x": -6816.4,
+  "y": 100.2,
+  "z": 29438.7
+ },
+ "munchen": {
+  "name": "München",
+  "country": "germany",
+  "x": -39778.0,
+  "y": 139.0,
+  "z": -38787.7
+ },
+ "newcastle": {
+  "name": "Newcastle-upon-Tyne",
+  "country": "uk",
+  "x": -39778.0,
+  "y": 139.0,
+  "z": -38787.7
+ },
+ "nurnberg": {
+  "name": "Nürnberg",
+  "country": "germany",
+  "x": 1849.2,
+  "y": 102.0,
+  "z": 6518.7
+ },
+ "osnabruck": {
+  "name": "Osnabrück",
+  "country": "germany",
+  "x": -7930.9,
+  "y": 82.8,
+  "z": -9745.8
+ },
+ "paris": {
+  "name": "Paris",
+  "country": "france",
+  "x": -30427.3,
+  "y": 68.5,
+  "z": 6886.2
+ },
+ "plymouth": {
+  "name": "Plymouth",
+  "country": "uk",
+  "x": -60041.4,
+  "y": 101.4,
+  "z": -7882.3
+ },
+ "poznan": {
+  "name": "Poznań",
+  "country": "poland",
+  "x": 22863.4,
+  "y": 46.6,
+  "z": -9112.2
+ },
+ "prague": {
+  "name": "Praha",
+  "country": "czech",
+  "x": 14299.7,
+  "y": 142.7,
+  "z": 3979.0
+ },
+ "reims": {
+  "name": "Reims",
+  "country": "france",
+  "x": -24054.8,
+  "y": 96.3,
+  "z": 5680.1
+ },
+ "rostock": {
+  "name": "Rostock",
+  "country": "germany",
+  "x": -18992.0,
+  "y": 158.0,
+  "z": -9455.9
+ },
+ "rotterdam": {
+  "name": "Rotterdam",
+  "country": "netherlands",
+  "x": -18992.0,
+  "y": 158.0,
+  "z": -9455.9
+ },
+ "salzburg": {
+  "name": "Salzburg",
+  "country": "austria",
+  "x": 9146.4,
+  "y": 86.9,
+  "z": 16039.6
+ },
+ "sheffield": {
+  "name": "Sheffield",
+  "country": "uk",
+  "x": -42688.8,
+  "y": 103.5,
+  "z": -26687.6
+ },
+ "southampton": {
+  "name": "Southampton",
+  "country": "uk",
+  "x": -46338.7,
+  "y": 111.4,
+  "z": -7523.2
+ },
+ "strasbourg": {
+  "name": "Strasbourg",
+  "country": "france",
+  "x": -10786.9,
+  "y": 100.0,
+  "z": 11198.7
+ },
+ "stuttgart": {
+  "name": "Stuttgart",
+  "country": "germany",
+  "x": -4636.7,
+  "y": 127.6,
+  "z": 10059.0
+ },
+ "swansea": {
+  "name": "Swansea",
+  "country": "uk",
+  "x": -56896.0,
+  "y": 71.4,
+  "z": -16881.9
+ },
+ "szczecin": {
+  "name": "Szczecin",
+  "country": "poland",
+  "x": 15052.7,
+  "y": 96.6,
+  "z": -15049.8
+ },
+ "torino": {
+  "name": "Torino",
+  "country": "italy",
+  "x": -12697.2,
+  "y": 89.9,
+  "z": 30932.0
+ },
+ "travemunde": {
+  "name": "Travemünde",
+  "country": "germany",
+  "x": 3057.5,
+  "y": 60.0,
+  "z": -19152.9
+ },
+ "trieste": {
+  "name": "Trieste",
+  "country": "italy",
+  "x": 10593.8,
+  "y": 104.6,
+  "z": 27566.8
+ },
+ "venezia": {
+  "name": "Venezia",
+  "country": "italy",
+  "x": 5089.9,
+  "y": 77.9,
+  "z": 30078.9
+ },
+ "verona": {
+  "name": "Verona",
+  "country": "italy",
+  "x": 39.1,
+  "y": 78.4,
+  "z": 29453.3
+ },
+ "wien": {
+  "name": "Wien",
+  "country": "austria",
+  "x": 20824.8,
+  "y": 112.4,
+  "z": 13986.0
+ },
+ "wroclaw": {
+  "name": "Wrocław",
+  "country": "poland",
+  "x": 23502.9,
+  "y": 120.5,
+  "z": -1951.0
+ },
+ "artand": {
+  "name": "Artand Border Crossing",
+  "country": "romania",
+  "x": -8744.9,
+  "y": 107.3,
+  "z": 17643.1
+ },
+ "bacau": {
+  "name": "Bacău",
+  "country": "romania",
+  "x": 62137.4,
+  "y": 54.9,
+  "z": 18494.0
+ },
+ "brasov": {
+  "name": "Brașov",
+  "country": "romania",
+  "x": 58252.4,
+  "y": 96.2,
+  "z": 23552.8
+ },
+ "bucuresti": {
+  "name": "București",
+  "country": "romania",
+  "x": 61121.0,
+  "y": 60.2,
+  "z": 31703.6
+ },
+ "burgas": {
+  "name": "Бургас",
+  "country": "bulgaria",
+  "x": 68297.2,
+  "y": 61.0,
+  "z": 40880.7
+ },
+ "calarasi": {
+  "name": "Călărași",
+  "country": "romania",
+  "x": 66074.6,
+  "y": 70.0,
+  "z": 31257.8
+ },
+ "cernavoda": {
+  "name": "Cernavodă",
+  "country": "romania",
+  "x": 69579.5,
+  "y": 90.0,
+  "z": 30015.4
+ },
+ "cluj_napoca": {
+  "name": "Cluj-Napoca",
+  "country": "romania",
+  "x": 50303.3,
+  "y": 64.2,
+  "z": 18277.2
+ },
+ "constanta": {
+  "name": "Constanța",
+  "country": "romania",
+  "x": 71731.7,
+  "y": 60.6,
+  "z": 30870.9
+ },
+ "craiova": {
+  "name": "Craiova",
+  "country": "romania",
+  "x": 51918.5,
+  "y": 68.8,
+  "z": 33228.5
+ },
+ "edirne": {
+  "name": "Edirne",
+  "country": "turkey",
+  "x": 65096.0,
+  "y": 69.0,
+  "z": 46829.2
+ },
+ "hamzabeyli": {
+  "name": "Hamzabeyli Border Crossing",
+  "country": "turkey",
+  "x": 67046.2,
+  "y": 65.7,
+  "z": 24473.0
+ },
+ "hunedoara": {
+  "name": "Hunedoara",
+  "country": "romania",
+  "x": 49016.9,
+  "y": 97.4,
+  "z": 26114.8
+ },
+ "iasi": {
+  "name": "Iași",
+  "country": "romania",
+  "x": 64746.4,
+  "y": 67.6,
+  "z": 14963.9
+ },
+ "kapikule": {
+  "name": "Kapikule Andreevo Border Crossing",
+  "country": "turkey",
+  "x": 75753.5,
+  "y": 68.5,
+  "z": 47644.0
+ },
+ "karlovo": {
+  "name": "Карлово",
+  "country": "bulgaria",
+  "x": 58056.4,
+  "y": 73.1,
+  "z": 42057.7
+ },
+ "kozloduy": {
+  "name": "Козлодуй",
+  "country": "bulgaria",
+  "x": 52658.2,
+  "y": 107.9,
+  "z": 36247.3
+ },
+ "nadlac": {
+  "name": "Nadlac Border Crossing",
+  "country": "romania",
+  "x": 71577.7,
+  "y": 57.3,
+  "z": 33330.9
+ },
+ "pernik": {
+  "name": "Перник",
+  "country": "bulgaria",
+  "x": 48398.2,
+  "y": 85.8,
+  "z": 45233.0
+ },
+ "pirdop": {
+  "name": "Пирдоп",
+  "country": "bulgaria",
+  "x": 55937.9,
+  "y": 73.1,
+  "z": 42161.1
+ },
+ "pitesti": {
+  "name": "Pitești",
+  "country": "romania",
+  "x": 56247.5,
+  "y": 63.9,
+  "z": 29912.5
+ },
+ "pleven": {
+  "name": "Плевен",
+  "country": "bulgaria",
+  "x": 57594.6,
+  "y": 78.0,
+  "z": 37457.6
+ },
+ "plovdiv": {
+  "name": "Пловдив",
+  "country": "bulgaria",
+  "x": 58234.8,
+  "y": 101.4,
+  "z": 46169.4
+ },
+ "resita": {
+  "name": "Reșița",
+  "country": "romania",
+  "x": 43990.4,
+  "y": 73.3,
+  "z": 29154.6
+ },
+ "ruse": {
+  "name": "Русе",
+  "country": "bulgaria",
+  "x": 61454.0,
+  "y": 67.8,
+  "z": 35069.8
+ },
+ "sofia": {
+  "name": "София",
+  "country": "bulgaria",
+  "x": 51154.8,
+  "y": 94.0,
+  "z": 42490.6
+ },
+ "targu_mures": {
+  "name": "Târgu Mureș",
+  "country": "romania",
+  "x": 53959.7,
+  "y": 56.8,
+  "z": 20157.2
+ },
+ "tekirdag": {
+  "name": "Tekirdağ",
+  "country": "turkey",
+  "x": 68590.5,
+  "y": 70.5,
+  "z": 49762.8
+ },
+ "timisoara": {
+  "name": "Timișoara",
+  "country": "romania",
+  "x": 41402.3,
+  "y": 63.8,
+  "z": 27290.1
+ },
+ "varna": {
+  "name": "Варна",
+  "country": "bulgaria",
+  "x": 70093.4,
+  "y": 63.4,
+  "z": 36462.2
+ },
+ "veli_tarnovo": {
+  "name": "Велико Търново",
+  "country": "bulgaria",
+  "x": 60763.4,
+  "y": 104.6,
+  "z": 38859.5
+ },
+ "banja_luka": {
+  "name": "Бања Лука",
+  "country": "bosnia",
+  "x": 26087.2,
+  "y": 64.6,
+  "z": 33233.3
+ },
+ "beograd": {
+  "name": "Београд",
+  "country": "serbia",
+  "x": 39346.9,
+  "y": 72.4,
+  "z": 32075.3
+ },
+ "bihac": {
+  "name": "Бихаћ",
+  "country": "bosnia",
+  "x": 21009.6,
+  "y": 86.0,
+  "z": 32936.1
+ },
+ "bijelo_polje": {
+  "name": "Бијело Поље",
+  "country": "montenegro",
+  "x": 45069.1,
+  "y": 123.7,
+  "z": 52784.6
+ },
+ "bitola": {
+  "name": "Битола",
+  "country": "macedonia",
+  "x": 45069.1,
+  "y": 123.7,
+  "z": 52784.6
+ },
+ "durres": {
+  "name": "Durrës",
+  "country": "albania",
+  "x": 36191.7,
+  "y": 52.6,
+  "z": 52037.7
+ },
+ "fier": {
+  "name": "Fier",
+  "country": "albania",
+  "x": 38304.8,
+  "y": 58.9,
+  "z": 55012.8
+ },
+ "karakaj": {
+  "name": "Каракај",
+  "country": "bosnia",
+  "x": -12548.6,
+  "y": 106.1,
+  "z": -2434.2
+ },
+ "koper": {
+  "name": "Koper",
+  "country": "slovenia",
+  "x": 11233.9,
+  "y": 65.0,
+  "z": 29456.7
+ },
+ "kragujevac": {
+  "name": "Крагујевац",
+  "country": "serbia",
+  "x": 40681.2,
+  "y": 45.2,
+  "z": 36682.6
+ },
+ "ljubljana": {
+  "name": "Ljubljana",
+  "country": "slovenia",
+  "x": 15398.1,
+  "y": 79.0,
+  "z": 25965.2
+ },
+ "mostar": {
+  "name": "Мостар",
+  "country": "bosnia",
+  "x": 28483.8,
+  "y": 104.6,
+  "z": 41005.8
+ },
+ "nis": {
+  "name": "Ниш",
+  "country": "serbia",
+  "x": 45301.3,
+  "y": 98.7,
+  "z": 39664.2
+ },
+ "novi_sad": {
+  "name": "Нови Сад",
+  "country": "serbia",
+  "x": 16812.7,
+  "y": 70.0,
+  "z": 27789.4
+ },
+ "novo_mesto": {
+  "name": "Novo Mesto",
+  "country": "slovenia",
+  "x": 16812.7,
+  "y": 70.0,
+  "z": 27789.4
+ },
+ "osijek": {
+  "name": "Osijek",
+  "country": "croatia",
+  "x": -85324.7,
+  "y": 115.0,
+  "z": 39550.9
+ },
+ "podgorica": {
+  "name": "Подгорица",
+  "country": "montenegro",
+  "x": 42673.6,
+  "y": 119.5,
+  "z": 43605.8
+ },
+ "pristina": {
+  "name": "Prishtinë",
+  "country": "kosovo",
+  "x": 42673.6,
+  "y": 119.5,
+  "z": 43605.8
+ },
+ "rijeka": {
+  "name": "Rijeka",
+  "country": "croatia",
+  "x": 14366.3,
+  "y": 98.6,
+  "z": 30236.3
+ },
+ "sarajevo": {
+  "name": "Сарајево",
+  "country": "bosnia",
+  "x": 43657.4,
+  "y": 94.9,
+  "z": 48230.5
+ },
+ "skopje": {
+  "name": "Скопје",
+  "country": "macedonia",
+  "x": 43657.4,
+  "y": 94.9,
+  "z": 48230.5
+ },
+ "split": {
+  "name": "Split",
+  "country": "croatia",
+  "x": 22115.1,
+  "y": 64.6,
+  "z": 40582.7
+ },
+ "tirana": {
+  "name": "Tiranë",
+  "country": "albania",
+  "x": 38274.9,
+  "y": 63.0,
+  "z": 51343.2
+ },
+ "tuzla": {
+  "name": "Тузла",
+  "country": "bosnia",
+  "x": 32062.7,
+  "y": 66.2,
+  "z": 33987.6
+ },
+ "vlore": {
+  "name": "Vlorë",
+  "country": "albania",
+  "x": -50628.1,
+  "y": 51.9,
+  "z": 44044.0
+ },
+ "zadar": {
+  "name": "Zadar",
+  "country": "croatia",
+  "x": 17622.1,
+  "y": 52.3,
+  "z": 36990.1
+ },
+ "harwich": {
+  "name": "Harwich",
+  "country": "uk",
+  "x": -2003.6,
+  "y": 59.2,
+  "z": -9065.2
+ },
+ "metz": {
+  "name": "Metz",
+  "country": "france",
+  "x": -16294.5,
+  "y": 104.5,
+  "z": 7463.7
+ },
+ "zurich": {
+  "name": "Zürich",
+  "country": "switzerland",
+  "x": -8744.9,
+  "y": 107.3,
+  "z": 17643.1
+ },
+ "giurgiu": {
+  "name": "Giurgiu Border Crossing",
+  "country": "romania",
+  "x": 67046.2,
+  "y": 65.7,
+  "z": 24473.0
+ },
+ "istanbul": {
+  "name": "İstanbul",
+  "country": "turkey",
+  "x": 75753.5,
+  "y": 68.5,
+  "z": 47644.0
+ }
+}

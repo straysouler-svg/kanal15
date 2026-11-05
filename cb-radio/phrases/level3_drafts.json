@@ -1,0 +1,60 @@
+{
+  "_comment": "DRAFTS (not voiced): new character lines from CHARACTERS.md for the ElevenLabs actors. Voice after 2026-12-03 (credit reset) or by another engine, then move into level3_eleven.json (append to the END of each list so voiced numbering stays). English [tags] = acting.",
+  "phrases": {
+    "soroka": [
+      "[laughs] Ой, я опять облака по-научному назвала! Кучево-дождевые. [giggles] Короче, тучка.",
+      "[cheerfully] Посчитала: сегодня проехала шестьсот двенадцать километров. [laughs] Зачем посчитала — не знаю!",
+      "[giggles] Мне бывший коллега статью прислал про туман. Сорок страниц формул. [laughs] Смешнее анекдота!",
+      "[laughing] Чек-лист проверила, всё проверила, а термос дома забыла! [laughs]",
+      "[warmly] Всех люблю, всем хорошей дороги! [giggles] Сорока, приём.",
+      "[laughs] Барометр падает. Значит, будет дождь. Или барометр сломался. [giggles]",
+      "[amused] Радуга! Это же просто преломление света... [laughs] а всё равно красиво!",
+      "[cheerful] Приехала минута в минуту. [giggles] Как же я люблю, когда всё по плану."
+    ]
+  },
+  "scenes": {},
+  "reactions": {
+    "_": "voice on/after 2026-12-03 (ElevenLabs reset), then move into level3_eleven.json reactions (append)",
+    "intent": {
+      "truck": [],
+      "how_are_you": []
+    },
+    "player": {
+      "dunno": []
+    }
+  },
+  "retired_scenes": {
+    "kotenok": [
+      {
+        "actor": "soroka",
+        "text": "Мальчики, у меня в кабине котёнок едет. Как назвать? Приём."
+      },
+      {
+        "actor": "mihalych",
+        "pause": 1.4,
+        "text": "[chuckles] Назови Дизелем, Сорока."
+      },
+      {
+        "actor": "soroka",
+        "pause": 0.7,
+        "text": "Дизель. Хорошо, Михалыч, спасибо!"
+      }
+    ],
+    "bulochki": [
+      {
+        "actor": "stas",
+        "text": "[excited] Сорока, а булочки ещё остались? Приём."
+      },
+      {
+        "actor": "soroka",
+        "pause": 1.1,
+        "text": "Остались, Стасян. Только догони сначала."
+      },
+      {
+        "actor": "boroda",
+        "pause": 0.8,
+        "text": "[laughs] Догонит он, как же."
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+scs_extractor: usage: scs_extractor archive.scs [output_path]

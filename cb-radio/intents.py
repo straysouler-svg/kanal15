@@ -1,0 +1,184 @@
+"""What did the player say on the radio? Local, rule-based, no network.
+
+understand(text) -> (intent, addressee)
+  intent:    who | truck | repeat | greet | bye | thanks | how_are_you | road | police | weather | food | joke | where |
+             radio_check | help | None (talked, but nothing we recognise)
+  addressee: actor key if the player called someone by name ("Михалыч, ...", "Петровна, ..."), else None
+Matching is by word stems so that Whisper's small spelling slips still match.
+"""
+import re
+
+NAMES = {
+    "mihalych": ["михалыч", "михалч", "михайлович", "николай"],
+    "stas": ["стас", "стасян", "стасик"],
+    "yanek": ["янек", "яник", "янеку", "янека", "ян "],
+    "lastochka": ["ласточк", "ласоч", "ласточ", "валя", "валентин"],
+    "boroda": ["бород", "брада", "барод", "игорь", "игорек", "игорёк"],
+    "soroka": ["сорок", "сорочк", "тамар"],
+    "student": ["студент", "студен", "леша", "лёша", "алекс"],
+    "professor": ["профессор", "професор", "аркади"],
+    "petrovna": ["петровн", "зинаид", "зина"],
+    "ten": ["тень", "тени", "серег", "серёг"],
+    "vitek": ["витек", "витёк", "витя", "витьк"],
+    "sova": ["сова", "совушк", "галин", "галя"],
+    "ment": ["палыч", "палычь", "мент"],
+    "kardan": ["кардан", "гена", "генк"],
+    "lisa": ["лиса", "лисичк", "лисиц", "алена", "алёна"],
+    "rustam": ["самарканд", "рустам", "рустем"],
+    "bahti": ["ковбой", "ковбо", "кавбо", "карбой", "карбо", "бахти", "бахтияр", "бахтиер"],   # «Карбой»: Whisper 2026-11-05
+    "vera": ["кинолог", "вера", "веру", "веры", "верочк", "граф"],
+}
+
+# order matters: first match wins (more specific intents first)
+INTENTS = [
+    # «почему тебя так зовут?» (2026-11-05): before «who»/«how», they share words
+    ("handle", ["почему тебя", "почему зовут", "почему так зовут", "откуда позывн", "почему позывн", "что за позывн",
+                "почему такой позывн", "откуда прозвищ", "почему прозвал", "кто тебя так назвал", "откуда кличк",
+                "почему кличк", "что значит твой позывн"]),
+    ("who", ["кто в эфире", "кто на связи", "кто есть", "кто тут", "кто здесь", "кто слышит", "отзовитесь",
+             "кто на канале", "кто меня слышит", "есть кто",
+             # how whisper mishears it on the fifine: «кто вы эфире», «кто в эхире», «кто вы, Хире/Сири»
+             "кто вы эфир", "кто в эхир", "кто вы эхир", "кто вы хир", "кто вы сир", "кто на линии", "кто в сети"]),
+    ("truck", ["на чем едешь", "на чем едете", "на чем ты", "какая машина", "какая у тебя машина",
+               "что за машина", "какой грузовик", "что за грузовик", "какой тягач", "что за тягач", "марка",
+               "на чем ездишь", "на чем катаешь"]),
+    # "say it again": the last speaker (or the one called by name) repeats his last line, twice at most
+    ("repeat", ["повтор", "не расслыш", "не понял", "не разобрал", "не слышно", "плохо слышно", "не слышу",
+                "что ты сказал", "что сказал", "что говоришь", "скажи еще раз", "еще раз скажи", "давай еще раз",
+                "пропадаешь"]),
+    ("radio_check", ["как слышно", "как слышите", "проверк", "проверочк", "слышите меня", "слышно меня", "слышишь меня",
+                     "как меня слыш", "ты тут", "ты здесь", "вы тут", "вы здесь"]),
+    ("help", ["помоги", "помощь", "сломал", "поломк", "пробил", "колесо", "заглох", "авари", "дтп", "застрял"]),
+    ("police", ["полици", "полосат", "гаишн", "гибдд", "дпс", "радар", "камер", "патрул", "мент", "мусор", "фото"]),
+    ("road", ["как дорога", "дорога как", "пробк", "затор", "свободн", "что впереди", "что там впереди",
+              "как трасса", "трасса как", "обстановк", "как на дорог", "что на дорог", "как на трасс", "что на трасс",
+              "как там дорог", "как там трасс"]),
+    ("weather", ["погод", "дожд", "туман", "снег", "холодн", "жарк", "солнц", "ветер", "гололед", "гололёд", "мороз"]),
+    ("food", ["поесть", "пожрать", "покушать", "кушать", "кафе", "столов", "голод", "обед", "ужин", "завтрак", "кофе",
+              "пирож", "булоч"]),
+    ("joke", ["анекдот", "расскажи", "шутк", "скучно", "повесели", "посмеш"]),
+    ("where", ["куда едешь", "куда едете", "куда путь", "куда направ", "откуда", "что везешь", "что везёшь",
+               "что везете", "какой груз", "куда идешь", "куда идёшь"]),
+    ("how_are_you", ["как дела", "как сам", "как жизнь", "как настроен", "как ты", "как вы", "как поживаешь",
+                     "как оно", "как здоровье", "какие новости", "что нового", "что слышно", "как жизнь молодая"]),
+    ("thanks", ["спасибо", "благодар", "спс", "от души", "выручил"]),
+    ("bye", ["отбой", "до связи", "отключаюсь", "пока", "удачи", "спокойной ночи", "ровной дороги", "счастливо",
+             "до встречи", "всего хорошего", "конец связи"]),
+    ("greet", ["привет", "здоров", "здравствуй", "добрый день", "добрый вечер", "доброе утро", "доброй ночи",
+               "на связи", "в эфире", "всем привет", "приветству", "салют", "хай"]),
+]
+
+
+def norm(text):
+    t = text.lower().replace("ё", "е")
+    t = re.sub(r"[^а-яa-z0-9 ]+", " ", t)
+    return " " + re.sub(r"\s+", " ", t).strip() + " "
+
+
+def addressee(text):
+    t = norm(text)
+    best = None
+    for key, stems in NAMES.items():
+        for s in stems:
+            i = t.find(" " + s.replace("ё", "е").strip())
+            if i >= 0 and (best is None or i < best[0]):
+                best = (i, key)                     # the name said first wins
+    return best[1] if best else None
+
+
+_INTENT_STEMS = {s.replace("ё", "е") for _, stems in INTENTS for s in stems}
+# name stems to mask before looking for the intent: «САМАРКАнд» hides «марка» (truck), so «Самарканд, как дела»
+# was a truck question. Stems that are intent words themselves («мент» = police) stay.
+_NAME_STEMS = tuple(sorted({s.replace("ё", "е").strip() for stems in NAMES.values() for s in stems} - _INTENT_STEMS,
+                           key=len, reverse=True))
+
+
+_NAME_STEMS_ALL = tuple(sorted({s.replace("ё", "е").strip() for stems in NAMES.values() for s in stems},
+                               key=len, reverse=True))
+
+
+def intent(text):
+    t = " " + " ".join(w for w in norm(text).split() if not w.startswith(_NAME_STEMS)) + " "
+    for name, stems in INTENTS:
+        if any(s.replace("ё", "е") in t for s in stems):
+            return name
+    return None
+
+
+QUESTION_WORDS = ("кто", "что", "где", "как", "какой", "какая", "какие", "какое", "когда", "куда", "откуда", "почему",
+                  "зачем", "сколько", "чей", "чья", "есть ли", "не знаешь", "не знаете", "не видел", "не видели",
+                  "не слышал", "не слышали", "никто не", "кто-нибудь", "ли ")
+
+
+def is_question(text):
+    """A question (whisper usually puts '?') or a sentence with a question word - vs. a statement / warning."""
+    if "?" in text:
+        return True
+    t = norm(text)
+    return any(f" {w}" in t for w in QUESTION_WORDS)
+
+
+# Граф, Vera's dog (2026-11-05, user): the player greets him or gives him a command -> Vera answers (only she).
+GRAF_VOICE = ("голос",)
+GRAF_CMD = ("сидеть", "сидет", "лежать", "лапу", "лапа", "ко мне", "место", "фас", "апорт", "рядом", "служить", "дай")
+GRAF_GREET = ("привет", "здоров", "здравствуй", "хорош", "умниц", "молодец", "красав", "как ты", "как дела", "мальчик",
+              "пес", "собак", "погладь", "обними", "салют", "хай")
+
+
+def graf(text):
+    """-> 'graf_voice' | 'graf_cmd' | 'graf_greet' | None (the dog is not mentioned)."""
+    t = norm(text)
+    if " граф" not in t:
+        return None
+    if any(w in t for w in GRAF_VOICE):
+        return "graf_voice"
+    if any(f" {w}" in t for w in GRAF_CMD):
+        return "graf_cmd"
+    if any(w in t for w in GRAF_GREET):
+        return "graf_greet"
+    return None
+
+
+_HANDLE_Q = (" почему ", " отчего ", " с чего ", " откуда ", " зачем ")
+_HANDLE_VERB = ("кличут", "кличет", "зовут", "зовет", "называют", "прозвал", "назвал", "величают", "позывн", "кличк",
+                "прозвищ")
+_HANDLE_FILLER = {"тебя", "вас", "его", "ее", "так", "ты", "вы", "а", "же", "то", "тебе", "все", "тут", "у", "в", "эфире",
+                  "вообще", "кстати", "слушай", "скажи", "ну", "да", "это"}
+
+
+def is_handle_question(text):
+    """«Почему Ласточка?», «Почему Самаркандом кличут?», «Почему Профессор — Профессор?», «Откуда позывной?».
+    After the question word only names / «кличут, зовут…» / fillers may follow — so «Ласточка, почему ты
+    опаздываешь?» is not about the handle (2026-11-05, user)."""
+    t = norm(text)
+    q = next((w for w in _HANDLE_Q if w in t), None)
+    if not q:
+        return False
+    rest = t.split(q, 1)[1].split()
+    names = [w for w in rest if w.startswith(_NAME_STEMS_ALL)]
+    verbs = [w for w in rest if w.startswith(_HANDLE_VERB)]
+    other = [w for w in rest if w not in _HANDLE_FILLER and w not in names and w not in verbs]
+    return bool(names or verbs) and not other
+
+
+def understand(text):
+    if is_handle_question(text):
+        return "handle", addressee(text)
+    g = graf(text)
+    if g:
+        return g, "vera"
+    return intent(text), addressee(text)
+
+
+if __name__ == "__main__":
+    tests = ["Железяка в эфире, приём", "Михалыч, здорово! Как сам?", "Встречные, как дорога? Приём",
+             "Петровна, а где тут поесть можно?", "Тень, расскажи анекдот", "Мужики, полосатые впереди есть?",
+             "Канал, дайте проверочку, как слышно Железяку?", "Всем ровной дороги, Железяка отключается",
+             "Спасибо, Витёк", "Ласточка, привет, красавица", "Борода, не гони там", "Студент, куда едешь?",
+             "Профессор, какая погода в Вене?", "Мужики, колесо пробил, помогите", "ну короче вот так",
+             "Повтори", "Михалыч, повтори, не расслышал", "Не понял, ещё раз скажи", "Пропадаешь, приём",
+             "Привет, Граф!", "Граф, голос!", "Граф, сидеть", "Граф, хороший мальчик", "Кинолог, как Граф?",
+             "Почему Ласточка?", "А почему Самаркандом кличут?", "Почему Профессор Профессор?", "Борода, откуда позывной?",
+             "Ласточка, почему ты опаздываешь?", "Тень, почему ты такой грустный?", "Слушай, а почему тебя так зовут?"]
+    for t in tests:
+        print(f"{t:50} -> {understand(t)}")
