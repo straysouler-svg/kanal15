@@ -1452,6 +1452,34 @@ def selftest():
 
 TRAY_STATE = {}
 TRAY_MOD = None
+BOT_URL = "https://t.me/kanal15_publisher_bot"
+
+
+def make_report():
+    """«Сообщить о проблеме» (2026-11-05): журналы и версия в один zip, показать его в папке и открыть чат
+    с ботом. Ничего не отправляется само: человек сам перетаскивает файл в чат."""
+    import platform
+    import subprocess
+    import zipfile
+    out = ROOT / "reports"
+    out.mkdir(exist_ok=True)
+    z = out / f"Kanal15-report-{datetime.now():%Y%m%d-%H%M%S}.zip"
+    with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name in ("cb_radio.log", "crash.log", "update/update.log", "update/applied.json", "version.json",
+                     "config.json", "install.json"):
+            p = ROOT / name
+            if p.exists():
+                data = p.read_bytes()
+                if name == "cb_radio.log":
+                    data = b"\n".join(data.splitlines()[-4000:])     # the last few hours are enough
+                zf.writestr(name, data)
+        zf.writestr("about.json", json.dumps({"version": VERSION, "date": VERSION_DATE, "build": BUILD_NAME,
+                                              "windows": platform.platform(), "created": datetime.now().isoformat()},
+                                             ensure_ascii=False, indent=1))
+    log(f"отчёт о проблеме собран: {z}")
+    subprocess.Popen(["explorer", f"/select,{z}"])
+    os.startfile(BOT_URL)
+    return z
 _HINTED = set()
 
 
@@ -1628,6 +1656,9 @@ def main(argv):
                     CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
                 except (OSError, ValueError):
                     pass
+            tray.HOOKS.update(report=lambda: (make_report(), tray.notify(
+                "Журналы рации собраны в архив и показаны в папке. Перетащи этот файл в чат с ботом и коротко "
+                "напиши, что случилось.")))
             tray.HOOKS.update(upd_status=lambda: upd.status, upd_check=upd_check, upd_auto=upd_auto,
                               upd_auto_on=lambda: upd.auto, upd_enabled=lambda: upd.enabled,
                               changelog=lambda: os.startfile(str(ROOT / "CHANGELOG.md")))

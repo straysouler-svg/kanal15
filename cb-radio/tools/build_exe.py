@@ -142,6 +142,10 @@ if __name__ == "__main__":
     variant = sys.argv[1]
     if "--skip-radio" not in sys.argv:
         build_radio()
+    if "--app-only" in sys.argv:              # an update: refresh build/app_<variant> only, then publish_update.py
+        build_app(variant)
+        print("APP:", BUILD / f"app_{variant}")
+        sys.exit(0)
     build_uninstaller()
     app = build_app(variant)
     build_setup(variant, build_payload(app, variant))

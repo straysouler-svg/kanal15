@@ -57,3 +57,6 @@ crash.log
 last_ptt*.wav
 probe_job.txt
 *.dmp
+
+# почта бота: анкеты, голоса и журналы людей — личное, не в репозиторий
+/promo/telegram/inbox/

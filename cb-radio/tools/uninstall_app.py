@@ -97,7 +97,7 @@ class Uninstall:
         # folders that only the radio and its updates fill (updates add files the install list doesn't know)
         if (APP / "CB-Radio.exe").exists() and APP.name.lower() == "cb-radio":
             import shutil
-            for sub in ("update", "app", "audio", "phrases", "map", "installer", "models", "_internal"):
+            for sub in ("update", "reports", "app", "audio", "phrases", "map", "installer", "models", "_internal"):
                 shutil.rmtree(APP / sub, ignore_errors=True)
         for d in sorted((q for q in APP.rglob("*") if q.is_dir()), key=lambda q: -len(q.parts)):
             try:

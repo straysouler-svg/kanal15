@@ -109,7 +109,7 @@ def notes_of(ver):
     return lines
 
 
-def publish(variant, with_installer=False):
+def publish(variant, with_installer=False, installer_url=None):
     ch = channels()
     channel, bucket = ch["channels"][variant], ch["bucket"]
     app = BUILD / f"app_{variant}"
@@ -126,11 +126,16 @@ def publish(variant, with_installer=False):
         s3_put(bucket, f"channels/{channel}/{name}", inst.read_bytes(), "application/vnd.microsoft.portable-executable",
                cache="public, max-age=86400")
         m["installer_url"] = f"{url}/channels/{channel}/{name}"
+    if installer_url:                         # an installer already in the bucket (an older version updates itself)
+        m["installer_url"] = installer_url
     sent = sent_bytes = 0
     for rel, (h, size) in sorted(files.items()):
         if exists(f"{url}/blobs/{h}"):
             continue
-        s3_put(bucket, f"blobs/{h}", (app / rel).read_bytes())
+        data = (app / rel).read_bytes()
+        if hashlib.sha256(data).hexdigest() != h:          # 2026-11-05: the app folder was rebuilt mid-upload
+            raise SystemExit(f"{rel} изменился во время выкладки — пересобери и запусти выкладку заново")
+        s3_put(bucket, f"blobs/{h}", data)
         sent, sent_bytes = sent + 1, sent_bytes + size
         if sent % 50 == 0:
             print(f"  ... загружено {sent} файлов, {sent_bytes / 1e6:.0f} МБ")
@@ -147,4 +152,5 @@ if __name__ == "__main__":
     if "--init" in sys.argv:
         init()
     else:
-        publish(sys.argv[1], "--installer" in sys.argv)
+        iu = sys.argv[sys.argv.index("--installer-url") + 1] if "--installer-url" in sys.argv else None
+        publish(sys.argv[1], "--installer" in sys.argv, iu)

@@ -125,8 +125,8 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
             Item("Обновлять автоматически", lambda icon, item: hook("upd_auto")(),
                  checked=lambda i: bool(hook("upd_auto_on", True)())),
             Item("Что нового…", lambda icon, item: hook("changelog")()))),
-        Item("Настройки…", open_file(cfg_file)),
         Item("Журнал эфира…", open_file(log_file)),
+        Item("Сообщить о проблеме…", lambda icon, item: hook("report")()),
         Menu.SEPARATOR,
         Item("Выключить рацию", quit_),
     )

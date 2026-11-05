@@ -9,6 +9,10 @@
     python autopost.py --dry-run  # показать, что опубликовал бы сейчас, ничего не отправляя
     python autopost.py --check    # проверить бота и права в канале
     python autopost.py --post ID  # опубликовать пост ID немедленно (вне очереди)
+    python autopost.py --inbox    # почта бота: непрочитанное (--inbox --read — и отметить прочитанным)
+
+Почтовый ящик (2026-11-05): на каждом запуске забирает сообщения боту @kanal15_publisher_bot (анкеты, голосовые,
+журналы рации, отзывы) в inbox/<дата>_<отправитель>/ и отвечает «спасибо, получили» (раз в день на человека).
 
 Файлы рядом: bot_token.txt (токен), schedule.json (что и когда), state.json (что уже вышло), autopost.log (журнал).
 Только стандартная библиотека Python, без установки пакетов.
@@ -102,6 +106,92 @@ class TelegramError(Exception):
     def __init__(self, msg, http=None):
         super().__init__(msg)
         self.http = http
+
+
+# ---------- почтовый ящик бота ----------
+
+INBOX = HERE / "inbox"
+INBOX_STATE = INBOX / "_state.json"
+WELCOME = ("Привет! Это бот «Канала 15» — рации для одиночной игры в Euro Truck Simulator 2.\n\n"
+           "Сюда можно прислать:\n"
+           "• анкету и записи голоса, чтобы стать водителем в эфире (анкета — в посте канала t.me/kanal15_ets2);\n"
+           "• журнал рации, если что-то не работает (значок рации → «Сообщить о проблеме»);\n"
+           "• любой отзыв или идею.\n\nМы читаем всё и отвечаем в течение пары дней.")
+THANKS = "Спасибо, получили! Ответим в течение пары дней."
+FILE_KINDS = ("voice", "audio", "document", "video", "video_note")
+
+
+def _safe(s):
+    return "".join(c if c.isalnum() or c in "-_." else "_" for c in str(s))[:60] or "anon"
+
+
+def _fetch(file_id, dest):
+    f = api("getFile", {"file_id": file_id})
+    if f.get("file_size", 0) > 20 * 1024 * 1024:
+        return None                                    # Bot API отдаёт файлы только до 20 МБ
+    token = TOKEN_FILE.read_text(encoding="utf-8").strip()
+    with urllib.request.urlopen(f"https://api.telegram.org/file/bot{token}/{f['file_path']}", timeout=120) as r:
+        dest.write_bytes(r.read())
+    return dest.name
+
+
+def poll_inbox():
+    """Забрать новые личные сообщения боту, сохранить, ответить. -> сколько новых."""
+    INBOX.mkdir(exist_ok=True)
+    st = load_json(INBOX_STATE, {"offset": 0, "thanked": {}, "unread": []})
+    new = 0
+    for u in api("getUpdates", {"offset": st["offset"], "timeout": 0, "allowed_updates": ["message"]}):
+        st["offset"] = u["update_id"] + 1
+        m = u.get("message")
+        if not m or m.get("chat", {}).get("type") != "private":
+            continue
+        fr = m.get("from", {})
+        who = fr.get("username") or f"id{fr.get('id')}"
+        when = datetime.fromtimestamp(m["date"], MSK)
+        d = INBOX / f"{when:%Y-%m-%d}_{_safe(who)}"
+        d.mkdir(parents=True, exist_ok=True)
+        text = m.get("text") or m.get("caption") or ""
+        rec = {"time": f"{when:%Y-%m-%d %H:%M}", "from": who,
+               "name": " ".join(x for x in (fr.get("first_name"), fr.get("last_name")) if x),
+               "chat_id": m["chat"]["id"], "text": text, "files": []}
+        for kind in FILE_KINDS:
+            if kind in m:
+                fn = m[kind].get("file_name") or f"{kind}_{m['message_id']}" + {"voice": ".ogg", "video_note": ".mp4"}.get(kind, "")
+                got = _fetch(m[kind]["file_id"], d / _safe(fn))
+                rec["files"].append(got or f"{fn} (больше 20 МБ — попросить ссылку на облако)")
+        if "photo" in m:
+            rec["files"].append(_fetch(m["photo"][-1]["file_id"], d / f"photo_{m['message_id']}.jpg"))
+        with (d / "messages.jsonl").open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        st["unread"].append(f"{d.name}/{m['message_id']}")
+        new += 1
+        chat = m["chat"]["id"]
+        if text.strip().startswith("/start"):
+            api("sendMessage", {"chat_id": chat, "text": WELCOME, "disable_web_page_preview": True})
+        elif st["thanked"].get(str(chat)) != f"{when:%Y-%m-%d}":
+            api("sendMessage", {"chat_id": chat, "text": THANKS})
+            st["thanked"][str(chat)] = f"{when:%Y-%m-%d}"
+    tmp = INBOX_STATE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(INBOX_STATE)
+    return new
+
+
+def show_inbox(mark_read=False):
+    st = load_json(INBOX_STATE, {"unread": []})
+    if not st.get("unread"):
+        print("непрочитанного нет")
+        return 0
+    for d in sorted(INBOX.glob("*/messages.jsonl")):
+        for line in d.read_text(encoding="utf-8").splitlines():
+            r = json.loads(line)
+            files = f"  [файлы: {', '.join(str(x) for x in r['files'])}]" if r["files"] else ""
+            print(f"{r['time']}  {r['from']} ({r['name']}): {r['text'][:300]}{files}")
+    print(f"непрочитанных сообщений: {len(st['unread'])} — папка {INBOX}")
+    if mark_read:
+        st["unread"] = []
+        INBOX_STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+    return 0
 
 
 def resolve(p):
@@ -243,13 +333,23 @@ def main():
         return show_list()
     if "--check" in args:
         return check()
+    if "--inbox" in args:
+        return show_inbox(mark_read="--read" in args)
     # защита от двух одновременных запусков; замок старше 30 минут считается брошенным
     if LOCK.exists() and time.time() - LOCK.stat().st_mtime < 1800:
         return 0
     LOCK.write_text(str(datetime.now(MSK)), encoding="utf-8")
     try:
         force = args[args.index("--post") + 1] if "--post" in args else None
-        return run(dry="--dry-run" in args, force_id=force)
+        res = run(dry="--dry-run" in args, force_id=force)
+        if "--dry-run" not in args:
+            try:
+                n = poll_inbox()
+                if n:
+                    log(f"почта бота: новых сообщений {n} (python autopost.py --inbox)")
+            except Exception as e:  # почта не должна мешать постам
+                log(f"почта бота: {e!r}")
+        return res
     except Exception as e:  # чтобы планировщик не копил висящие ошибки
         log(f"СБОЙ: {e!r}")
         return 3
