@@ -199,6 +199,21 @@ def resolve(p):
     return path if path.is_absolute() else (HERE / path).resolve()
 
 
+def video_meta(f):
+    """width / height / duration of a video for sendVideo (ffprobe), so phones show it in the right shape."""
+    import subprocess
+    try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                              "stream=width,height:format=duration", "-of", "json", str(f)],
+                             capture_output=True, text=True, timeout=30, creationflags=0x08000000).stdout
+        j = json.loads(out)
+        st = j["streams"][0]
+        return {"width": st["width"], "height": st["height"], "duration": int(float(j["format"]["duration"])),
+                "supports_streaming": "true"}
+    except Exception:  # noqa: BLE001 — a post without the size is still a post
+        return {"supports_streaming": "true"}
+
+
 def publish(post, chat_id):
     kind = post["kind"]
     base = {"chat_id": chat_id}
@@ -217,6 +232,8 @@ def publish(post, chat_id):
         if not f.exists():
             raise FileNotFoundError(f"нет файла {f}")
         extra = {k: post[k] for k in ("performer", "title") if k in post and kind == "audio"}
+        if kind == "video":
+            extra.update(video_meta(f))      # 2026-11-05: without size Telegram drew the vertical short squeezed
         r = api({"audio": "sendAudio", "voice": "sendVoice", "photo": "sendPhoto",
                  "video": "sendVideo", "document": "sendDocument"}[kind], {**base, **extra}, {kind: f})
     else:
