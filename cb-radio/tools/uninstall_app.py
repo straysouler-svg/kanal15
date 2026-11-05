@@ -72,10 +72,14 @@ class Uninstall:
             except OSError:
                 notes.append(f"не удалил ярлык {lnk}")
         if self.plugin.get() and self.m.get("plugin_installed"):
-            try:
-                Path(self.m["plugin_installed"]).unlink(missing_ok=True)
-            except OSError:
-                notes.append("плагин занят игрой — закрой игру и удали его вручную: " + self.m["plugin_installed"])
+            for pl in dict.fromkeys(self.m.get("plugins_installed") or [self.m["plugin_installed"]]):
+                try:
+                    import gamecheck               # 1.13: a protected folder -> administrator prompt
+                    ok, why = gamecheck.remove_file(pl)
+                except Exception as e:  # noqa: BLE001
+                    ok, why = False, repr(e)
+                if not ok:
+                    notes.append("плагин не удалился (закрой игру и удали его вручную): " + pl)
         remove_registry()
         keep = APP.parent / "CB-Radio-настройки"
         if self.keep.get() and (APP / "config.json").exists():

@@ -121,6 +121,17 @@ PLUGIN = HERE / "installer" / "plugins" / "ets2-telemetry.dll"
 
 
 def find_game_dirs():
+    """ETS2 folders: Steam libraries + any other copy (1.13, gamecheck.find_games: the running game, copies Windows
+    remembers starting, installed programs, a short disk scan)."""
+    steam = steam_game_dirs()
+    try:
+        import gamecheck
+        return gamecheck.find_games(extra=steam)
+    except Exception:  # noqa: BLE001 — never worse than Steam only
+        return steam
+
+
+def steam_game_dirs():
     """ETS2 install folders: every Steam library (registry + libraryfolders.vdf) that has the game."""
     import re
     import winreg

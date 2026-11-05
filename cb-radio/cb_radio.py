@@ -1351,13 +1351,20 @@ def _send_quit(port):
         return False
 
 
-def single_instance(port, quit_only=False):
+def single_instance(port, quit_only=False, takeover=False):
     """Hold the lock port for the process lifetime and listen there for «quit» (2026-11-05: the user could only
     close a windowless radio through Task Manager). A second launch offers to switch the running one off."""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.bind(("127.0.0.1", port))
-    except OSError:
+    bound = False
+    for _ in range(40 if takeover else 1):    # 1.13: «перезапустить с правами администратора» — the old one is leaving
+        try:
+            s.bind(("127.0.0.1", port))
+            bound = True
+            break
+        except OSError:
+            if takeover:
+                time.sleep(0.5)
+    if not bound:
         windowless = sys.stdout is None
         if quit_only:
             ok = _send_quit(port)
@@ -1541,7 +1548,7 @@ def main(argv):
             PLAYER.item(p)
         return
 
-    _lock = single_instance(cfg["lock_port"], quit_only="--quit" in argv)  # noqa: F841 (held for the process lifetime)
+    _lock = single_instance(cfg["lock_port"], quit_only="--quit" in argv, takeover="--takeover" in argv)  # noqa: F841 (held for the process lifetime)
     tray = None
     if "--console" not in argv:               # the radio's icon by the clock instead of a console window
         try:
@@ -1577,6 +1584,33 @@ def main(argv):
             log(f"плагин из меню: {text}")
             tray.notify(text)
         tray.HOOKS.update(plugin_needed=lambda: gamecheck.needs_fix(GSEEN["dir"]), plugin_install=plugin_install)
+
+        # 1.13: the game runs as administrator (many repacks mark it so) -> Windows keeps the radio away
+        def admin_fix():
+            ok, text = gamecheck.clear_admin_flags()
+            log(f"снять «от администратора» из меню: {text}")
+            if ok:
+                GSEEN.update(since=None, diag=None)
+            tray.notify(text)
+
+        def admin_restart():
+            if getattr(sys, "frozen", False):
+                exe, params = sys.executable, "--takeover"
+            else:
+                exe, params = sys.executable, f'"{Path(__file__).resolve()}" --takeover'
+            ok, why = gamecheck.run_as_admin(exe, params, wait=False)
+            log(f"перезапуск рации с правами администратора: {ok} {why or ''}")
+            if ok:
+                QUIT_REQ["why"] = "для перезапуска с правами администратора"
+            else:
+                tray.notify("Рация не перезапущена: Windows не дала прав администратора." if why == "cancelled"
+                            else f"Рация не перезапущена ({why}).")
+
+        def admin_state():
+            if GSEEN["diag"] != "admin":
+                return None
+            return "flag" if gamecheck.admin_flags() else ("restart" if not gamecheck.is_admin() else None)
+        tray.HOOKS.update(admin_state=admin_state, admin_fix=admin_fix, admin_restart=admin_restart)
     ptt = PTT(cfg)
     PLAYER.ptt = ptt if ptt.ok else None
     ears = Ears(cfg) if ptt.ok else None

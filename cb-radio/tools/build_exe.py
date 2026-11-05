@@ -51,7 +51,8 @@ def build_radio():
 def build_uninstaller():
     spec = BUILD / "uninstall.spec"
     spec.write_text(f"""
-a = Analysis([r"{CB / 'tools' / 'uninstall_app.py'}"], excludes=["numpy", "scipy"])
+a = Analysis([r"{CB / 'tools' / 'uninstall_app.py'}"], pathex=[r"{CB}"], hiddenimports=["gamecheck"],
+             excludes=["numpy", "scipy"])
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="Uninstall", icon=r"{BUILD / 'cb_radio.ico'}",
           console=False, upx=False)

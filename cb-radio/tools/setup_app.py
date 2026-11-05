@@ -71,6 +71,10 @@ def game_found():
     return dirs, docs.exists()
 
 
+def gamecheck_plugin_exists(g, name):
+    return (Path(g) / "bin" / "win_x64" / "plugins" / name).exists()
+
+
 def stop_running_radio(port=47819):
     """The radio holds its files open: ask it to switch off before we overwrite them (radio >= 1.01)."""
     try:
@@ -392,25 +396,62 @@ class Wizard:
         plugin = old.get("plugin_installed")
         if self.plugin_target and not self.plugin_was and self.plugin_target.exists():
             plugin = str(self.plugin_target)                 # we put it there -> the uninstaller may take it away
+        plugins = list(old.get("plugins_installed") or ([plugin] if plugin else []))
+        for g, was in (getattr(self, "plugin_was_all", None) or {}).items():   # 1.13: every copy we put it into
+            t = Path(g) / "bin" / "win_x64" / "plugins" / "ets2-telemetry.dll"
+            if not was and t.exists() and str(t) not in plugins:
+                plugins.append(str(t))
         (self.app / "install.json").write_text(json.dumps(
-            {"files": self.files, "shortcuts": self.shortcuts, "plugin_installed": plugin}, ensure_ascii=False,
-            indent=1), encoding="utf-8")
+            {"files": self.files, "shortcuts": self.shortcuts, "plugin_installed": plugin or (plugins[0] if plugins else None),
+             "plugins_installed": plugins}, ensure_ascii=False, indent=1), encoding="utf-8")
 
     def p_plugin(self):
         self.title("Плагин телеметрии", "По нему рация понимает, что вы едете, где вы и когда игра на паузе.")
         src = self.app / "installer" / "plugins" / "ets2-telemetry.dll"   # 1.06: the one that makes SimTelemetryETS2
         dirs = self.game_dirs
         self.game = getattr(self, "game", None) or (dirs[0] if dirs else None)
+        # 1.13: Steam or not — every copy found gets the plugin (the player may run any of them)
+        self.games = getattr(self, "games", None) or list(dirs)
         self.plug_info = self.text("")
         row = tk.Frame(self.page, bg=PAGE_BG)
         row.pack(fill="x", pady=8)
         self.plug_btn = ttk.Button(row, text="Установить плагин", command=lambda: self._plugin_copy(src))
         self.plug_btn.pack(side="left")
         ttk.Button(row, text="Выбрать папку игры…", command=lambda: self._plugin_pick(src)).pack(side="left", padx=6)
-        self.text("Игра должна быть закрыта. Этот шаг можно пропустить и вернуться к нему, запустив установщик ещё раз.",
+        self.text("Игра должна быть закрыта. Если игра стоит в защищённой папке (например, C:\\Program Files), "
+                  "Windows спросит разрешение — ответьте «Да». Шаг можно пропустить и вернуться к нему позже.",
                   fg=GREY, pady=(12, 3))
+        self.admin_row = tk.Frame(self.page, bg=PAGE_BG)
+        self.admin_row.pack(fill="x", pady=(6, 0))
         self._plugin_show(src)
+        self._admin_show()
         self.buttons(back=False)
+
+    def _admin_show(self):
+        """1.13: many repacks mark the game «run as administrator» — then Windows keeps the radio away from it."""
+        import gamecheck
+        for w in self.admin_row.winfo_children():
+            w.destroy()
+        try:
+            flags = gamecheck.admin_flags()
+        except Exception as e:  # noqa: BLE001
+            slog(f"отметка администратора: {e!r}")
+            flags = []
+        if not flags:
+            return
+        slog(f"игра помечена «от администратора»: {flags}")
+        tk.Label(self.admin_row, text="Игра помечена «запускать от имени администратора» — из-за этого Windows не "
+                                      "пустит рацию к её данным.", bg=PAGE_BG, fg="#b06000", font=F_TEXT,
+                 wraplength=410, justify="left").pack(anchor="w")
+
+        def clear():
+            ok, text = gamecheck.clear_admin_flags()
+            slog(f"снять «от администратора»: {ok} {text}")
+            for w in self.admin_row.winfo_children():
+                w.destroy()
+            tk.Label(self.admin_row, text=text, bg=PAGE_BG, fg="#2e7d32" if ok else "#b00000", font=F_TEXT,
+                     wraplength=410, justify="left").pack(anchor="w")
+        ttk.Button(self.admin_row, text="Снять отметку", command=clear).pack(anchor="w", pady=(4, 0))
 
     def _plugin_show(self, src):
         if not self.game:
@@ -421,13 +462,19 @@ class Wizard:
         t = self.game / "bin" / "win_x64" / "plugins" / src.name
         if self.plugin_target is None:
             self.plugin_target, self.plugin_was = t, t.exists()
+            self.plugin_was_all = {str(g): gamecheck_plugin_exists(g, src.name) for g in self.games}
         import gamecheck
         vc = gamecheck.vc_missing(self.game)
-        same = t.exists() and t.read_bytes() == src.read_bytes() and not vc
-        slog(f"плагин: {t} — {'на месте' if t.exists() else 'нет'}; не хватает Visual C++: {vc or 'нет'}")
-        self.plug_info.config(text=f"Игра: {self.game}\n" + (
+        same = all(gamecheck.plugin_current(src, g) for g in self.games)
+        slog(f"плагин: {t} — {'на месте' if t.exists() else 'нет'}; не хватает Visual C++: {vc or 'нет'}; "
+             f"копий игры: {[str(g) for g in self.games]}")
+        where = f"Игра: {self.game}" if len(self.games) < 2 else \
+            "Найдено копий игры: " + str(len(self.games)) + " — плагин встанет во все:\n" + \
+            "\n".join(str(g) for g in self.games[:4])
+        t_exists = all(gamecheck.plugin_path(g).exists() for g in self.games)
+        self.plug_info.config(text=where + "\n" + (
             "Плагин уже установлен — ничего делать не нужно." if same else
-            "Плагин на месте, но ему не хватает Visual C++ 2012 — нажмите «Установить плагин»." if t.exists() else
+            "Плагин на месте, но его нужно обновить — нажмите «Установить плагин»." if t_exists else
             "Плагин ещё не установлен."), fg="#2e7d32" if same else TXT)
         self.plug_btn.config(state="disabled" if same else "normal")
 
@@ -439,21 +486,18 @@ class Wizard:
             if not (g / "bin" / "win_x64").exists():
                 self.plug_info.config(text=r"В этой папке нет bin\win_x64 — это не папка игры.", fg="#b00000")
                 return
-            self.game, self.plugin_target = g, None
+            self.game, self.plugin_target, self.games = g, None, [g]
             self._plugin_show(src)
 
     def _plugin_copy(self, src):
-        t = self.game / "bin" / "win_x64" / "plugins" / src.name
         try:
-            t.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, t)
-            slog(f"плагин поставлен: {t}")
             import gamecheck                       # 1.04: Kirill's game showed the SDK dialog but never loaded it
-            ok, msg = gamecheck.fix(src, src.parent / "vc", self.game)
-            slog(f"Visual C++ для плагина: {msg}")
-            if not ok:
-                self.plug_info.config(text=msg, fg="#b00000")
-                return
+            for g in self.games:                   # 1.13: plugin + Visual C++, admin prompt if the folder is protected
+                ok, msg = gamecheck.fix(src, src.parent / "vc", g)
+                slog(f"плагин в {g}: {ok} {msg}")
+                if not ok:
+                    self.plug_info.config(text=f"{g}:\n{msg}", fg="#b00000")
+                    return
             try:                                   # 1.00-1.05 put the WRONG plugin in; remove it only if WE did
                 old = json.loads((self.app / "install.json").read_text(encoding="utf-8")).get("plugin_installed") or ""
                 if old.endswith(gamecheck.WRONG_PLUGIN) and Path(old).exists():
