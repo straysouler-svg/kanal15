@@ -17,6 +17,7 @@ COLORS = {                    # speaker name colours (ASS BGR)
     "player": "&H004EC1F2&", "petrovna": "&H009C8CFF&", "mihalych": "&H0060B0FF&", "lastochka": "&H00E08CF0&",
     "vitek": "&H0070E070&", "ten": "&H00C0C0C0&", "stas": "&H00FFC060&", "yanek": "&H0080FFFF&",
     "boroda": "&H004080E0&", "bahti": "&H00FFB040&", "vera": "&H0080E0A0&", "rustam": "&H0040A0FF&", "buh": "&H00B0FFB0&", "foreign": "&H00D0D0D0&",
+    "lisa": "&H003C8CFF&", "sova": "&H00E0C8A0&", "kardan": "&H006060FF&", "author": "&H00C0C0C0&",
 }
 NAMES = {"player": "Железяка", "petrovna": "Петровна", "mihalych": "Михалыч", "lastochka": "Ласточка",
          "vitek": "Витёк", "ten": "Тень", "stas": "Стас", "yanek": "Янек", "boroda": "Борода",
@@ -103,6 +104,9 @@ def main(spec_path):
     sub.write_text(ass(spec, dur), encoding="utf-8")
     out = HERE / "out" / spec.get("out", spec_path.stem + ".mp4")
     out.parent.mkdir(exist_ok=True)
+    # 2026-11-05: "layout": "phone" — a vertical phone video (the player at the wheel), full frame 1080x1920;
+    # "bleep": [[t, d], ...] (recording time) — swear words muted under a 1 kHz tone
+    phone = spec.get("layout") == "phone"
     W, H = 1964, 822           # source frame; square from the centre of the cab
     sq = H
     x0 = spec.get("crop_x", (W - sq) // 2)
@@ -111,14 +115,23 @@ def main(spec_path):
                   f"[0:a]atrim={a - s0:.3f}:{b - s0:.3f},asetpts=PTS-STARTPTS,"
                   f"afade=t=in:d=0.04,afade=t=out:st={b - a - 0.06:.3f}:d=0.06[a{i}];" for i, (a, b) in enumerate(ps))
     cut += "".join(f"[v{i}][a{i}]" for i in range(len(ps))) + f"concat=n={len(ps)}:v=1:a=1[cv][ca];"
-    vf = (cut + f"[cv]split=2[a][b];"
-          f"[a]crop={W - 120}:{H - 40}:60:20,scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.18[bg];"
-          f"[b]crop={sq}:{sq}:{x0}:0,scale=1080:1080[fg];"
-          f"[bg][fg]overlay=0:420,fps=30,"
+    frame = ("[cv]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30," if phone else
+             f"[cv]split=2[a][b];"
+             f"[a]crop={W - 120}:{H - 40}:60:20,scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.18[bg];"
+             f"[b]crop={sq}:{sq}:{x0}:0,scale=1080:1080[fg];"
+             f"[bg][fg]overlay=0:420,fps=30,")
+    vf = (cut + frame +
           f"tpad=stop_mode=clone:stop_duration={OUTRO_S},"
           f"drawbox=enable='gte(t,{body:.2f})':x=0:y=0:w=iw:h=ih:color=black@0.82:t=fill,"
           f"ass='{sub_f}':fontsdir='C\\:/Windows/Fonts'[v]")
     af = f"[ca]afade=t=in:d=0.3,apad=pad_dur={OUTRO_S},afade=t=out:st={body - 0.2:.2f}:d={OUTRO_S + 0.2:.2f}[au]"
+    bl = [(out_time(spec, t), d) for t, d in spec.get("bleep", [])]
+    bl = [(a, d) for a, d in bl if a is not None]
+    if bl:
+        on = "+".join(f"between(t,{a:.2f},{a + d:.2f})" for a, d in bl)
+        af = (f"[ca]volume=eval=frame:volume='1-({on})'[cm];"
+              f"sine=f=1000:sample_rate=48000:d={body:.2f},volume=eval=frame:volume='0.22*({on})'[bp];"
+              f"[cm][bp]amix=inputs=2:duration=first:normalize=0," + af[4:])
     cmd = ["ffmpeg", "-v", "error", "-y", "-ss", f"{s0:.2f}", "-t", f"{ps[-1][1] - s0 + 0.5:.2f}", "-i", str(src),
            "-filter_complex", vf + ";" + af, "-map", "[v]", "-map", "[au]",
            "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-profile:v", "high",
