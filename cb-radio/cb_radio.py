@@ -525,6 +525,8 @@ class Deck:
         self.allowed_far = set() # beyond range but within 2x: may answer in a scene, barely heard
         self.prefer = set()      # just came into range: let them talk first
         self.off_until = {}      # actor -> monotonic time
+        self.signed_off = {}     # actor -> monotonic time of his sign-off
+        self.grace = None        # an actor who may still answer although he signed off (a «пока» to his «пока»)
 
     def _save(self):
         try:
@@ -533,6 +535,8 @@ class Deck:
             log(f"не сохранил колоду: {e}")
 
     def offline(self, actor):
+        if actor == self.grace:
+            return False
         return self.off_until.get(actor, 0) > time.monotonic()
 
     def _ok(self, item, left, last_voice, strict):
@@ -615,6 +619,7 @@ class Deck:
             if pick in self.roles.get(a, {}).get("signoff", set()):
                 self.on_air.discard(a)
                 self.off_until[a] = time.monotonic() + OFFLINE_S
+                self.signed_off[a] = time.monotonic()
         return pick
 
     def is_greeting(self, item):
@@ -894,7 +899,7 @@ class Operator:
     person answer with a pre-voiced line. Without a microphone it falls back to press length and timing."""
     CLICK_S = 0.6            # shorter press = just a click of the key
     REGREET_S = 30 * 60      # after this long without talking, people greet you again
-    STT_WAIT_S = 6.0         # give up waiting for recognition after this
+    STT_WAIT_S = 9.0         # give up waiting for recognition after this (6 s ran out twice 2026-11-05: game + OBS)
 
     def __init__(self, deck, ears=None):
         self.deck, self.ears = deck, ears
@@ -979,7 +984,7 @@ class Operator:
         else:
             r = random.random()
             kind = "ack" if r < 0.7 else "not_heard" if r < 0.9 else None
-        if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat"):
+        if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude"):
             # step 2 of «вариативность» (2026-11-05): asked him the same within 10 min -> he notices
             last = self.asked.get((who, kind))
             self.asked[(who, kind)] = now
@@ -1159,7 +1164,7 @@ class Operator:
         if not who and kind != "interrupt" and random.random() > 0.6:
             prefer = None                # not always the same person answering
         pool = reaction_pool(group, kind)
-        question = group == "intent" and kind not in ("thanks", "bye")
+        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude")
         if who and who not in {a for a, _ in pool}:
             # called by name but he has no line on this topic: "не знаю, не слышал" (a question),
             # "принял" / hello otherwise; whatever he has
@@ -1185,7 +1190,14 @@ class Operator:
             # asked BY NAME: only he answers (user 2026-11-04: «Борода, как дела?» was answered by Ласточка
             # because Борода had just left the range) - near, or through the noise if he's just out; else silence
             pool = mine(pool) or pool
-        pick = self.deck.choose(pool, prefer=prefer, avoid=self.last_file)
+        # 2026-11-05 (Zhenya): Самарканд said «всё, на ночёвку», the player said «давай, пока» 10 s later -> silence.
+        # Somebody who has just signed off still answers a goodbye / thanks addressed to him.
+        if who and kind in ("bye", "thanks") and time.monotonic() - self.deck.signed_off.get(who, -1e9) < 180:
+            self.deck.grace = who
+        try:
+            pick = self.deck.choose(pool, prefer=prefer, avoid=self.last_file)
+        finally:
+            self.deck.grace = None
         if not pick and (question or kind == "dunno"):
             # nobody near has a recorded answer: somebody says he doesn't know / didn't get it
             for alt_kind in ("dunno", "not_heard"):
@@ -1205,7 +1217,8 @@ class Operator:
             if pick:
                 log(f"  отвечает дальний: {pick[0]}")
         if not pick and who:
-            log(f"{who} вне зоны рации — не слышит, молчит (за него никто не отвечает)")
+            log(f"{who} " + ("ушёл из эфира (попрощался)" if self.deck.offline(who) else "вне зоны рации — не слышит")
+                + ", молчит (за него никто не отвечает)")
             return
         if not pick:
             log(f"ответить некому: {group}/{kind} (у тех, кто в зоне, нет такой реплики)")

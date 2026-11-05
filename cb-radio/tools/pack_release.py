@@ -44,14 +44,29 @@ README = r"""# CB-рация для Euro Truck Simulator 2
 """
 
 
+CACHE = Path(__file__).resolve().parents[2] / "build" / "opus_cache"
+VARIANT = [None]
+
+
 def opus(src, dst):
-    x, sr = sf.read(src, dtype="float32")
+    """2026-11-05: an Opus file differs byte-for-byte on every encode (random stream serial), so every release
+    re-sent ALL sounds to players (1.14: 83 MB). The same wav -> the same .ogg as last time, from the cache."""
+    import hashlib
+    key = hashlib.sha256(Path(src).read_bytes()).hexdigest()
+    c = CACHE / (VARIANT[0] or "_") / key[:2] / (key + ".ogg")
     dst.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(dst.with_suffix(".ogg"), x, sr, format="OGG", subtype="OPUS")
+    if not c.exists():
+        x, sr = sf.read(src, dtype="float32")
+        c.parent.mkdir(parents=True, exist_ok=True)
+        tmp = c.with_name(key + ".tmp.ogg")
+        sf.write(tmp, x, sr, format="OGG", subtype="OPUS")
+        tmp.replace(c)
+    shutil.copy2(c, dst.with_suffix(".ogg"))
 
 
 def main(variant):
     assert variant in HANDLE, "kirill | neutral"
+    VARIANT[0] = variant
     out = OUT_BASE / variant / "CB-Radio"
     if out.exists():
         shutil.rmtree(out)
