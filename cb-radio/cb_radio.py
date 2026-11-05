@@ -74,11 +74,13 @@ def snd_glob(d, pattern):
 # ---- which version of the lines that call the player by name (config "variant", 2026-11-04):
 # "" = the original (Железяка), "kirill" = for Кирилл, "neutral" = no name (public build).
 VARIANT = ""
+BUILD_NAME = ""               # config "build" (set by pack_release): kirill / <customer> -> reactions/only_<build>
 HANDLE_LINES = set()          # "reactions/player/greet/01", ... - lines that call the player by name
 
 
 def load_variant(cfg):
-    global VARIANT
+    global VARIANT, BUILD_NAME
+    BUILD_NAME = str(cfg.get("build") or "")
     VARIANT = str(cfg.get("variant") or "")
     if not VARIANT:
         return
@@ -131,6 +133,7 @@ DEFAULT_CFG = {
     "greet_reply_chance": 0.85,    # someone answers an actor's hello
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
+    "update": {"url": "", "channel": "public", "auto": True},   # tools/pack_release.py fills url + channel per build
 }
 
 
@@ -1213,7 +1216,7 @@ class Operator:
         own = personal(group, kind, actor)
         if own:
             actor, wav = own
-            log(f"  личная реплика ({VARIANT})")
+            log(f"  личная реплика ({BUILD_NAME})")
         if (question or kind == "dunno") and wav == self.last_file:
             log(f"{actor}: тот же ответ второй раз подряд — молчит")
             return
@@ -1249,9 +1252,9 @@ PERSONAL_P = 0.5
 def personal(group, kind, actor):
     """A line of this build's own (reactions/only_<variant>/<group>__<kind>) for this actor, half of the time:
     e.g. Ласточка flirting with Кирилл only in his build (2026-11-05). None in the user's radio and in neutral."""
-    if not VARIANT or random.random() > PERSONAL_P:
+    if not BUILD_NAME or random.random() > PERSONAL_P:
         return None
-    pool = [x for x in reaction_pool(f"only_{VARIANT}", f"{group}__{kind}") if x[0] == actor]
+    pool = [x for x in reaction_pool(f"only_{BUILD_NAME}", f"{group}__{kind}") if x[0] == actor]
     if not pool:
         return None
     pick = random.choice(fresh_first(pool))
@@ -1604,6 +1607,33 @@ def main(argv):
         except Exception as e:
             world = None
             log(f"живая трасса не запустилась: {e!r}")
+    upd = None
+    try:                                      # 2026-11-05: quiet background updates (updater.py, launcher.py)
+        import updater as updater_mod
+        upd = updater_mod.Updater(ROOT, cfg, VERSION, log=log, notify=(tray.notify if tray else None))
+        upd.start()
+        if tray:
+            def upd_check():
+                import threading
+
+                def run():
+                    tray.notify("Обновления: " + upd.check())
+                threading.Thread(target=run, daemon=True).start()
+
+            def upd_auto():
+                upd.auto = not upd.auto
+                try:
+                    cur = json.loads(CFG_FILE.read_text(encoding="utf-8-sig"))
+                    cur.setdefault("update", {})["auto"] = upd.auto
+                    CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
+                except (OSError, ValueError):
+                    pass
+            tray.HOOKS.update(upd_status=lambda: upd.status, upd_check=upd_check, upd_auto=upd_auto,
+                              upd_auto_on=lambda: upd.auto, upd_enabled=lambda: upd.enabled,
+                              changelog=lambda: os.startfile(str(ROOT / "CHANGELOG.md")))
+    except Exception as e:
+        log(f"обновления не подключились: {e!r}")
+    upd_ok_at = time.monotonic() + 20         # healthy for 20 s -> keep the update the launcher just applied
     air = apply_air(cfg, world, cfg.get("air", "normal"))
     log(f"эфир: {air['name']}")
     if tray:
@@ -1695,6 +1725,10 @@ def main(argv):
                     tray.set_state(st, {"no_game": "игра в меню или загружается" if GSEEN["diag"] == "menu" or game._p
                                         else "жду игру", "paused": "пауза", "engine_off": "мотор выключен",
                                         "driving": "едем"}[st])
+            if upd_ok_at and time.monotonic() > upd_ok_at:
+                upd_ok_at = 0
+                if upd:
+                    upd.mark_ok()
             if TRAY_STATE.get("quit") or QUIT_REQ["why"]:
                 log("выход " + (QUIT_REQ["why"] or "из меню значка"))
                 try:

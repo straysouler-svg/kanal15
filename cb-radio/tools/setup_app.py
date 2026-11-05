@@ -327,6 +327,9 @@ class Wizard:
         try:
             slog(f"установка в {dst}")
             stop_running_radio()
+            for stale in ("update/staged", "update/backup"):  # an update staged by an older version must not
+                shutil.rmtree(dst / stale, ignore_errors=True)   # overwrite what we install now
+            (dst / "update" / "applied.json").unlink(missing_ok=True)
             dst.mkdir(parents=True, exist_ok=True)
             slog(f"архив: {PAYLOAD}")
             with zipfile.ZipFile(PAYLOAD) as z:

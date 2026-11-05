@@ -119,6 +119,12 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
         Item("Эфир", Menu(air_items)),
         Item("Микрофон", Menu(mic_items)),
         Item("Тишина в эфире", toggle_mute, checked=lambda i: STATE["muted"]),
+        Item("Обновления", Menu(
+            Item(lambda i: str(hook("upd_status", "—")() or "—")[:60], None, enabled=False),
+            Item("Проверить сейчас", lambda icon, item: hook("upd_check")(), enabled=lambda i: bool(hook("upd_enabled", False)())),
+            Item("Обновлять автоматически", lambda icon, item: hook("upd_auto")(),
+                 checked=lambda i: bool(hook("upd_auto_on", True)())),
+            Item("Что нового…", lambda icon, item: hook("changelog")()))),
         Item("Настройки…", open_file(cfg_file)),
         Item("Журнал эфира…", open_file(log_file)),
         Menu.SEPARATOR,

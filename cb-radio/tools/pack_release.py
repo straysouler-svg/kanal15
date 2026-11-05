@@ -15,7 +15,8 @@ import soundfile as sf
 ROOT = Path(__file__).resolve().parents[1]
 OUT_BASE = ROOT.parent / "release"
 PERSONAL = {"soroka"}
-CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py"]
+CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tray.py", "mic.py", "gamecheck.py",
+        "updater.py", "ed25519.py", "launcher.py"]
 HANDLE = {"kirill": "Сиди-Посиди", "neutral": ""}
 README = r"""# CB-рация для Euro Truck Simulator 2
 
@@ -127,7 +128,13 @@ def main(variant):
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     cfg["ptt"] = {"device": "", "button": None}
     cfg["mic"] = {"enabled": True, "device": "", "model": "small"}
-    cfg.pop("variant", None)
+    cfg.pop("variant", None)                 # names are baked into the audio files of this build
+    cfg["build"] = variant                    # -> reactions/only_<build> (personal lines, e.g. Ласточка for Кирилл)
+    chf = ROOT / "tools" / "update_channels.json"
+    if chf.exists():                          # auto-update: where this build looks for new versions
+        ch = json.loads(chf.read_text(encoding="utf-8"))
+        cfg["update"] = {"url": f"https://storage.yandexcloud.net/{ch['bucket']}",
+                         "channel": ch["channels"].get(variant, "public"), "auto": True}
     (out / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=4), encoding="utf-8")
     (out / "requirements.txt").write_text("numpy\nscipy\nsoundfile\nsounddevice\nfaster-whisper\npygame-ce\n",
                                           encoding="utf-8")
