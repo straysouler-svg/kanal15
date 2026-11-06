@@ -1553,6 +1553,44 @@ def play_murmur(world):
     PLAYER.file(tmp)
 
 
+ASK_P = 0.35                  # chance that a turn on air is «driver asks the channel, another answers»
+ASK_ANSWER = {"road": ("intent", "road"), "food": ("intent", "food"), "joke": ("intent", "joke"),
+              "how": ("intent", "how_are_you")}
+
+
+def air_ask(deck):
+    """Drivers talk to each other (2026-11-06, stream chat: «не хватает, чтобы они друг с другом говорили»):
+    one near you asks the channel (reactions/ask/<topic>), another near you answers with his own line on that
+    topic — any pair can talk this way, not only the pairs that have scenes. True if it was played."""
+    here = [a for a in (deck.allowed or ()) if not deck.offline(a)]
+    if len(here) < 2:
+        return False
+    random.shuffle(here)
+    for a in here:
+        topics = list(ASK_ANSWER)
+        random.shuffle(topics)
+        for t in topics:
+            q = line_of("ask", t, a)
+            if not q:
+                continue
+            others = [b for b in here if b != a]
+            g, k = ASK_ANSWER[t]
+            pool = [x for x in reaction_pool(g, k) if x[0] in others
+                    and not (BONDS and BONDS.calls_by_name(_rel(x[1])))]     # not «Железяка» to another driver
+            if not pool:
+                continue
+            ans = mood_pick(fresh_first(pool))
+            heard(ans[1])
+            log(f"эфир: {a} спрашивает канал ({t}) -> отвечает {ans[0]}")
+            if PLAYER.file(q[1], a) != "ok":
+                return True
+            if PLAYER.idle(random.uniform(0.7, 1.6)):
+                PLAYER.file(ans[1], ans[0])
+            deck.on_air.update((a, ans[0]))
+            return True
+    return False
+
+
 def greet_reply(deck, cfg, greeter):
     """Someone on the channel answers an actor's hello."""
     if random.random() > cfg.get("greet_reply_chance", 0.85):
@@ -2439,6 +2477,13 @@ def main(argv):
                     play_murmur(world)
                     murmur_acc, next_murmur = 0.0, random.uniform(90, 200)
             if driving_s >= next_at:
+                # 2026-11-06: two or more near you — now and then one asks the channel, another answers
+                if random.random() < ASK_P and air_ask(deck):
+                    driving_s = 0.0
+                    next_at = random.uniform(cfg["gap_min_s"], cfg["gap_max_s"])
+                    if next_k is not None:
+                        next_k = random.uniform(*kgap)
+                    continue
                 p = deck.draw()
                 if not p:                                # nobody in range (or nothing allowed): try later
                     next_at = driving_s + 20
