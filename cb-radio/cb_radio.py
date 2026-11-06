@@ -139,7 +139,10 @@ DEFAULT_CFG = {
 
 def log(msg):
     line = f"{datetime.now():%H:%M:%S} {msg}"
-    print(line, flush=True)
+    try:
+        print(line, flush=True)
+    except (UnicodeEncodeError, OSError, ValueError, AttributeError):
+        pass    # a cp1251 console can't print «→» (06.11: the radio died on start); the log file is what matters
     try:
         with LOG_FILE.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
@@ -590,10 +593,21 @@ class Deck:
             scenes = [p for p in cands if p.startswith("scene/")]
             if scenes:
                 cands = scenes                             # two of them nearby: let them talk to each other
+        if cands and BONDS:
+            # friendship & mood: a stranger doesn't say his lines that call you by name; a line that fits the
+            # speaker's mood today comes a little earlier, one against it a little later
+            cands = [p for p in cands if p.startswith("scene/") or not (
+                BONDS.level(actors_of(p)[0]) == 0 and BONDS.calls_by_name(p))] or cands
         if cands:
             pos = {p: i for i, p in enumerate(left)}
-            pick = min(cands, key=lambda p: (self.spoken.get(actors_of(p)[0], 0) / self.weights.get(actors_of(p)[0], 1.0),
-                                             pos[p]))
+
+            def mood_k(p):
+                if not BONDS or p.startswith("scene/"):
+                    return 0.0
+                w = BONDS.weight(actors_of(p)[0], p)
+                return -0.4 if w > 1 else 0.4 if w < 1 else 0.0
+            pick = min(cands, key=lambda p: (self.spoken.get(actors_of(p)[0], 0) / self.weights.get(actors_of(p)[0], 1.0)
+                                             + mood_k(p), pos[p]))
         else:
             pick = next((p for p in left if self._ok(p, left_set, last_voice, False)), None)
         hist = [h for h in self.st.get("history", []) if h in have]
@@ -635,26 +649,104 @@ class Deck:
             ok = [x for x in ok if x[1] != avoid] or ok
         if not ok:
             return None
+        ok = bond_filter(ok)
         for cand in ([x for x in ok if x[0] == prefer], [x for x in ok if x[0] in self.on_air], ok):
             if cand:
-                pick = random.choice(fresh_first(cand))
+                pick = mood_pick(fresh_first(cand))
                 heard(pick[1])
                 return pick
         return None
 
 
+# ---------------------------------------------------------------- friendship & mood (bonds.py, 2026-11-06)
+BONDS = None
+FEMALE = {"petrovna", "lastochka", "lisa", "sova", "vera", "soroka"}
+
+
+def bond_filter(cands):
+    """A stranger (friendship level 0) doesn't call you by name: drop his named lines if he has others."""
+    if not BONDS:
+        return cands
+    keep = [x for x in cands if not (BONDS.level(x[0]) == 0 and BONDS.calls_by_name(_rel(x[1])))]
+    return keep or cands
+
+
+def mood_pick(cands):
+    """Random pick weighted by each speaker's mood today (lines whose emotion tags fit it come up more)."""
+    if not BONDS or len(cands) < 2:
+        return random.choice(cands)
+    return random.choices(cands, weights=[BONDS.weight(a, _rel(f)) for a, f in cands])[0]
+
+
+def mood_nudge(actor, d, why):
+    """Cheer a driver up (+) or spoil his mood (-); a change shows on the stream overlay."""
+    if not BONDS:
+        return
+    ch = BONDS.nudge(actor, d, why)
+    if not ch or not OVERLAY:
+        return
+    import bonds as _b
+    before, after = ch
+    try:
+        nm = (_json(PHRASES_JSON) or {})["actors"][actor]["name"].split(" (")[0]
+    except (KeyError, TypeError):
+        nm = actor
+    she = actor in FEMALE
+    up = _b.Bonds.ORDER.index(after) > _b.Bonds.ORDER.index(before)
+    word = ("повеселела" if she else "повеселел") if up else ("помрачнела" if she else "помрачнел")
+    OVERLAY.bond(f"{nm} {word} {_b.MOODS[after]['emoji']}")
+
+
+def bond_add(actor, n, why):
+    """Friendship points; a level change is announced in the log and on the stream overlay."""
+    if not BONDS:
+        return
+    ch = BONDS.add(actor, n, why)
+    if not ch:
+        return
+    old, new = ch
+    nm = actor
+    try:
+        nm = (_json(PHRASES_JSON) or {})["actors"][actor]["name"]
+    except (KeyError, TypeError):
+        pass
+    nm = nm.split(" (")[0]
+    she = actor in FEMALE
+    if new > old:
+        msg = f"{nm}: " + {1: "теперь вы знакомы ♥", 2: "теперь вы приятели ♥♥", 3: "теперь вы друзья ♥♥♥"}[new]
+    else:
+        msg = (f"{nm} {'обиделась' if she else 'обиделся'}: " +
+               {0: "вы снова незнакомы", 1: "теперь вы просто знакомые", 2: "теперь вы просто приятели"}[new])
+    log(f"ДРУЖБА: {msg}")
+    if OVERLAY:
+        OVERLAY.bond(msg)
+
+
 # ---------------------------------------------------------------- audio
+# «Помехи» (2026-11-06, Kirill: the noise got in his way): how much static the radio adds on top of the voices -
+# hiss and drop-outs at the edge of range, empty PTT clicks, the crackle when somebody comes into range.
+# 1.0 = as it was. The light background baked into the recordings stays.
+STATIC = {
+    "full": {"name": "Сильные", "k": 1.0},
+    "mid":  {"name": "Средние", "k": 0.5},
+    "low":  {"name": "Слабые", "k": 0.2},
+    "off":  {"name": "Без помех", "k": 0.0},
+}
+STATIC_NOW = {"k": 0.5}
+
+
 def degrade(x, sr, d):
     """Signal by distance: d = distance / radio range. Near: as recorded. Towards the edge: more hiss,
-    weaker voice, short drop-outs ("пропадаешь")."""
-    if d is None or d < 0.55:
+    weaker voice, short drop-outs ("пропадаешь"). Scaled by the «Помехи» setting."""
+    f = STATIC_NOW["k"]
+    if d is None or d < 0.55 or f <= 0:
         return x
     k = min(2.0, (d - 0.55) / 0.45)              # 1 = edge of range, up to 2 = the far side of a talk
-    y = x * max(0.3, 1.0 - 0.35 * k)
+    y = x * max(0.3, 1.0 - 0.35 * k * f)
     noise = np.random.standard_normal(len(x)).astype(np.float32)
     noise = np.convolve(noise, np.ones(6, np.float32) / 6, mode="same")      # take the fizz off
-    y = y + noise * (0.012 + 0.05 * k)
-    for _ in range(int(k * 3 + random.random())):
+    y = y + noise * (0.012 + 0.05 * k) * f
+    for _ in range(int(k * 3 * f + random.random() * f)):
         n = int(random.uniform(0.08, 0.22) * sr)
         s = random.randint(0, max(0, len(y) - n))
         y[s:s + n] *= 0.15
@@ -700,8 +792,14 @@ class Player:
             data, sr = sf.read(path, dtype="float32")
             if self.world and actor:
                 data = degrade(data, sr, self.world.distance(actor))
+            if not actor and Path(path).name.startswith(("kerchunk_", "enter_")):
+                if STATIC_NOW["k"] <= 0:                 # «Помехи: без помех» - no clicks / crackles at all
+                    return "ok"
+                data = data * STATIC_NOW["k"] ** 0.5     # half the static = a bit quieter clicks, not silent
             vol = 0.0 if TRAY_STATE.get("muted") else float(self.cfg["volume"])     # «Тишина в эфире» (tray)
             sd.play(data * vol, sr, device=self.cfg["device"])
+            if OVERLAY:                       # stream overlay: subtitles of what is said (overlay.py)
+                OVERLAY.said(_rel(path), actor)
         except Exception as e:  # missing file, busy/unplugged device: skip, keep the radio alive
             log(f"не смог проиграть {Path(path).name}: {e}")
             return "error"
@@ -879,7 +977,7 @@ class Ears:
                 if peak <= 0.002:
                     self.last_info = f"тишина ({db:.0f} дБ) — микрофон молчит"
                     log(f"  микрофон «{self.dev_name}» молчит — выберите другой в меню значка (Микрофон)")
-                    if self.on_silent:
+                    if self.on_silent and len(audio) >= 0.8 * self.sr:   # a short tap is silent anyway (Kirill 06.11)
                         self.on_silent(self.dev_name)
                 if peak > 0.002:                            # the fifine is quiet (~-45 dB peaks): normalise
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
@@ -946,12 +1044,23 @@ class Operator:
         import intents
         now = time.monotonic()
         intent, who = intents.understand(text) if text else (None, None)
+        self.support = intent == "support"
+        if self.support and not reaction_pool("intent", "support"):
+            intent = "praise"            # no own lines for support yet: they answer as to praise («спасибо, сынок»)
         group = "player"
         about = None
         if who and self.deck.allowed is not None and who not in (self.deck.allowed | self.deck.allowed_far):
             # a name of somebody NOT in range: a question ABOUT him ("Сороку никто не видел?"), not to him -
             # those in range answer; with no recorded line on that, "не знаю / не видел"
             about, who = who, None
+        reply = False
+        if (not who and not about and heard and PLAYER.last_speaker and t_rel - PLAYER.last_t < 25
+                and intent not in ("who", "repeat") and not (intent or "").startswith("graf_")):
+            # 2026-11-06 (user): a driver has just finished, you answer right away without a name -> you are
+            # talking to HIM (before, 40% of the time somebody else answered). Only if he is still in range.
+            a = PLAYER.last_speaker
+            if not self.deck.offline(a) and (self.deck.allowed is None or a in self.deck.allowed):
+                who, reply = a, True
         question = intents.is_question(text) if text else False
         if intent == "repeat":
             group, kind = "special", "repeat"             # he says his last line again (or keeps quiet)
@@ -984,7 +1093,8 @@ class Operator:
         else:
             r = random.random()
             kind = "ack" if r < 0.7 else "not_heard" if r < 0.9 else None
-        if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude"):
+        if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude",
+                                                       "mock", "bot", "support"):
             # step 2 of «вариативность» (2026-11-05): asked him the same within 10 min -> he notices
             last = self.asked.get((who, kind))
             self.asked[(who, kind)] = now
@@ -992,7 +1102,10 @@ class Operator:
                 group, kind = "player", "already"
         if who:
             prefer = who
-        log(f"тангента: «{text}» -> {intent or '?'}{' для ' + who if who else ''}{' про ' + about if about else ''}"
+        if OVERLAY and heard:
+            OVERLAY.you(text)
+        log(f"тангента: «{text}» -> {intent or '?'}{' для ' + who if who else ''}{' (ответ ему)' if reply else ''}"
+            f"{' про ' + about if about else ''}"
             f"{' (вопрос)' if question else ''} => {group}/{kind or 'тишина'}"
             if heard else f"тангента{' (перебил)' if interrupted else ''} -> {kind or 'тишина'}")
         delay = random.uniform(0.8, 2.2) if heard else random.uniform(1.2, 3.2)
@@ -1023,6 +1136,7 @@ class Operator:
                 heard(wav)
                 log(f"ответ: куда едет — {actor} на {g}")
                 if PLAYER.file(wav, actor) == "ok":
+                    bond_add(actor, 2 if who == actor else 1, "куда едет")
                     self.deck.on_air.add(actor)
                     self.on_air = True
                     self._maybe_cross(actor, "intent")
@@ -1061,10 +1175,10 @@ class Operator:
             wk = weather_kind(getattr(self, "game", None), w)
             pool = [x for x in reaction_pool("weather", wk) if x[0] in here]
             mine = [x for x in pool if x[0] == who]
-            if not pool:
-                # nobody near has a word on it (the ElevenLabs five have no weather lines until December):
-                # somebody further out answers - same weather around, but you barely hear him
-                far = [a for a in self.deck.allowed_far if not self.deck.offline(a)]
+            if not pool and who:
+                # nobody near has a word on it: the one you called by name answers from further out,
+                # barely heard (without a name nobody far answers - 2026-11-06)
+                far = [a for a in self.deck.allowed_far if a == who and not self.deck.offline(a)]
                 pool = [x for x in reaction_pool("weather", wk) if x[0] in far]
                 if pool:
                     log("  про погоду отвечает дальний")
@@ -1094,8 +1208,25 @@ class Operator:
                 break
             self.rollcalled[a] = time.monotonic() + random.uniform(120, 180)
             self.deck.on_air.add(a)
+            bond_add(a, 1, "перекличка")
             done += 1
-        log(f"перекличка: ответили {done}" + ("" if done else " (никого в зоне или все уже отвечали)"))
+        if not done:
+            # 2026-11-06, Kirill: «Кто в эфире?» is how he says hello — 15 times in a row into dead air.
+            # Somebody near who already answered says a short «тут я»; nobody near -> the channel just hisses.
+            near = [a for a in here if not self.deck.offline(a)]
+            random.shuffle(near)
+            for a in near:
+                pick = line_of("intent", "radio_check", a)
+                if pick and PLAYER.file(pick[1], a) == "ok":
+                    self.rollcalled[a] = time.monotonic() + random.uniform(120, 180)
+                    self.deck.on_air.add(a)
+                    self.on_air = True
+                    log(f"перекличка: все уже отвечали — {a} коротко: тут я")
+                    return
+            fx = snd_glob(FX, "kerchunk_*.wav")
+            if fx:
+                PLAYER.file(random.choice(fx))
+        log(f"перекличка: ответили {done}" + ("" if done else " (никого в зоне — в эфире только шипение)"))
         if not done and self.deck.allowed is not None and not self.deck.allowed:
             hint("nobody", "Рядом сейчас никого нет, поэтому никто не ответил. Водители-персонажи появятся по дороге.")
         if done:
@@ -1144,6 +1275,7 @@ class Operator:
             heard(wav)
             log(f"ответ: про машину ({actor})")
             if PLAYER.file(wav, actor) == "ok":
+                bond_add(actor, 2 if who == actor else 1, "про машину")
                 self.deck.on_air.add(actor)
                 self.on_air = True
             return
@@ -1155,6 +1287,7 @@ class Operator:
                 actor, wav = pick
                 log(f"ответ: {kind} по делу ({actor})")
                 if PLAYER.file(wav, actor) == "ok":
+                    bond_add(actor, 2 if who == actor else 1, kind)
                     self.deck.on_air.add(actor)
                     self.on_air = True
                     self._maybe_cross(actor, group)
@@ -1164,7 +1297,7 @@ class Operator:
         if not who and kind != "interrupt" and random.random() > 0.6:
             prefer = None                # not always the same person answering
         pool = reaction_pool(group, kind)
-        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude")
+        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support")
         if who and who not in {a for a, _ in pool}:
             # called by name but he has no line on this topic: "не знаю, не слышал" (a question),
             # "принял" / hello otherwise; whatever he has
@@ -1205,8 +1338,9 @@ class Operator:
                 if pick:
                     log(f"  на {group}/{kind} ответа нет — {alt_kind}")
                     break
-        if not pick and self.deck.allowed is not None and self.deck.allowed_far:
-            # nobody near has a line: somebody further out answers through the noise - better than dead air
+        if not pick and who and self.deck.allowed is not None and who in self.deck.allowed_far:
+            # called BY NAME and he is just out of range: he answers through the noise. Without a name nobody
+            # far answers (2026-11-06, Kirill: «ты ненастоящий» was answered by Petrovna who had driven off)
             near, self.deck.allowed = self.deck.allowed, set(self.deck.allowed_far)
             try:
                 pick = (self.deck.choose(pool, prefer=prefer)
@@ -1241,6 +1375,25 @@ class Operator:
                 self.on_air = True           # the channel knows you're here now
             if kind == "not_heard":
                 self.repeat_until = time.monotonic() + 45
+            if kind in ("rude", "mock"):
+                # 2026-11-06 (user, after Kirill's log): an insulted driver answers back once and then leaves
+                # the air for ~10 minutes - he is still on the road nearby, he just doesn't talk to you.
+                # Friendship & mood: a grumpy one sulks longer, a cheerful one / a friend gets over it sooner.
+                sulk = random.uniform(540, 720) * (0.6 if kind == "mock" else 1.0)   # humiliation: shorter sulk
+                if BONDS:
+                    sulk = BONDS.sulk_s(actor, sulk)
+                self.deck.off_until[actor] = time.monotonic() + sulk
+                self.deck.on_air.discard(actor)
+                log(f"  {actor} обиделся — молчит {sulk / 60:.0f} мин")
+                bond_add(actor, -25 if kind == "rude" else -15, "грубость" if kind == "rude" else "унижение")
+                mood_nudge(actor, -2 if kind == "rude" else -1, "грубость" if kind == "rude" else "унижение")
+                return
+            if group in ("intent", "player", "graf") and kind not in ("not_heard", "interrupt", "click", "already"):
+                bond_add(actor, 3 if kind in ("thanks", "praise") else 2 if who == actor else 1, kind)
+            if group == "intent" and kind in ("thanks", "praise", "joke", "song", "support"):
+                sup = getattr(self, "support", False)
+                low = BONDS and BONDS.mood(actor) in ("tired", "grumpy")
+                mood_nudge(actor, 2 if sup and low else 1, "поддержка" if sup else kind)
             self._maybe_cross(actor, group)
 
     CROSS_P = 0.15
@@ -1283,7 +1436,7 @@ def line_of(group, kind, actor):
     pool = [x for x in reaction_pool(group, kind) if x[0] == actor]
     if not pool:
         return None
-    pick = random.choice(fresh_first(pool))
+    pick = mood_pick(fresh_first(bond_filter(pool)))
     heard(pick[1])
     return pick
 
@@ -1471,6 +1624,7 @@ def selftest():
 
 
 TRAY_STATE = {}
+OVERLAY = None                # overlay module once the stream overlay is running (cfg "overlay")
 TRAY_MOD = None
 BOT_URL = "https://t.me/kanal15_publisher_bot"
 
@@ -1521,7 +1675,7 @@ except Exception:
 
 
 def main(argv):
-    global TRAY_STATE
+    global TRAY_STATE, OVERLAY
     try:                                      # native crashes (audio / whisper / joystick DLLs) -> crash.log
         import faulthandler
         faulthandler.enable(open(ROOT / "crash.log", "a", encoding="utf-8"), all_threads=True)
@@ -1562,6 +1716,32 @@ def main(argv):
         return
 
     _lock = single_instance(cfg["lock_port"], quit_only="--quit" in argv, takeover="--takeover" in argv)  # noqa: F841 (held for the process lifetime)
+    ov = cfg.get("overlay") or {}
+    ov_port = int(ov.get("port", 47823))
+
+    def overlay_set(on):
+        """Stream overlay for OBS (browser source, localhost only). OFF by default; tray toggles it, choice saved."""
+        global OVERLAY
+        try:
+            import overlay as overlay_mod
+            if on:
+                OVERLAY = overlay_mod if overlay_mod.start(ov_port, PHRASES_JSON, BUILD_NAME or VARIANT, log) else None
+            else:
+                OVERLAY = None
+                overlay_mod.stop()
+                log("оверлей для стрима: выключен")
+        except Exception as e:
+            OVERLAY = None
+            log(f"оверлей для стрима не запустился: {e!r}")
+        try:                                  # remember the choice (other settings untouched)
+            cur = json.loads(CFG_FILE.read_text(encoding="utf-8-sig")) if CFG_FILE.exists() else {}
+            cur["overlay"] = {"enabled": bool(OVERLAY), "port": ov_port}
+            CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    if ov.get("enabled", False):
+        overlay_set(True)
     tray = None
     if "--console" not in argv:               # the radio's icon by the clock instead of a console window
         try:
@@ -1682,6 +1862,18 @@ def main(argv):
         except Exception as e:
             world = None
             log(f"живая трасса не запустилась: {e!r}")
+    global BONDS
+    try:                                      # 2026-11-06: friendship & mood (bonds.py)
+        import bonds as bonds_mod
+        BONDS = bonds_mod.Bonds(ROOT / "bonds.json", PHRASES_JSON, log)
+        if world:
+            BONDS.seed(world.met)
+            BONDS.set_world(world.game_min, world.is_night(world.game_min), False)
+        lv = [BONDS.level(k) for k in BONDS.st]
+        log(f"дружба: водителей {len(lv)} — знакомых {lv.count(1)}, приятелей {lv.count(2)}, друзей {lv.count(3)}")
+    except Exception as e:
+        BONDS = None
+        log(f"дружба не подключилась: {e!r}")
     upd = None
     try:                                      # 2026-11-05: quiet background updates (updater.py, launcher.py)
         import updater as updater_mod
@@ -1714,6 +1906,8 @@ def main(argv):
     upd_ok_at = time.monotonic() + 20         # healthy for 20 s -> keep the update the launcher just applied
     air = apply_air(cfg, world, cfg.get("air", "normal"))
     log(f"эфир: {air['name']}")
+    STATIC_NOW["k"] = STATIC.get(cfg.get("static", "mid"), STATIC["mid"])["k"]
+    log(f"помехи: {STATIC.get(cfg.get('static', 'mid'), STATIC['mid'])['name']}")
     if tray:
         def air_set(level):
             p = apply_air(cfg, world, level)
@@ -1724,8 +1918,24 @@ def main(argv):
             except (OSError, ValueError) as e:
                 log(f"настройки не сохранились: {e!r}")
             log(f"эфир: {p['name']} (из меню значка)")
+        tray.HOOKS.update(overlay_on=lambda: bool(OVERLAY), overlay_toggle=lambda: overlay_set(not OVERLAY),
+                          overlay_url=lambda: f"http://127.0.0.1:{ov_port}/")
         tray.HOOKS.update(air_levels=lambda: [(k, v["name"]) for k, v in AIR.items()],
                           air_now=lambda: cfg.get("air", "normal"), air_set=air_set)
+
+        def static_set(level):
+            level = level if level in STATIC else "mid"
+            cfg["static"] = level
+            STATIC_NOW["k"] = STATIC[level]["k"]
+            try:
+                cur = json.loads(CFG_FILE.read_text(encoding="utf-8-sig"))
+                cur["static"] = level
+                CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
+            except (OSError, ValueError) as e:
+                log(f"настройки не сохранились: {e!r}")
+            log(f"помехи: {STATIC[level]['name']} (из меню значка)")
+        tray.HOOKS.update(static_levels=lambda: [(k, v["name"]) for k, v in STATIC.items()],
+                          static_now=lambda: cfg.get("static", "mid"), static_set=static_set)
     w_acc, w_saved = 0.0, time.monotonic()
     job_t = 0.0
     hired_seen = set()          # your hired drivers already noticed near you (once per session each)
@@ -1818,6 +2028,11 @@ def main(argv):
                     os._exit(0)                  # PTT / ears threads must not keep a windowless process alive
             if tray:
                 tray.set_state(st, inside=sorted(world.inside) if world else [])
+            if BONDS and world:
+                BONDS.set_world(world.game_min, world.is_night(world.game_min), game.wipers())
+            if OVERLAY and world:
+                ins = [k for k in world.inside if not deck.offline(k)]   # offended / signed off: gone from the list
+                OVERLAY.inside(ins, {k: BONDS.chip(k) for k in ins} if BONDS else None)
             if MEET_REQ["keys"] and world and world.px is not None:
                 want = MEET_REQ["keys"].pop(0)
                 k = world.summon(None if want == "*" else want)
@@ -1879,6 +2094,9 @@ def main(argv):
                             PLAYER.file(random.choice(cues))
                         for k in world.entered:
                             now_ = time.monotonic()
+                            lv = BONDS.level(k) if BONDS else 1
+                            if world.met_before(k):
+                                bond_add(k, 1, "встреча на трассе")
                             if world.met_before(k) and line_of("world", "meet_again", k):
                                 wq.append(("world", "meet_again", k, now_))     # "опять пересеклись!"
                                 deck.on_air.add(k)
@@ -1886,9 +2104,11 @@ def main(argv):
                             kn = world.knowledge(k)                          # he comes from where you go
                             if kn in ("camera", "police") and line_of("world", "warn_" + kn, k):
                                 wq.append(("world", "warn_" + kn, k, now_))
-                            elif kn == "clear" and random.random() < 0.35 and line_of("world", "clear", k):
+                            # friends come on air by themselves more often (road ahead, weather); strangers less
+                            elif (kn == "clear" and random.random() < (0.15, 0.3, 0.5, 0.75)[lv]
+                                  and line_of("world", "clear", k)):
                                 wq.append(("world", "clear", k, now_))
-                            if random.random() < 0.3:
+                            if random.random() < (0.15, 0.3, 0.45, 0.6)[lv]:
                                 wk = weather_kind(game, world)
                                 if line_of("weather", wk, k):
                                     wq.append(("weather", wk, k, now_))
@@ -2029,6 +2249,10 @@ def main(argv):
                         tmp = ROOT / "_foreign.wav"
                         sf.write(tmp, degrade(x, sr, random.uniform(0.6, 1.2)), sr)
                         log(f"эфир: проезжий иностранец ({lang}, вы в стране {country})")
+                        if OVERLAY:
+                            OVERLAY.foreign({"de": "по-немецки", "pl": "по-польски", "fr": "по-французски",
+                                             "es": "по-испански", "it": "по-итальянски", "nl": "по-голландски",
+                                             "cs": "по-чешски"}.get(lang, "не по-нашему"))
                         PLAYER.file(tmp)
                         next_at = max(next_at, driving_s + 15)
                         continue

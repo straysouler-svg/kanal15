@@ -47,6 +47,9 @@ def out_time(spec, t):
 
 def ass(spec, dur):
     F = spec.get("font", "Golos Text")   # user picked font 2 (2026-11-05)
+    # stream layout: subtitles sit between the game (top) and the camera (bottom)
+    sub_top = spec.get("sub_top", 1010 if spec.get("layout") == "stream" else 1550)
+    name_mv = spec.get("name_mv", 1920 - sub_top + 8 if spec.get("layout") == "stream" else 330)
     head = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
@@ -57,8 +60,8 @@ WrapStyle: 0
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Hook,{F},74,{WHITE},{WHITE},&H00000000&,&H80000000&,1,0,0,0,100,100,0,0,1,6,2,8,70,70,150,1
 Style: Badge,{F},40,{GOLD},{GOLD},&H00000000&,&H00000000&,1,0,0,0,100,100,2,0,1,4,0,8,40,40,70,1
-Style: Name,{F},56,{WHITE},{WHITE},&H00000000&,&H00000000&,1,0,0,0,100,100,0,0,1,5,0,2,60,60,330,1
-Style: Sub,{F},68,{WHITE},{WHITE},&H00000000&,&H00000000&,1,0,0,0,100,100,0,0,1,6,1,8,70,70,1550,1
+Style: Name,{F},56,{WHITE},{WHITE},&H00000000&,&H00000000&,1,0,0,0,100,100,0,0,1,5,0,2,60,60,{name_mv},1
+Style: Sub,{F},68,{WHITE},{WHITE},&H00000000&,&H00000000&,1,0,0,0,100,100,0,0,1,6,1,8,70,70,{sub_top},1
 Style: Outro,{F},110,{GOLD},{GOLD},&H00000000&,&H00000000&,1,0,0,0,100,100,4,0,1,7,0,5,40,40,0,1
 Style: OutroSub,{F},52,{WHITE},{WHITE},&H00000000&,&H00000000&,1,0,0,0,100,100,0,0,1,5,0,5,60,60,0,1
 
@@ -107,18 +110,34 @@ def main(spec_path):
     # 2026-11-05: "layout": "phone" — a vertical phone video (the player at the wheel), full frame 1080x1920;
     # "bleep": [[t, d], ...] (recording time) — swear words muted under a 1 kHz tone
     phone = spec.get("layout") == "phone"
+    stream = spec.get("layout") == "stream"
     W, H = 1964, 822           # source frame; square from the centre of the cab
     sq = H
     x0 = spec.get("crop_x", (W - sq) // 2)
+    y0 = 0
+    if spec.get("layout") == "game":   # 2026-11-06: a «Канал 15» stream VOD without the streamer: the game picture only
+        W, H, sq, y0 = 1920, 804, 804, spec.get("game_y", 150)
+        x0 = spec.get("crop_x", (W - sq) // 2)
     sub_f = str(sub).replace("\\", "/").replace(":", "\\:")
     cut = "".join(f"[0:v]trim={a - s0:.3f}:{b - s0:.3f},setpts=PTS-STARTPTS[v{i}];"
                   f"[0:a]atrim={a - s0:.3f}:{b - s0:.3f},asetpts=PTS-STARTPTS,"
                   f"afade=t=in:d=0.04,afade=t=out:st={b - a - 0.06:.3f}:d=0.06[a{i}];" for i, (a, b) in enumerate(ps))
     cut += "".join(f"[v{i}][a{i}]" for i in range(len(ps))) + f"concat=n={len(ps)}:v=1:a=1[cv][ca];"
-    frame = ("[cv]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30," if phone else
+    # 2026-11-06: "layout": "stream" — a Twitch VOD of «Канал 15» (1920x1080, game 21:9 at y=150, camera in its
+    # ragged frame on the left): game centre on top, subtitles under it, the streamer's camera below
+    gy = spec.get("game_y", 150)
+    cx, cy, cw, ch = spec.get("cam", [20, 376, 318, 428])
+    cam_w = round(cw * 1.55 / 2) * 2
+    cam_h = round(ch * 1.55 / 2) * 2
+    frame = (f"[cv]split=3[a][b][c];"
+             f"[a]scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.25[bg];"
+             f"[b]crop=1080:804:{spec.get('game_x', 420)}:{gy}[g];"
+             f"[c]crop={cw}:{ch}:{cx}:{cy},scale={cam_w}:{cam_h}[cam];"
+             f"[bg][g]overlay=0:170[t];[t][cam]overlay={(1080 - cam_w) // 2}:1225,fps=30," if stream else
+             "[cv]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30," if phone else
              f"[cv]split=2[a][b];"
-             f"[a]crop={W - 120}:{H - 40}:60:20,scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.18[bg];"
-             f"[b]crop={sq}:{sq}:{x0}:0,scale=1080:1080[fg];"
+             f"[a]crop={W - 120}:{H - 40}:60:{20 + y0},scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.18[bg];"
+             f"[b]crop={sq}:{sq}:{x0}:{y0},scale=1080:1080[fg];"
              f"[bg][fg]overlay=0:420,fps=30,")
     vf = (cut + frame +
           f"tpad=stop_mode=clone:stop_duration={OUTRO_S},"

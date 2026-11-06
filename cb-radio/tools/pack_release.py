@@ -17,7 +17,7 @@ OUT_BASE = ROOT.parent / "release"
 PERSONAL = {"soroka"}
 CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tray.py", "mic.py", "gamecheck.py",
         "updater.py", "ed25519.py", "launcher.py"]
-HANDLE = {"kirill": "Сиди-Посиди", "neutral": ""}
+HANDLE = {"kirill": "Сиди-Посиди", "alive": "Пятьдесят пятый", "neutral": ""}   # alive = blogger TheAlive55 (Алексей)
 README = r"""# CB-рация для Euro Truck Simulator 2
 
 Живой эфир дальнобойщиков: водители едут своими рейсами, ты слышишь тех, кто рядом,
@@ -65,7 +65,7 @@ def opus(src, dst):
 
 
 def main(variant):
-    assert variant in HANDLE, "kirill | neutral"
+    assert variant in HANDLE, " | ".join(HANDLE)
     VARIANT[0] = variant
     out = OUT_BASE / variant / "CB-Radio"
     if out.exists():
@@ -176,7 +176,7 @@ def main(variant):
         (out / name).write_text("@echo off\r\nchcp 65001 >nul\r\ntitle CB-рация (ETS2)\r\n"
                                 f"\"%~dp0.venv\\Scripts\\python.exe\" -W ignore \"%~dp0cb_radio.py\"{arg}\r\npause\r\n",
                                 encoding="utf-8")
-    who = "Кирилл, Сиди-Посиди" if variant == "kirill" else "без обращения по имени"
+    who = {"kirill": "Кирилл, Сиди-Посиди", "alive": "Алексей, Лёха, Пятьдесят пятый"}.get(variant, "без обращения по имени")
     (out / "README.md").write_text(README.format(who=who), encoding="utf-8")
     # never ship secrets / personal files
     bad = [p for p in out.rglob("*") if p.is_file() and (p.name.endswith("_key.txt") or p.name in

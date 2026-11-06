@@ -1,5 +1,6 @@
 """2026-11-04: lines that call the player «Железяка» get two more versions (fields on the line):
   v_kirill  - for friend Кирилл (handle «СидиПосиди»): Кирилл / Кириллушка / Кирюха / Сиди-Посиди by character
+  v_alive   - for blogger TheAlive55 (Алексей): Алёша / Лёха / Алексей / «Пятьдесят пятый» by character
   v_neutral - no name at all (public release)
 Audio goes to audio/variants/<variant>/<same path> (tools/gen_variants.py); the radio picks it by config "variant".
 Сорока is personal (Tatiana's voice) and is never part of a shared build -> skipped here."""
@@ -24,6 +25,25 @@ FORMS = {
 # lines where the handle (not the name) is the only right choice: radio calls and "знакомый позывной"
 FORCE_HANDLE = {"scenes/zhelezyaka/01", "reactions/player/greet/19", "reactions/player/greet/35"}
 
+# personal builds for bloggers (2026-11-06): same scheme as Кирилл. key -> handle, forms per actor, other cases
+ALIVE = "Пятьдесят пятый"             # TheAlive55 (Алексей): radio-style call sign from his «55»
+PERSONAL = {
+    "kirill": {"handle": HANDLE, "forms": FORMS,
+               "cases": {"Железякой": "Кириллом", "Железяке": "Кириллу"}},
+    "alive": {"handle": ALIVE,
+              "forms": {"mihalych": [("Алёша", 3), (ALIVE, 1)], "petrovna": [("Алёшенька", 1)],
+                        "sova": [("Алёшенька", 2), ("Алёша", 1)],
+                        "boroda": [("Лёха", 3), (ALIVE, 1)], "stas": [("Лёха", 3), (ALIVE, 1)],
+                        "kardan": [("Лёха", 2), (ALIVE, 1)], "bahti": [("Лёха", 2), (ALIVE, 1)],
+                        "vitek": [("Лёха", 2), (ALIVE, 1)],
+                        "ment": [(ALIVE, 2), ("Алексей", 1)], "ten": [(ALIVE, 2), ("Алексей", 1)],
+                        "vera": [(ALIVE, 2), ("Алексей", 1)],
+                        "yanek": [("Алексей", 3), (ALIVE, 1)], "lastochka": [("Алёша", 2), (ALIVE, 1)],
+                        "student": [("Алексей", 3), (ALIVE, 1)], "professor": [("Алексей", 3), (ALIVE, 1)],
+                        "lisa": [(ALIVE, 2), ("Лёха", 1)], "rustam": [("Алексей", 3), (ALIVE, 1)]},
+              "cases": {"Железякой": "Лёхой", "Железяке": "Лёхе"}},
+}
+
 # neutral: the name is the subject of the sentence -> rewrite by hand
 NEUTRAL = {
     "scenes/zhelezyaka/01": "[calling out] На канале, есть кто живой? Ответьте Михалычу. Приём.",
@@ -44,10 +64,11 @@ NEUTRAL = {
 }
 
 
-def pick_form(actor, path):
+def pick_form(actor, path, who="kirill"):
+    spec = PERSONAL[who]
     if path in FORCE_HANDLE:
-        return HANDLE
-    forms = FORMS[actor]
+        return spec["handle"]
+    forms = spec["forms"][actor]
     total = sum(w for _, w in forms)
     h = int(hashlib.md5(path.encode()).hexdigest(), 16) % total
     for f, w in forms:
@@ -63,6 +84,7 @@ def neutral(text):
     t = re.sub(r"Железяка,\s*", "", t)                           # "Железяка, здорово!" -> "здорово!"
     t = re.sub(r"Железяка[.!]\s*", "", t)                        # "О, Железяка! ..." -> "О, ..."
     t = re.sub(r"\s+Железяка(?=[.!?])", "", t)
+    t = t.replace("рядом с Железякой", "рядом").replace("Железяке помочь", "человеку помочь")   # other cases
     t = re.sub(r"(^|[.!?]\s+|\]\s+|\)\s+)([а-яё])", lambda m: m.group(1) + m.group(2).upper(), t)
     t = re.sub(r"О,\s+([А-ЯЁ])", lambda m: "О! " + m.group(1), t)
     return re.sub(r"\s{2,}", " ", t).strip()
@@ -73,11 +95,15 @@ def main():
     rows = []
 
     def handle_line(path, ln):
-        if "Железяка" not in ln["text"] or ln["actor"] == "soroka":
+        if "Железяк" not in ln["text"] or ln["actor"] == "soroka":
             return
-        ln["v_kirill"] = ln["text"].replace("Железяка", pick_form(ln["actor"], path))
+        for who, spec in PERSONAL.items():
+            t = ln["text"]
+            for case, form in spec["cases"].items():
+                t = t.replace(case, form)
+            ln[f"v_{who}"] = t.replace("Железяка", pick_form(ln["actor"], path, who))
         ln["v_neutral"] = NEUTRAL.get(path) or neutral(ln["text"])
-        rows.append((path, ln["actor"], ln["v_kirill"], ln["v_neutral"]))
+        rows.append((path, ln["actor"], ln["v_alive"], ln["v_neutral"]))
 
     for sid, ls in d["scenes"].items():
         for i, ln in enumerate(ls, 1):

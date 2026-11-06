@@ -282,7 +282,7 @@ def run(dry=False, force_id=None):
             return 0
         last = last_post_time(state)
         gap = timedelta(hours=sched.get("min_gap_hours", 3))
-        if last and now - last < gap:
+        if last and now - last < gap and not todo[0].get("ignore_gap"):   # «мы в эфире» goes out on time (06.11)
             if dry:
                 print(f"ждём паузу: последний пост {last:%d.%m %H:%M}, следующий не раньше {last + gap:%d.%m %H:%M}")
             return 0

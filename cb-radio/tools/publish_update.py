@@ -120,7 +120,7 @@ def publish(variant, with_installer=False, installer_url=None):
          "base": updater.base_signature(app), "managed": list(updater.MANAGED), "files": files}
     url = base_url()
     if with_installer:
-        name = f"Kanal15-Setup{'-Kirill' if variant == 'kirill' else ''}-v{ver['version']}.exe"
+        name = f"Kanal15-Setup{ {'kirill': '-Kirill', 'alive': '-Alexey'}.get(variant, '') }-v{ver['version']}.exe"
         inst = CB.parent / "release" / name
         print("установщик:", inst.name, f"{inst.stat().st_size / 1e6:.0f} МБ")
         s3_put(bucket, f"channels/{channel}/{name}", inst.read_bytes(), "application/vnd.microsoft.portable-executable",

@@ -67,7 +67,8 @@ def build_app(variant):
         shutil.rmtree(app)
     shutil.copytree(BUILD / "dist" / "CB-Radio", app)
     (app / "app").mkdir()                       # the radio's own code: plain .py, updated without touching any exe
-    for mod in ("cb_radio", "world", "intents", "company", "tray", "mic", "gamecheck", "updater", "ed25519"):
+    for mod in ("cb_radio", "world", "intents", "company", "tray", "mic", "gamecheck", "updater", "ed25519", "overlay",
+                "bonds"):
         shutil.copy2(CB / f"{mod}.py", app / "app" / f"{mod}.py")
     shutil.copy2(CB / "tools" / "savegame.py", app / "app" / "savegame.py")
     for part in ("audio", "phrases", "map", "config.json", "CREDITS.md"):
@@ -80,7 +81,8 @@ def build_app(variant):
     shutil.copy2(rel / "installer" / "icon.png", app / "installer" / "icon.png")
     shutil.copy2(BUILD / "dist" / "Uninstall.exe", app / "Uninstall.exe")
     shutil.copytree(MODEL, app / "models" / "whisper-small")
-    who = "Обращения к игроку: Кирилл, Сиди-Посиди." if variant == "kirill" else "Водители обращаются к тебе без имени."
+    who = {"kirill": "Обращения к игроку: Кирилл, Сиди-Посиди.",
+           "alive": "Обращения к игроку: Алексей, Лёха, «Пятьдесят пятый»."}.get(variant, "Водители обращаются к тебе без имени.")
     (app / "README.md").write_text(README.format(who=who, ver=VER["version"], date=VER["date"]), encoding="utf-8")
     shutil.copy2(CB / "version.json", app / "version.json")
     shutil.copy2(CB / "CHANGELOG.md", app / "CHANGELOG.md")
@@ -114,7 +116,8 @@ def build_setup(variant, payload):
         shutil.copy2(rel / "installer" / f, art / f)
     shutil.copy2(CB / "installer_art" / "side_banner.png", art / "side_banner.png")
     shutil.copy2(CB / "version.json", art / "version.json")
-    name = (f"Kanal15-Setup-Kirill-v{VER['version']}" if variant == "kirill" else f"Kanal15-Setup-v{VER['version']}")
+    tag = {"kirill": "-Kirill", "alive": "-Alexey"}.get(variant, "")      # personal builds carry the owner's name
+    name = f"Kanal15-Setup{tag}-v{VER['version']}"
     spec = BUILD / f"setup_{variant}.spec"
     spec.write_text(f'''
 a = Analysis([r"{CB / "tools" / "setup_app.py"}"], pathex=[r"{CB / "tools"}", r"{CB}"],

@@ -1,6 +1,6 @@
 """Voice the variants of the lines that call the player by name (fields v_<variant> made by make_variants.py).
   gen_variants.py <variant> [--engine gpt-audio|eleven|all] [--dry-run]
-      variant: kirill | neutral
+      variant: kirill | alive | neutral
 -> audio/variants/<variant>/<same path as the original>.wav (+ _dry source). Only new/changed texts are voiced
 (manifest.json per variant). Сорока is never voiced here (personal). OR_BUDGET env limits OpenRouter spend."""
 import json

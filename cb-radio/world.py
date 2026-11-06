@@ -518,6 +518,9 @@ class World:
         for d in self.drivers.values():
             if any(t not in keep for t in d.route):
                 d.route, d.x, d.z = [], None, None        # gets a new job on the owned map next step
+            own = [c for c in d.lanes if c in keep]       # «куда едешь?» names only cities on the player's map
+            if own:
+                d.lanes = own
         self.ppath, self._path_t, self.hired_pos = [], 0.0, {}
         self.__dict__.pop("_hp_cache", None)
         if self.dest not in keep:
@@ -694,6 +697,8 @@ class World:
             n = math.hypot(vx, vz) or 1.0
 
             def along(c):
+                if c not in self.cities:                 # a lane city outside the player's map (no DLC): last choice
+                    return -2.0                          # (was KeyError('kaunas') → silence on «куда едешь?», Kirill 06.11)
                 cx, cz = self.cities[c][2] - d.x, self.cities[c][3] - d.z
                 return (vx * cx + vz * cz) / (n * (math.hypot(cx, cz) or 1.0))
             g = max(d.lanes, key=along)

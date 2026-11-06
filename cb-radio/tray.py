@@ -105,6 +105,11 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
                           checked=(lambda k: lambda i: hook("air_now", "normal")() == k)(k), radio=True)
                      for k, name in (hook("air_levels", [])() or []))
 
+    def static_items():
+        return tuple(Item(name, (lambda k: lambda icon, item: hook("static_set")(k))(k),
+                          checked=(lambda k: lambda i: hook("static_now", "mid")() == k)(k), radio=True)
+                     for k, name in (hook("static_levels", [])() or []))
+
     vol = Menu(*[Item(f"{p}%", set_vol(p), checked=lambda i, p=p: round(float(cfg["volume"]) * 100) == p, radio=True)
                  for p in (25, 50, 80, 100)])
     menu = Menu(
@@ -121,8 +126,13 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
              visible=lambda i: hook("admin_state", None)() == "restart"),
         Item("Громкость", vol),
         Item("Эфир", Menu(air_items)),
+        Item("Помехи", Menu(static_items)),
         Item("Микрофон", Menu(mic_items)),
         Item("Тишина в эфире", toggle_mute, checked=lambda i: STATE["muted"]),
+        Item("Оверлей для стрима", lambda icon, item: hook("overlay_toggle")(),
+             checked=lambda i: bool(hook("overlay_on", False)())),
+        Item(lambda i: "  OBS → Браузер: " + str(hook("overlay_url", "")() or ""), None, enabled=False,
+             visible=lambda i: bool(hook("overlay_on", False)())),
         Item("Обновления", Menu(
             Item(lambda i: str(hook("upd_status", "—")() or "—")[:60], None, enabled=False),
             Item("Проверить сейчас", lambda icon, item: hook("upd_check")(), enabled=lambda i: bool(hook("upd_enabled", False)())),

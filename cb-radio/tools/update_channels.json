@@ -2,6 +2,7 @@
   "bucket": "kanal15-updates",
   "channels": {
     "neutral": "public",
-    "kirill": "kirill-7db1196415a3aeb5"
+    "kirill": "kirill-7db1196415a3aeb5",
+    "alive": "alive-32df7ee422cad8ca"
   }
 }
