@@ -366,6 +366,17 @@ def main():
                     log(f"почта бота: новых сообщений {n} (python autopost.py --inbox)")
             except Exception as e:  # почта не должна мешать постам
                 log(f"почта бота: {e!r}")
+            try:  # 2026-11-06: журналы игроков из хранилища «только для приёма» -> inbox/reports/
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    "k15_reports", HERE.parents[1] / "cb-radio" / "tools" / "reports.py")
+                rep = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(rep)
+                n = rep.fetch()
+                if n:
+                    log(f"журналы игроков: новых {n} -> inbox/reports/")
+            except Exception as e:
+                log(f"журналы игроков: {e!r}")
         return res
     except Exception as e:  # чтобы планировщик не копил висящие ошибки
         log(f"СБОЙ: {e!r}")

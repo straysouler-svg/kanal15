@@ -588,6 +588,17 @@ class World:
             return None
         return math.hypot(d.x - self.px, d.z - self.pz) / self.range
 
+    def remaining_km(self, key):
+        """How far he still has to go on his route (game km, straight segments city to city) — «сколько ещё ехать?»."""
+        d = self.drivers.get(key)
+        if not d or d.x is None or len(d.route) < 2:
+            return None
+        try:
+            pts = [(d.x, d.z)] + [self.roads.xz(t) for t in d.route[1:]]
+        except Exception:
+            return None
+        return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(pts, pts[1:])) / 1000.0
+
     def place_of(self, key):
         d = self.drivers.get(key)
         if not d or d.x is None:

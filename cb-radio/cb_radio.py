@@ -476,6 +476,23 @@ COUNTRY_LANG = {"germany": "de", "austria": "de", "switzerland": "de", "poland":
                 "czech": "cs", "slovakia": "cs"}
 
 
+try:                                       # secrets (2026-11-06, tainik.py): the kinds are known only from the tainik
+    import tainik as _tainik
+    SECRET_KINDS, _tainik_dir = set(), _tainik.dirname
+except Exception:
+    _tainik, SECRET_KINDS, _tainik_dir = None, set(), (lambda k: k)
+SECRETS = {"intents": [], "texts": {}}
+
+
+def secret_texts():
+    """Overlay subtitles for secret lines in builds: reactions/x/<faceless>/NN -> text."""
+    out = {}
+    for k, ls in (SECRETS.get("texts") or {}).items():
+        for i, t in enumerate(ls, 1):
+            out[f"reactions/x/{_tainik_dir(k)}/{i:02d}"] = t
+    return out
+
+
 def fresh_first(cands):
     """From (actor, wav) candidates keep the ones not heard lately (if any are left)."""
     new = [c for c in cands if str(c[1]) not in RECENT]
@@ -490,8 +507,10 @@ _POOL_FILES = {}
 
 
 def reaction_pool(group, kind):
-    """[(actor, wav path)] for audio/reactions/<group>/<kind>."""
+    """[(actor, wav path)] for audio/reactions/<group>/<kind>. Secrets (tainik.py) live in a faceless folder in builds."""
     d = REACT / group / kind
+    if group == "intent" and kind in SECRET_KINDS and not d.exists():
+        d = REACT / "x" / _tainik_dir(kind)
     idx = _json(d / "index.json")
     if not idx or "actors" not in idx:
         return []
@@ -1070,6 +1089,8 @@ class Operator:
             kind = "not_heard" if random.random() < 0.7 else None      # pressed, but said nothing clear
         elif intent == "who":
             group, kind = "special", "who"                # roll call: everybody in range answers once
+        elif intent in ("dist", "eta", "meet") or intent in SECRET_KINDS:
+            group, kind = "intent", intent                # «живые ответы»: picked by distance / route / friendship
         elif intent and intent.startswith("graf_") and reaction_pool("graf", intent[5:]):
             group, kind = "graf", intent[5:]              # the dog: only Vera answers (who = vera)
         elif intent and intent != "greet" and reaction_pool("intent", intent):
@@ -1256,9 +1277,73 @@ class Operator:
             self.deck.on_air.add(a)
             self.on_air = True
 
+    def _live(self, kind, who, prefer):
+        """«Где ты?» / «сколько ещё ехать?» / «встретимся?» — the answer is chosen by the game: his real distance,
+        what is left of his route, your friendship (2026-11-06). True if somebody answered."""
+        w = getattr(self, "world", None)
+        here = ([a for a in self.deck.allowed if not self.deck.offline(a)] if self.deck.allowed is not None
+                else list(self.deck.on_air))
+        far = [a for a in (self.deck.allowed_far or ()) if not self.deck.offline(a)]
+        if who:
+            order = [who] if who in here or who in far else []
+        else:
+            order = ([prefer] if prefer in here else []) + random.sample(here, len(here))
+        for a in order:
+            if kind == "dist":
+                dd = w.distance(a) if w else None
+                v = "dist_near" if dd is not None and dd < 0.6 else "dist_far"
+            elif kind == "eta":
+                km = w.remaining_km(a) if w else None
+                v = "eta_soon" if km is not None and km < 30 else "eta_long"
+            else:
+                v = "meet_yes" if BONDS and BONDS.level(a) >= 2 else "meet_no"
+            pick = line_of("intent", v, a)
+            if not pick:
+                continue
+            log(f"ответ: {kind} -> {v} ({a})")
+            if PLAYER.file(pick[1], a) == "ok":
+                self.deck.on_air.add(a)
+                self.on_air = True
+                bond_add(a, 2 if who == a else 1, kind)
+                if v == "meet_yes":
+                    mood_nudge(a, 1, "позвали встретиться")
+            return True
+        return False
+
+    def all_answer(self, who, kind):
+        """A secret (tainik.py): everybody in range answers, one after another (2026-11-06)."""
+        here = ([a for a in self.deck.allowed if not self.deck.offline(a)] if self.deck.allowed is not None
+                else list(self.deck.on_air))
+        random.shuffle(here)
+        if who in here:
+            here.remove(who)
+            here.insert(0, who)
+        done = 0
+        for a in here:
+            pick = line_of("intent", kind, a)
+            if not pick:
+                continue
+            if done and not PLAYER.idle(random.uniform(0.6, 1.4)):
+                break
+            if PLAYER.file(pick[1], a) != "ok":
+                break
+            self.deck.on_air.add(a)
+            bond_add(a, 2, "секрет")
+            mood_nudge(a, 1, "секрет")
+            done += 1
+        log(f"секрет: ответили {done}")
+        if done:
+            self.on_air = True
+
     def answer(self):
         _, group, kind, prefer, who = self.pending
         self.pending = None
+        if group == "intent" and kind in SECRET_KINDS:
+            return self.all_answer(who, kind)
+        if group == "intent" and kind in ("dist", "eta", "meet"):
+            if self._live(kind, who, prefer):
+                return
+            group, kind = "player", "dunno"
         if kind == "who":
             return self.rollcall()
         if kind == "repeat":
@@ -1297,7 +1382,7 @@ class Operator:
         if not who and kind != "interrupt" and random.random() > 0.6:
             prefer = None                # not always the same person answering
         pool = reaction_pool(group, kind)
-        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support")
+        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support") and kind not in SECRET_KINDS
         if who and who not in {a for a, _ in pool}:
             # called by name but he has no line on this topic: "не знаю, не слышал" (a question),
             # "принял" / hello otherwise; whatever he has
@@ -1629,7 +1714,85 @@ TRAY_MOD = None
 BOT_URL = "https://t.me/kanal15_publisher_bot"
 
 
-def make_report():
+REPORT_URL = "https://storage.yandexcloud.net/kanal15-reports/in/"     # receive-only: anyone may put, nobody may read
+NL = chr(10)
+REPORT_WARN = NL.join([
+    "Отправить журнал разработчикам «Канала 15»?",
+    "",
+    "Журнал помогает нам находить ошибки и понимать, что добавить в рацию. Его увидит только разработчик, "
+    "через 30 дней он удаляется сам.",
+    "",
+    "В журнале есть:",
+    "• ваши фразы в рацию — текстом (голос не отправляется);",
+    "• события игры: города, штрафы, доставки;",
+    "• настройки рации: микрофон, руль, версия Windows, путь к папке рации "
+    "(в нём может быть имя пользователя Windows).",
+    "Сохранения игры и файлы с компьютера не отправляются.",
+    "",
+    "Да — отправить журнал",
+    "Нет — отправить без ваших фраз",
+    "Отмена — ничего не отправлять"])
+
+
+def _msgbox(text, title, flags):
+    try:
+        return ctypes.windll.user32.MessageBoxW(None, text, title, flags | 0x40000)    # MB_TOPMOST
+    except Exception:
+        return 0
+
+
+def send_report():
+    """«Отправить журнал разработчикам…» (2026-11-06, user): a warning first (speech transcripts are in the log),
+    then one click — the archive goes to the receive-only bucket. No keys in the radio: an anonymous PUT.
+    Without internet: the old way — the archive in a folder + the bot chat."""
+    import secrets
+    import urllib.request
+    # 2026-11-06 (user): the player chooses — the whole log, the log without his own phrases, or nothing.
+    # The radio never offers this by itself (not even after a crash): only this menu item.
+    ans = _msgbox(REPORT_WARN, "Канал 15 — отправить журнал", 0x3 | 0x40)              # MB_YESNOCANCEL|ICONINFO
+    if ans not in (6, 7):                                                               # IDYES / IDNO
+        log("журнал: игрок не стал отправлять")
+        return None
+    z = make_report(show=False, hide_speech=ans == 7)
+    rid = f"{datetime.now():%Y%m%d-%H%M%S}_{BUILD_NAME or VARIANT or 'public'}_{secrets.token_hex(3)}"
+    try:
+        req = urllib.request.Request(REPORT_URL + rid + ".zip", data=z.read_bytes(), method="PUT",
+                                     headers={"Content-Type": "application/zip", "User-Agent": "Kanal15-Radio-Report"})
+        urllib.request.urlopen(req, timeout=60).read()
+    except Exception as e:
+        log(f"журнал не отправился: {e!r} — показываю архив и чат с ботом")
+        _msgbox(NL.join(["Не получилось отправить журнал (нет интернета?).", "",
+                         "Архив сейчас откроется в папке — можно перетащить его в чат с ботом @kanal15_publisher_bot."]),
+                "Канал 15", 0x30)
+        _show_report(z)
+        return z
+    num = rid.split("_")[-1]
+    log(f"журнал отправлен разработчикам: {rid}")
+    _msgbox(NL.join(["Журнал отправлен. Спасибо!", "", f"Номер отчёта: {num}", "",
+                     "Если хотите рассказать, что случилось или что хочется в рации, напишите боту "
+                     "@kanal15_publisher_bot и укажите этот номер."]), "Канал 15", 0x40)
+    return z
+
+
+def _show_report(z):
+    import subprocess
+    subprocess.Popen(["explorer", f"/select,{z}"])
+    os.startfile(BOT_URL)
+
+
+def _hide_speech(data):
+    """The log without the player's own words: in «тангента: «…»» lines the phrase is replaced, what the radio
+    understood (intent, who answered) stays."""
+    import re as _re
+    out = []
+    for ln in data.decode("utf-8", "replace").splitlines():
+        if "тангента" in ln and "«" in ln:
+            ln = _re.sub(r"«[^»]*»", "«(скрыто)»", ln)
+        out.append(ln)
+    return NL.join(out).encode("utf-8")
+
+
+def make_report(show=True, hide_speech=False):
     """«Сообщить о проблеме» (2026-11-05): журналы и версия в один zip, показать его в папке и открыть чат
     с ботом. Ничего не отправляется само: человек сам перетаскивает файл в чат."""
     import platform
@@ -1646,13 +1809,16 @@ def make_report():
                 data = p.read_bytes()
                 if name == "cb_radio.log":
                     data = b"\n".join(data.splitlines()[-4000:])     # the last few hours are enough
+                    if hide_speech:
+                        data = _hide_speech(data)
                 zf.writestr(name, data)
         zf.writestr("about.json", json.dumps({"version": VERSION, "date": VERSION_DATE, "build": BUILD_NAME,
+                                              "speech_hidden": bool(hide_speech),
                                               "windows": platform.platform(), "created": datetime.now().isoformat()},
                                              ensure_ascii=False, indent=1))
     log(f"отчёт о проблеме собран: {z}")
-    subprocess.Popen(["explorer", f"/select,{z}"])
-    os.startfile(BOT_URL)
+    if show:
+        _show_report(z)
     return z
 _HINTED = set()
 
@@ -1726,6 +1892,8 @@ def main(argv):
             import overlay as overlay_mod
             if on:
                 OVERLAY = overlay_mod if overlay_mod.start(ov_port, PHRASES_JSON, BUILD_NAME or VARIANT, log) else None
+            if OVERLAY:
+                OVERLAY.add_texts(secret_texts())
             else:
                 OVERLAY = None
                 overlay_mod.stop()
@@ -1862,7 +2030,17 @@ def main(argv):
         except Exception as e:
             world = None
             log(f"живая трасса не запустилась: {e!r}")
-    global BONDS
+    global BONDS, SECRETS
+    if _tainik:
+        try:
+            import intents as _intents
+            SECRETS = _tainik.load(ROOT / "phrases")
+            SECRET_KINDS.update(_tainik.kinds(SECRETS))
+            _intents.add_secrets(SECRETS.get("intents"))
+            if OVERLAY:
+                OVERLAY.add_texts(secret_texts())
+        except Exception as e:
+            log(f"секреты: {e!r}")
     try:                                      # 2026-11-06: friendship & mood (bonds.py)
         import bonds as bonds_mod
         BONDS = bonds_mod.Bonds(ROOT / "bonds.json", PHRASES_JSON, log)
@@ -1895,9 +2073,7 @@ def main(argv):
                     CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
                 except (OSError, ValueError):
                     pass
-            tray.HOOKS.update(report=lambda: (make_report(), tray.notify(
-                "Журналы рации собраны в архив и показаны в папке. Перетащи этот файл в чат с ботом и коротко "
-                "напиши, что случилось.")))
+            tray.HOOKS.update(report=send_report)
             tray.HOOKS.update(upd_status=lambda: upd.status, upd_check=upd_check, upd_auto=upd_auto,
                               upd_auto_on=lambda: upd.auto, upd_enabled=lambda: upd.enabled,
                               changelog=lambda: os.startfile(str(ROOT / "CHANGELOG.md")))

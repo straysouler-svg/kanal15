@@ -52,6 +52,11 @@ def load_texts(phrases_json, build=""):
                 _TEXT[f"reactions/{g}/{k}/{i:02d}"] = txt(ln)
 
 
+def add_texts(m):
+    """Extra rel -> text (secret lines of a build, tainik.py)."""
+    _TEXT.update(m or {})
+
+
 def _push(who, text, kind):
     with _lock:
         STATE["seq"] += 1

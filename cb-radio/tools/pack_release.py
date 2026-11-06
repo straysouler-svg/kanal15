@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_BASE = ROOT.parent / "release"
 PERSONAL = {"soroka"}
 CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tray.py", "mic.py", "gamecheck.py",
-        "updater.py", "ed25519.py", "launcher.py"]
+        "updater.py", "ed25519.py", "launcher.py", "tainik.py"]
 HANDLE = {"kirill": "Сиди-Посиди", "alive": "Пятьдесят пятый", "neutral": ""}   # alive = blogger TheAlive55 (Алексей)
 README = r"""# CB-рация для Euro Truck Simulator 2
 
@@ -133,6 +133,21 @@ def main(variant):
         d["reactions"].pop(g)                                     # no other build's personal texts either
     d["player_handle"] = HANDLE[variant]
     (out / "phrases").mkdir()
+    # secrets (tainik.py, 2026-11-06): texts + trigger words -> phrases/x.dat (encoded), audio -> reactions/x/<faceless>
+    sys.path.insert(0, str(ROOT))
+    import tainik
+    sec = {"intents": json.loads((ROOT / "phrases" / "secrets_src.json").read_text(encoding="utf-8"))["intents"],
+           "texts": {}}
+    for k in tainik.kinds(sec):
+        lines = d["reactions"].get("intent", {}).pop(k, [])
+        sec["texts"][k] = [ln["text"] for ln in lines]
+        src_dir = out / "audio" / "reactions" / "intent" / k
+        if src_dir.exists():
+            dst = out / "audio" / "reactions" / "x" / tainik.dirname(k)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            src_dir.replace(dst)
+    (out / "phrases" / "x.dat").write_bytes(tainik.encode(sec))
+    print("  секреты в тайнике:", {k: len(v) for k, v in sec["texts"].items()})
     (out / "phrases" / "level3_eleven.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     for c in CODE:
         (out / c).parent.mkdir(parents=True, exist_ok=True)

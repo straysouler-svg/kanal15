@@ -140,7 +140,7 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
                  checked=lambda i: bool(hook("upd_auto_on", True)())),
             Item("Что нового…", lambda icon, item: hook("changelog")()))),
         Item("Журнал эфира…", open_file(log_file)),
-        Item("Сообщить о проблеме…", lambda icon, item: hook("report")()),
+        Item("Отправить журнал разработчикам…", lambda icon, item: hook("report")()),
         Menu.SEPARATOR,
         Item("Выключить рацию", quit_),
     )
