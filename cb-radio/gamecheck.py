@@ -13,6 +13,11 @@ from pathlib import Path
 
 PLUGIN = "ets2-telemetry.dll"          # Funbit; creates Local\\SimTelemetryETS2 (1.00-1.05 shipped the wrong one)
 WRONG_PLUGIN = "ETS2SharedMemoryMapPlugin64.dll"   # makes SCSTelemetryShared — not what the radio reads
+# 1.26 (07.11, Kirill: fines happened, the accountant stayed silent): Funbit has no gameplay events. Fines and the job
+# come from RenCloud scs-sdk-plugin (MIT, v1.12.1) -> Local\SCSTelemetry. SimHub ships the same plugin renamed
+# (Local\SHSCSTelemetry), so until now only SimHub owners got fines.
+EVENTS_PLUGIN = "scs-telemetry.dll"
+VC_EVENTS = ("msvcp140.dll", "vcruntime140.dll")      # Visual C++ 2015-2022 x64, what scs-telemetry.dll imports
 GAME_EXE = "eurotrucks2.exe"
 _k = ctypes.WinDLL("kernel32", use_last_error=True)
 _k.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
@@ -146,12 +151,21 @@ VC_DLLS = ("msvcr110.dll",)     # what ets2-telemetry.dll imports (Visual C++ 20
 VC_URL = "https://www.microsoft.com/download/details.aspx?id=30679 (vcredist_x64.exe)"
 
 
-def vc_missing(gdir=None):
-    """Runtime DLLs the plugin needs that Windows cannot find (System32, or next to eurotrucks2.exe)."""
+def vc_missing(gdir=None, names=VC_DLLS):
+    """Runtime DLLs a plugin needs that Windows cannot find (System32, or next to eurotrucks2.exe)."""
     import os
     sys32 = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32"
     here = Path(gdir) / "bin" / "win_x64" if gdir else None
-    return [d for d in VC_DLLS if not (sys32 / d).exists() and not (here and (here / d).exists())]
+    return [d for d in names if not (sys32 / d).exists() and not (here and (here / d).exists())]
+
+
+def events_path(gdir):
+    return Path(gdir) / "bin" / "win_x64" / "plugins" / EVENTS_PLUGIN
+
+
+def events_missing(gdir):
+    """The fines plugin (or its Visual C++) is not in this game."""
+    return bool(gdir) and (not events_path(gdir).exists() or bool(vc_missing(gdir, VC_EVENTS)))
 
 
 def game_log_plugin():
@@ -223,14 +237,19 @@ def diagnose(gdir):
 
 
 def needs_fix(gdir):
-    return bool(gdir) and (not plugin_path(gdir).exists() or bool(vc_missing(gdir)))
+    return bool(gdir) and (not plugin_path(gdir).exists() or bool(vc_missing(gdir)) or events_missing(gdir))
 
 
 def plugin_current(src, gdir):
     """The plugin in the game is exactly ours (and its Visual C++ is there)."""
     t = plugin_path(gdir)
+    ev = Path(src).parent / EVENTS_PLUGIN
     try:
-        return t.exists() and t.read_bytes() == Path(src).read_bytes() and not vc_missing(gdir)
+        main = t.exists() and t.read_bytes() == Path(src).read_bytes() and not vc_missing(gdir)
+        if not ev.exists():
+            return main
+        return (main and events_path(gdir).exists() and events_path(gdir).read_bytes() == ev.read_bytes()
+                and not vc_missing(gdir, VC_EVENTS))
     except OSError:
         return False
 
@@ -248,7 +267,17 @@ def fix(src, vc_dir, gdir):
     if stale:
         pairs.append((src, t))
         msgs.append("плагин поставлен")
-    vc = vc_missing(gdir)
+    ev = Path(src).parent / EVENTS_PLUGIN                    # 1.26: the fines plugin goes along
+    if ev.exists():
+        te = events_path(gdir)
+        try:
+            ev_stale = not te.exists() or te.read_bytes() != ev.read_bytes()
+        except OSError:
+            ev_stale = True
+        if ev_stale:
+            pairs.append((ev, te))
+            msgs.append("плагин штрафов поставлен")
+    vc = vc_missing(gdir) + (vc_missing(gdir, VC_EVENTS) if ev.exists() else [])
     here = Path(gdir) / "bin" / "win_x64"
     for d in vc:
         s = next((f for f in Path(vc_dir).glob("*") if f.name.lower() == d), None) if vc_dir else None
@@ -263,6 +292,27 @@ def fix(src, vc_dir, gdir):
     if not ok:
         return False, how
     return True, ("Готово: " + ", ".join(msgs) + ". Перезапустите игру и в окне про SDK нажмите OK.")
+
+
+def quiet_events_install(src_dir, gdir):
+    """1.26: put the fines plugin (and its Visual C++ if Windows lacks it) into the game WITHOUT any prompt: a plain
+    copy or nothing (no administrator window may ever pop up over the game). -> (done, text)."""
+    ev = Path(src_dir) / EVENTS_PLUGIN
+    if not gdir or not ev.exists() or not events_missing(gdir):
+        return False, ""
+    pairs = [] if events_path(gdir).exists() else [(ev, events_path(gdir))]
+    for d in vc_missing(gdir, VC_EVENTS):
+        s = next((f for f in (Path(src_dir) / "vc").glob("*") if f.name.lower() == d), None)
+        if not s:
+            return False, "нет " + d + " для плагина штрафов"
+        pairs.append((s, Path(gdir) / "bin" / "win_x64" / d))
+    try:
+        for s, d in pairs:
+            d.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(s, d)
+    except OSError as e:
+        return False, "папка игры защищена (" + str(e.strerror or e) + "), нужен пункт меню значка «Исправить плагин телеметрии»"
+    return True, "плагин штрафов поставлен в игру, заработает со следующего запуска игры"
 
 
 def details():

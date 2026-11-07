@@ -79,6 +79,10 @@ def build_app(variant):
     shutil.copy2(rel / "installer" / "plugins" / "ets2-telemetry.dll", app / "installer" / "plugins")
     (app / "installer" / "plugins" / "vc").mkdir()        # Visual C++ 2012 x64 for the plugin (app-local copy)
     shutil.copy2(SYS32 / "msvcr110.dll", app / "installer" / "plugins" / "vc" / "msvcr110.dll")
+    # 1.26: the fines plugin (RenCloud scs-telemetry.dll) and the Visual C++ 2015-2022 DLLs it imports
+    shutil.copy2(rel / "installer" / "plugins" / "scs-telemetry.dll", app / "installer" / "plugins")
+    for dll in ("msvcp140.dll", "vcruntime140.dll"):
+        shutil.copy2(SYS32 / dll, app / "installer" / "plugins" / "vc" / dll)
     shutil.copy2(rel / "installer" / "icon.png", app / "installer" / "icon.png")
     shutil.copy2(BUILD / "dist" / "Uninstall.exe", app / "Uninstall.exe")
     shutil.copytree(MODEL, app / "models" / "whisper-small")

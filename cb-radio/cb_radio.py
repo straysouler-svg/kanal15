@@ -228,10 +228,15 @@ class Fines:
 
     def poll(self):
         if not self._p:
-            h = _k.OpenFileMappingW(4, False, "Local\\SHSCSTelemetry")
-            if not h:
+            # 1.26: our own RenCloud plugin first (ships with the radio), SimHub's renamed copy as a fallback
+            for name in ("Local\\SCSTelemetry", "Local\\SHSCSTelemetry"):
+                h = _k.OpenFileMappingW(4, False, name)
+                if h:
+                    self._p = _k.MapViewOfFile(h, 4, 0, 0, 0)
+                    log("штрафы и заказ: читаю " + name.split(chr(92))[-1])
+                    break
+            if not self._p:
                 return None
-            self._p = _k.MapViewOfFile(h, 4, 0, 0, 0)
         b = ctypes.string_at(self._p, 4400)
         offence = b[3436:3500].split(b"\0")[0].decode("ascii", "replace")
         sig = (offence, struct.unpack_from("<i", b, 4216)[0], struct.unpack_from("<i", b, 4304)[0])
@@ -471,8 +476,10 @@ import collections  # noqa: E402
 
 RECENT = collections.deque(maxlen=20)   # reaction files heard lately: one driver must not repeat himself
 FOREIGN = {p.name for p in (ROOT / "audio" / "reactions" / "foreign").glob("*") if p.is_dir()}
-FOREIGN_LAST = [None, -1e9]   # (language, monotonic end) of the last passing foreigner on air
-FOREIGN_HEARS_S = 30          # any words right after him are for him
+FOREIGN_LAST = [None, -1e9, 0]   # (language, monotonic end of his last line, replies so far) of the passing foreigner
+FOREIGN_HEARS_S = 20          # small talk right after him is for him
+FOREIGN_MAX_REPLIES = 2       # 07.11 Kirill: 8 «не понял, брат» in a row — after two he drives on
+FOREIGN_SMALLTALK = (None, "greet", "how_are_you", "praise", "thanks", "bye", "joke", "mock", "rude", "bot")
 FOREIGN_WORD_S = 600          # «амиго», «хеллоу»… reach him for 10 min (he is still somewhere on the channel)
 _FOREIGN_WORDS = re.compile(
     r"\b(амиго|амигос|хеллоу?|хелло|хэллоу?|хай|бонжур|бонжюр|мерси|гутен|гутн|данке|данкешон|чао|грацие?|грация|"
@@ -1080,10 +1087,11 @@ class Operator:
         # or «амиго / хеллоу / бонжур…» within 10 min -> HE answers in his language, laughing («не понял, брат,
         # но хорошей дороги»). Foreign words with no foreigner around -> nobody of ours answers them.
         if heard and text and not who and intent not in ("who", "repeat"):
-            fl, ft = FOREIGN_LAST
+            fl, ft, fn = FOREIGN_LAST
             fw = foreign_word(text)
-            right_after = t_rel - ft < FOREIGN_HEARS_S and PLAYER.last_t < ft
-            if fl and (right_after or (fw and t_rel - ft < FOREIGN_WORD_S)):
+            # only small talk goes to him; a real question («где заправиться?», «кто в эфире?») is for our drivers
+            right_after = t_rel - ft < FOREIGN_HEARS_S and PLAYER.last_t < ft and intent in FOREIGN_SMALLTALK
+            if fl and fn < FOREIGN_MAX_REPLIES and (right_after or (fw and t_rel - ft < FOREIGN_WORD_S)):
                 if OVERLAY:
                     OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
                 log(f"тангента: «{text}» -> проезжему иностранцу ({fl})")
@@ -1248,7 +1256,7 @@ class Operator:
         now = time.monotonic()
         here = list(self.deck.allowed) if self.deck.allowed is not None else list(self.deck.on_air)
         random.shuffle(here)
-        done = 0
+        done, cut = 0, None
         for a in here:
             if self.rollcalled.get(a, 0) > now or self.deck.offline(a):
                 continue
@@ -1257,12 +1265,18 @@ class Operator:
                 continue
             if done and not PLAYER.idle(random.uniform(0.6, 1.5)):
                 break
-            if PLAYER.file(pick[1], a) != "ok":
+            r = PLAYER.file(pick[1], a)
+            if r != "ok":
+                cut = r
                 break
             self.rollcalled[a] = time.monotonic() + random.uniform(120, 180)
             self.deck.on_air.add(a)
             bond_add(a, 1, "перекличка")
             done += 1
+        if cut in ("ptt", "paused"):
+            # 07.11 Kirill's log said «никого в зоне», but he had just keyed up again over the first answer
+            log(f"перекличка прервана ({'ты нажал тангенту' if cut == 'ptt' else 'пауза'}), ответили {done}")
+            return
         if not done:
             # 2026-11-06, Kirill: «Кто в эфире?» is how he says hello — 15 times in a row into dead air.
             # Somebody near who already answered says a short «тут я»; nobody near -> the channel just hisses.
@@ -1386,7 +1400,10 @@ class Operator:
         if OVERLAY:
             OVERLAY.said(_rel(wav), actor)      # subtitle = Russian translation ("ru" in the phrases)
         PLAYER.file(tmp)
-        FOREIGN_LAST[1] = time.monotonic()      # you can keep chatting with him a little
+        FOREIGN_LAST[1] = time.monotonic()      # one more word to him is still his...
+        FOREIGN_LAST[2] += 1                    # ...but after FOREIGN_MAX_REPLIES he is gone
+        if FOREIGN_LAST[2] >= FOREIGN_MAX_REPLIES:
+            log(f"проезжий иностранец ({lang}) уехал дальше")
 
     def answer(self):
         _, group, kind, prefer, who = self.pending
@@ -2279,6 +2296,21 @@ def main(argv):
             now = time.monotonic()
             dt, last = now - last, now
             st = game.state(cfg["require_engine_on"])
+            if now >= GSEEN.get("ev_next", 0.0):         # 1.26: the fines plugin goes into the game quietly, no prompts
+                GSEEN["ev_next"] = now + 60
+                try:
+                    gx_ = gamecheck.game_process()
+                    gd_ = gamecheck.game_dir(gx_) if gx_ else None
+                    if gd_:
+                        GSEEN["dir"] = gd_
+                        tried_ = GSEEN.setdefault("ev_tried", set())
+                        if str(gd_) not in tried_:           # one attempt per game folder per run
+                            tried_.add(str(gd_))
+                            _done, _txt = gamecheck.quiet_events_install(ROOT / "installer" / "plugins", gd_)
+                            if _txt:
+                                log(f"плагин штрафов: {_txt}")
+                except Exception as e:
+                    log(f"плагин штрафов: {e!r}")
             if st == "no_game":                  # «жду игру» while the game IS running -> say why (gamecheck.py)
                 if now >= GSEEN["next"]:
                     GSEEN["next"] = now + 5
@@ -2568,7 +2600,7 @@ def main(argv):
                                              "es": "по-испански", "it": "по-итальянски", "nl": "по-голландски",
                                              "cs": "по-чешски"}.get(lang, "не по-нашему"))
                         PLAYER.file(tmp)
-                        FOREIGN_LAST[:] = [lang, time.monotonic()]
+                        FOREIGN_LAST[:] = [lang, time.monotonic(), 0]
                         next_at = max(next_at, driving_s + 15)
                         continue
             # far-away chatter near a big city when nobody is in range

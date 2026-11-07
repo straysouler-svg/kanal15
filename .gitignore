@@ -66,3 +66,8 @@ probe_job.txt
 /promo/stream/.da_goal_url
 /promo/drivers_art/**/*.png
 /promo/drivers_art/**/*.jpg
+
+# сторонний плагин для сборки: бинарник не храним, только записка об источнике
+!/cb-radio/vendor/
+/cb-radio/vendor/*
+!/cb-radio/vendor/README.md

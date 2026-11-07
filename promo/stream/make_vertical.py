@@ -36,7 +36,8 @@ def rel(it):     # canvas-relative fields (OBS 31+): centre = 0, half the canvas
 
 
 col = json.loads(COL.read_text(encoding="utf-8"))
-(COL.with_name("Канал_15.before_vertical.json")).write_text(json.dumps(col, ensure_ascii=False, indent=4),
+# backup NOT as *.json: OBS loads every .json in this folder as a collection (07.11 it opened the backup)
+(COL.with_name("Канал_15.json.before_vertical.bak")).write_text(json.dumps(col, ensure_ascii=False, indent=4),
                                                            encoding="utf-8")
 src = {s["name"]: s for s in col["sources"]}
 canv = next((c for c in col.get("canvases") or [] if c["info"]["name"] == CANVAS_NAME), None)
@@ -46,7 +47,10 @@ if not canv:
 CU = canv["info"]["uuid"]
 # rebuild our vertical scenes from scratch on every run
 col["sources"] = [s for s in col["sources"] if not (s["id"] == "scene" and s.get("canvas_uuid") == CU)
-                  and s["name"] not in ("Верт: фон", "Рация — оверлей (верт.)")]
+                  and s["name"] not in ("Верт: фон", "Рация — оверлей (верт.)", "Верт. заставка: скоро начнём",
+                                        "Верт. заставка: перерыв", "Верт. заставка: конец",
+                                        "ETS2 (фон верт.)")]
+SCN = Path(__file__).resolve().parent / "scenes"
 src = {s["name"]: s for s in col["sources"]}
 main_cam_item = next(i for i in src["В пути"]["settings"]["items"] if i["name"] == "Устройство захвата видео")
 
@@ -84,6 +88,26 @@ def scene(name, items, order):
                                   "canvas_active": True}, canvas_uuid=CU, hotkeys={"OBSBasic.SelectScene": []})
 
 
+def filt(kind, name, settings):
+    return {"prev_ver": 553648129, "name": name, "uuid": U(), "id": kind, "versioned_id": kind, "settings": settings,
+            "mixers": 0, "sync": 0, "flags": 0, "volume": 1.0, "balance": 0.5, "enabled": True, "muted": False,
+            "push-to-mute": False, "push-to-mute-delay": 0, "push-to-talk": False, "push-to-talk-delay": 0,
+            "hotkeys": {}, "deinterlace_mode": 0, "deinterlace_field_order": 0, "monitoring_type": 0,
+            "monitoring_enabled": False, "private_settings": {}}
+
+
+# --- full-screen background: a SECOND capture of the same game window with its own filters (no nested scene:
+# 07.11 a vertical scene inside a vertical scene froze OBS at start with Aitum). Shrink 10x (area), crop 9:16 from the
+# centre in the small picture, stretch back with bilinear = soft blur; darken.
+SMALL = (GAME_W // 10, GAME_H // 10)                       # 344x144
+bg_game = source("game_capture", "ETS2 (фон верт.)", copy.deepcopy(src["ETS2"]["settings"]))
+bg_game["filters"] = [filt("scale_filter", "Размытие: уменьшить", {"resolution": f"{SMALL[0]}x{SMALL[1]}", "sampling": "area"}),
+                      filt("color_filter_v2", "Притемнить", {"brightness": -0.28, "saturation": -0.25})]
+cw = round(SMALL[1] * W / H)                                # 81 px wide = 9:16 of 144
+cl = (SMALL[0] - cw) // 2
+blur = item(bg_game, 1, 0, 0, H / SMALL[1], (cl, SMALL[0] - cw - cl, 0, 0))
+blur["scale_filter"] = "bilinear"
+
 # --- «В пути»: centre of the cab as a square
 side = (GAME_W - GAME_H) // 2
 game = item(src["ETS2"], 2, 0, 170, W / GAME_H, (side, side, 0, 0))
@@ -97,15 +121,15 @@ cam.update(id=4, scale_ref={"x": float(W), "y": float(H)},
 rel(cam)
 frame = item(src["Рамка камеры"], 5, *FR_AT)
 dono = item(src["Донаты (DonationAlerts)"], 6, (W - 800) / 2, 420)
-on_road = [item(bg, 1), game, item(ov, 3), cam, frame, dono]
+on_road = [blur, game, item(ov, 3), cam, frame, dono]
 scene("Верт: В пути", on_road, 1)
 
-# --- title cards: the horizontal 1920x1080 picture fitted to the width
-k = W / 1920
-for n, (name, img) in enumerate((("Верт: Скоро начнём", "Заставка: скоро начнём"), ("Верт: Перерыв", "Заставка: перерыв"),
-                                 ("Верт: Конец", "Заставка: конец")), 2):
-    scene(name, [item(bg, 1), item(src[img], 2, 0, (H - 1080 * k) / 2, k), item(dono_src := src["Донаты (DonationAlerts)"], 3,
-                                                                              (W - 800) / 2, 300)], n)
+# --- title cards: full-screen 1080x1920 versions (scenes/*_v.png: blurred card behind, the card in the middle)
+for n, (name, f, title) in enumerate((("Верт: Скоро начнём", "scene_soon_v.png", "скоро начнём"),
+                                      ("Верт: Перерыв", "scene_break_v.png", "перерыв"),
+                                      ("Верт: Конец", "scene_end_v.png", "конец")), 2):
+    card = source("image_source", f"Верт. заставка: {title}", {"file": (SCN / f).as_posix()})
+    scene(name, [item(card, 1), item(src["Донаты (DonationAlerts)"], 2, (W - 800) / 2, 300)], n)
 # scene order inside the vertical canvas: Скоро начнём, В пути, Перерыв, Конец
 for s in col["sources"]:
     if s.get("canvas_uuid") == CU and s["id"] == "scene":

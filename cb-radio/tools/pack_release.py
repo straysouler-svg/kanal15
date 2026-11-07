@@ -181,6 +181,8 @@ def main(variant):
     (out / "installer" / "plugins").mkdir()
     shutil.copy2(Path(r"G:\SteamLibrary\steamapps\common\Euro Truck Simulator 2\bin\win_x64\plugins")
                  / "ets2-telemetry.dll", out / "installer" / "plugins" / "ets2-telemetry.dll")   # makes SimTelemetryETS2
+    # 1.26: RenCloud scs-sdk-plugin (MIT, v1.12.1, sha256 1d03dbc7...) -> Local\\SCSTelemetry: fines and the job without SimHub
+    shutil.copy2(ROOT / "vendor" / "scs-telemetry.dll", out / "installer" / "plugins" / "scs-telemetry.dll")
     sf.write(out / "installer" / "kardan_kruchitsya.wav", (y / (abs(y).max() + 1e-9) * 0.85).astype("float32"),
              32000, subtype="PCM_16")
     (out / "Установка.cmd").write_text(
