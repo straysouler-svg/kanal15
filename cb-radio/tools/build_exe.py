@@ -126,7 +126,7 @@ def build_setup(variant, payload):
     spec = BUILD / f"setup_{variant}.spec"
     spec.write_text(f'''
 a = Analysis([r"{CB / "tools" / "setup_app.py"}"], pathex=[r"{CB / "tools"}", r"{CB}"],
-             hiddenimports=["release_installer", "mic", "gamecheck", "sounddevice", "_sounddevice_data"],
+             hiddenimports=["release_installer", "mic", "gamecheck", "sounddevice", "_sounddevice_data", "pynput.keyboard", "pynput.mouse"],
              datas=[(r"{art}", "art")], excludes=["numpy", "scipy"])
 a.datas = [d for d in a.datas]
 splash = Splash(r"{art / "banner.png"}", binaries=a.binaries, datas=a.datas, text_pos=(24, 188), text_size=9,

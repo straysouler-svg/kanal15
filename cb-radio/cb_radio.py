@@ -277,25 +277,40 @@ def _oem_name(vid, pid):
     return ""
 
 
+def _input_name(key):
+    """pynput key/button -> the name config.json stores (one rule for PTT and the rebind dialog)."""
+    return key.name if hasattr(key, "name") else (key.char if getattr(key, "char", None) else str(key))
+
+
+def _winmm_buttons(mm, ids=range(16)):
+    """{id: (device name, pressed-buttons bitmask)} of winmm joysticks - shared by PTT and the rebind dialog."""
+    out = {}
+    for i in ids:
+        caps = _JOYCAPSW()
+        if mm.joyGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) != 0:
+            continue
+        ji = _JOYINFOEX()
+        ji.dwSize, ji.dwFlags = ctypes.sizeof(ji), 0x80        # JOY_RETURNBUTTONS
+        if mm.joyGetPosEx(i, ctypes.byref(ji)) == 0:
+            out[i] = (_oem_name(caps.wMid, caps.wPid) or f"{caps.wMid:04X}:{caps.wPid:04X}", ji.dwButtons)
+    return out
+
+
 class PTT:
-    """Push-to-talk = one wheel button or keyboard key. Read straight from Windows (winmm joyGetPosEx for wheels
-    buttons 0-31, pynput.keyboard.Listener for keyboard): ~1.5 % of a core. pygame/SDL opened all 5 controllers
-    with its own thread and cost 7-20 % (measured 2026-11-03) - it stays only as a fallback (button >= 32, winmm
-    can't see the device, or "backend": "pygame" in config ptt). Survives the wheel reconnecting (Pit House
-    re-plugs the R5 base when a game starts). 1.27: keyboard works for players without a wheel."""
+    """Push-to-talk = a wheel button, a keyboard key (1.27) or a mouse button (1.28). Read straight from Windows
+    (winmm joyGetPosEx for wheel buttons 0-31, pynput listeners for keyboard/mouse): ~1.5 % of a core. pygame/SDL
+    opened all 5 controllers with its own thread and cost 7-20 % (measured 2026-11-03) - it stays only as a fallback
+    (button >= 32, winmm can't see the device, or "backend": "pygame" in config ptt). Survives the wheel
+    reconnecting (Pit House re-plugs the R5 base when a game starts). 1.28: the tray «переназначить кнопку» applies
+    the new button right away - want_rebind is picked up by poll(), in the one thread that touches pynput/SDL."""
     RESCAN_S = 2.0
 
     def __init__(self, cfg):
-        c = cfg.get("ptt") or {}
-        self.dev, self.btn = str(c.get("device", "")).lower(), c.get("button")
         self.down, self.t_down, self.presses = False, 0.0, []
         self.was_playing, self.cut = False, None
         self.ears = None         # set in main(): microphone + speech recognition
-        self.js = {}
-        self.ok = False
-        self.backend, self.jid, self._next_scan, self._names = None, None, 0.0, None
-        self._last_cfg = -1e9
-        self.kb_listener = None
+        self.on_rebind = None    # set in main(): called after rebind() (the mic may need to wake up)
+        self.device = cfg.get("device")
         # your own key-up / key-release sounds ("ptt_sounds" in config.json)
         s = cfg.get("ptt_sounds") or {}
         self.snd = {}
@@ -304,36 +319,49 @@ class PTT:
             if f and f.exists():
                 data, sr = sf.read(f, dtype="float32")
                 self.snd[edge] = (data * float(s.get("volume", 0.5)) * float(cfg.get("volume", 0.8)), sr)
-        self.device = cfg.get("device")
+        self.want_rebind = None
+        self._start_backend(cfg.get("ptt") or {})
+
+    def _start_backend(self, c):
+        """keyboard / mouse / winmm / pygame, in this order; re-runnable at any moment (tray «переназначить кнопку»)."""
+        self.dev, self.btn = str(c.get("device", "")).lower(), c.get("button")
+        self.ok = False
+        self.backend = None
+        self.jid, self.js = None, {}
+        self._next_scan, self._names, self._last_cfg = 0.0, None, -1e9
+        self.listener, self.mm, self.pg = None, None, None
+        self.kb_down = False
         if self.btn is None:
             return
-        if self.dev == "keyboard" and isinstance(self.btn, str):     # 1.27: keyboard PTT for players without a wheel
+        if self.dev in ("keyboard", "mouse") and isinstance(self.btn, str):
+            # 1.27: keyboard PTT for players without a wheel; 1.28: any mouse button too
             try:
-                from pynput import keyboard
-                self.kb_down = False
+                from pynput import keyboard, mouse
+                src = keyboard if self.dev == "keyboard" else mouse
                 def on_press(key):
                     try:
-                        name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
-                        if name == self.btn and not self.kb_down:
+                        if _input_name(key) == self.btn and not self.kb_down:
                             self.kb_down = True
                             self._press()
                     except Exception:
                         pass
                 def on_release(key):
                     try:
-                        name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
-                        if name == self.btn and self.kb_down:
+                        if _input_name(key) == self.btn and self.kb_down:
                             self.kb_down = False
                             self._release()
                     except Exception:
                         pass
-                self.kb_listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-                self.kb_listener.start()
-                self.backend, self.ok = "keyboard", True
-                log(f"тангента: клавиша {self.btn}")
+                self.listener = src.Listener(on_press=on_press, on_release=on_release)
+                self.listener.start()
+                self.backend, self.ok = self.dev, True
+                log(f"тангента: {self.dev} «{self.btn}»")
                 return
             except Exception as e:
                 log(f"тангента через pynput не вышла ({e!r})")
+        if not isinstance(self.btn, int) or self.btn < 0:
+            log(f"тангента: непонятная кнопка {self.btn!r} для устройства «{self.dev}»")
+            return
         if self.btn < 32 and c.get("backend", "winmm") == "winmm":
             try:
                 self.mm = ctypes.WinDLL("winmm")
@@ -354,6 +382,39 @@ class PTT:
         except Exception as e:
             log(f"тангента не работает: {e!r}")
 
+    def rebind(self, c):
+        """1.28: switch the button at once (tray «переназначить кнопку рации»): same object, new backend, no restart."""
+        if self.down:
+            self._release()
+        if self.listener:
+            try:
+                self.listener.stop()
+            except Exception:
+                pass
+        if self.pg:
+            try:
+                self.pg.quit()        # closes its joysticks; _start_backend inits pygame again if still needed
+            except Exception:
+                pass
+        self.down = False
+        self._start_backend(c)
+        log(f"тангента: новая кнопка применена ({c.get('device')}, {c.get('button')})")
+        if self.on_rebind:
+            try:
+                self.on_rebind()
+            except Exception as e:
+                log(f"тангента: после переназначения {e!r}")
+
+    def describe(self):
+        """The current button, human-readable — tray menu line and the rebind dialog («Кнопка рации: …»)."""
+        if not self.ok or self.btn is None:
+            return "не найдена"
+        if self.dev == "keyboard":
+            return f"клавиша {self.btn}"
+        if self.dev == "mouse":
+            return f"мышь: {self.btn}"
+        return f"{self.dev}, кнопка {self.btn}"
+
     CFG_CHANGED_S = 15.0     # joyConfigChanged not more often than this
 
     def _scan_winmm(self):
@@ -364,16 +425,13 @@ class PTT:
         if now - self._last_cfg >= self.CFG_CHANGED_S:
             self._last_cfg = now
             self.mm.joyConfigChanged(0)
-        self.jid, names, found = None, [], None
-        for i in range(16):
-            caps = _JOYCAPSW()
-            if self.mm.joyGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) != 0:
-                continue
-            name = _oem_name(caps.wMid, caps.wPid) or f"{caps.wMid:04X}:{caps.wPid:04X}"
-            names.append(name)
+        devs = _winmm_buttons(self.mm)
+        found = None
+        for i, (name, _) in devs.items():
             if self.jid is None and self.dev and self.dev in name.lower() \
                     and self.mm.joyGetPosEx(i, ctypes.byref(self.ji)) == 0:
                 self.jid, found = i, name
+        names = [n for n, _ in devs.values()]
         if names != self._names:
             self._names = names
             log(f"тангента: {'найдена на ' + found if found else 'устройство не найдено'} "
@@ -416,9 +474,14 @@ class PTT:
         self._sound("release")
 
     def poll(self):
+        if self.want_rebind is not None:      # 1.28: tray «переназначить кнопку» — applied here so pynput/SDL
+            c, self.want_rebind = self.want_rebind, None      # calls stay in the one thread that polls
+            self.rebind(c)
         if not self.ok:
             return
         try:
+            if self.backend in ("keyboard", "mouse"):
+                return                        # the pynput listener presses/releases on its own thread
             if self.backend == "winmm":
                 if self.jid is None:
                     if time.monotonic() >= self._next_scan:
@@ -2130,70 +2193,109 @@ def main(argv):
         tray.HOOKS.update(plugin_needed=lambda: gamecheck.needs_fix(GSEEN["dir"]), plugin_install=plugin_install)
 
         # 1.27: rebind PTT from the tray menu (for players without a wheel who missed the installer step)
+        # 1.28: any device, any moment — mouse buttons too, and the new button works at once (no radio restart)
         def ptt_rebind():
             import tkinter as tk
             from tkinter import ttk
-            import threading
             root = tk.Tk()
             root.title("Переназначить кнопку рации")
-            root.geometry("400x200")
+            root.geometry("400x240")
             root.resizable(False, False)
             tk.Label(root, text="Нажмите нужную кнопку на руле, геймпаде,\nклавиатуре или мыши.", font=("Segoe UI", 10)).pack(pady=15)
-            status = tk.Label(root, text="Жду нажатия…", font=("Segoe UI", 11, "bold"), fg="#333")
+            status = tk.Label(root, text=f"Сейчас: {ptt.describe()}\nЖду нажатия…", font=("Segoe UI", 11, "bold"), fg="#333")
             status.pack(pady=10)
-            result = {"ptt": None, "base": {}, "kb_listener": None}
+            result = {"ptt": None, "base": {}, "listeners": [], "stopped": False}
+
+            def cleanup():
+                result["stopped"] = True
+                for li in result["listeners"]:
+                    try:
+                        li.stop()
+                    except Exception:
+                        pass
+                root.destroy()
+
+            def got(value, text):
+                result["ptt"] = value
+                for li in result["listeners"]:        # enough: later presses must not overwrite the result
+                    try:
+                        li.stop()
+                    except Exception:
+                        pass
+                status.config(text=f"✔ {text}", fg="#2e7d32")
+                root.after(1200, root.destroy)        # let the user see what got assigned
+
+            btn_frame = tk.Frame(root)
+            btn_frame.pack(pady=15)
+            ttk.Button(btn_frame, text="Отмена", command=cleanup).pack()
+
             def poll_buttons():
-                if result["ptt"]:
+                if result["ptt"] or result["stopped"] or not root.winfo_exists():
                     return
-                import ri
                 try:
-                    now = ri.read_buttons(ids=list(result["base"]))
-                except OSError:
+                    now = _winmm_buttons(mm, result["base"])
+                except Exception:
                     now = {}
                 for j, (name, b) in now.items():
                     pressed = b & ~result["base"].get(j, (name, 0))[1]
                     if pressed:
-                        result["ptt"] = (name, (pressed & -pressed).bit_length() - 1)
-                        status.config(text=f"✔ {result['ptt'][0]}, кнопка {result['ptt'][1]}", fg="#2e7d32")
-                        if result["kb_listener"]:
-                            result["kb_listener"].stop()
-                        root.after(1500, root.destroy)
+                        num = (pressed & -pressed).bit_length() - 1
+                        got((name, num), f"{name}, кнопка {num}")
                         return
                 root.after(40, poll_buttons)
+
             def kb_release(key):
-                if result["ptt"]:
+                if result["ptt"] or result["stopped"]:
                     return
-                from pynput.keyboard import Key
-                name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
-                result["ptt"] = ("keyboard", name)
-                status.config(text=f"✔ клавиша {name}", fg="#2e7d32")
-                if result["kb_listener"]:
-                    result["kb_listener"].stop()
-                root.after(1500, root.destroy)
-            try:
-                import ri
-                result["base"] = ri.read_buttons()
-            except Exception:
-                result["base"] = {}
-            if not result["base"]:
                 try:
-                    from pynput import keyboard
-                    result["kb_listener"] = keyboard.Listener(on_press=lambda k: None, on_release=kb_release)
-                    result["kb_listener"].start()
-                except Exception:
-                    pass
+                    got(("keyboard", _input_name(key)), f"клавиша {_input_name(key)}")
+                except Exception as e:
+                    log(f"ошибка обработки клавиши: {e!r}")
+
+            def ms_click(x, y, button, pressed):
+                if not pressed or result["ptt"] or result["stopped"]:
+                    return
+                try:
+                    if root.winfo_containing(x, y) is not None:
+                        return            # a click on this very dialog (e.g. «Отмена») must not become the button
+                    got(("mouse", _input_name(button)), f"мышь: {_input_name(button)}")
+                except Exception as e:
+                    log(f"ошибка обработки мыши: {e!r}")
+
+            try:
+                mm = ctypes.WinDLL("winmm")
+                mm.joyConfigChanged(0)
+                result["base"] = _winmm_buttons(mm)
+                log(f"переназначение кнопки: найдено устройств {len(result['base'])}")
+            except Exception as e:
+                mm = None
+                log(f"переназначение кнопки: ошибка опроса джойстиков {e!r}")
+
+            try:
+                from pynput import keyboard, mouse
+                for li in (keyboard.Listener(on_press=lambda k: None, on_release=kb_release),
+                           mouse.Listener(on_click=ms_click)):
+                    li.start()
+                    result["listeners"].append(li)
+                log("переназначение кнопки: слушатели клавиатуры и мыши запущены")
+            except Exception as e:
+                log(f"переназначение кнопки: pynput не работает {e!r}")
+
             poll_buttons()
             root.mainloop()
+
             if result["ptt"]:
                 try:
                     cfg["ptt"] = {"device": result["ptt"][0], "button": result["ptt"][1]}
                     CFG_FILE.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
                     log(f"кнопка рации переназначена: {result['ptt']}")
-                    tray.notify(f"Кнопка рации: {result['ptt'][0]}, {result['ptt'][1]}.\nПерезапустите рацию, чтобы изменения вступили в силу.")
+                    ptt.want_rebind = cfg["ptt"]        # applied by the very next poll() — restart not needed
+                    tray.notify(f"Кнопка рации: {result['ptt'][0]}, {result['ptt'][1]}.\nЖмите её в эфире — перезапуск не нужен.")
                 except Exception as e:
                     log(f"кнопка рации: не удалось сохранить {e!r}")
                     tray.notify(f"Не удалось сохранить настройку ({e})")
         tray.HOOKS["ptt_rebind"] = ptt_rebind
+        tray.HOOKS["ptt_now"] = lambda: ptt.describe()        # меню значка: строка «Кнопка рации: …»
 
         # 1.13: the game runs as administrator (many repacks mark it so) -> Windows keeps the radio away
         def admin_fix():
@@ -2222,38 +2324,57 @@ def main(argv):
             return "flag" if gamecheck.admin_flags() else ("restart" if not gamecheck.is_admin() else None)
         tray.HOOKS.update(admin_state=admin_state, admin_fix=admin_fix, admin_restart=admin_restart)
     ptt = PTT(cfg)
-    PLAYER.ptt = ptt if ptt.ok else None
-    ears = Ears(cfg) if ptt.ok else None
-    ptt.ears = ears if ears and ears.ok else None
-    if ears:
-        def on_silent(name):
-            import mic
-            hint("mic_silent", mic.privacy_blocked() or f"Рация не слышит микрофон «{name}» (полная тишина). "
-                 "Правый клик по значку рации → Микрофон → выберите другой.")
-        ears.on_silent = on_silent
-        if tray:
-            import mic as mic_mod
+    PLAYER.ptt = ptt            # poll() сам смотрит self.ok — так переназначение из меню (1.28) оживляет тангенту сразу
+    op = None                   # Operator ниже; ensure_ears() дергается из главного цикла, к тому моменту op уже есть
+    ears = [Ears(cfg) if ptt.ok else None]
+    ptt.ears = ears[0] if ears[0] and ears[0].ok else None
 
-            def mic_set(name):
-                if ears.open(name):
-                    if not ears.ok:            # no microphone at start: the recogniser starts now
-                        import threading
-                        ears.ok = True
-                        ears.want_model = threading.Event()
-                        threading.Thread(target=ears._worker, args=((cfg.get("mic") or {}).get("model", "small"),),
-                                         daemon=True).start()
-                    ptt.ears = ears
-                    op.ears = ears
-                    cfg.setdefault("mic", {})["device"] = name
-                    try:
-                        cur = json.loads(CFG_FILE.read_text(encoding="utf-8-sig"))
-                        cur.setdefault("mic", {})["device"] = name
-                        CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
-                    except (OSError, ValueError) as e:
-                        log(f"настройки не сохранились: {e!r}")
-                    ears.last_info = "микрофон сменён — нажмите тангенту и скажите что-нибудь"
-            tray.HOOKS.update(mics=lambda: [n for _, n in mic_mod.inputs(sd)], mic_now=lambda: ears.dev_name,
-                              mic_info=lambda: ears.last_info, mic_set=mic_set)
+    def on_silent(name):
+        import mic
+        hint("mic_silent", mic.privacy_blocked() or f"Рация не слышит микрофон «{name}» (полная тишина). "
+             "Правый клик по значку рации → Микрофон → выберите другой.")
+
+    def register_mic_hooks():
+        if not tray:
+            return
+        import mic as mic_mod
+
+        def mic_set(name):
+            if ears[0].open(name):
+                if not ears[0].ok:            # no microphone at start: the recogniser starts now
+                    import threading
+                    ears[0].ok = True
+                    ears[0].want_model = threading.Event()
+                    threading.Thread(target=ears[0]._worker, args=((cfg.get("mic") or {}).get("model", "small"),),
+                                     daemon=True).start()
+                ptt.ears = ears[0]
+                op.ears = ears[0]
+                cfg.setdefault("mic", {})["device"] = name
+                try:
+                    cur = json.loads(CFG_FILE.read_text(encoding="utf-8-sig"))
+                    cur.setdefault("mic", {})["device"] = name
+                    CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
+                except (OSError, ValueError) as e:
+                    log(f"настройки не сохранились: {e!r}")
+                ears[0].last_info = "микрофон сменён — нажмите тангенту и скажите что-нибудь"
+        tray.HOOKS.update(mics=lambda: [n for _, n in mic_mod.inputs(sd)], mic_now=lambda: ears[0].dev_name,
+                          mic_info=lambda: ears[0].last_info, mic_set=mic_set)
+
+    def ensure_ears():
+        """1.28: меню «переназначить кнопку» может дать рации кнопку, которой не было на старте, — микрофон просыпается."""
+        if ears[0] is None and ptt.ok:
+            ears[0] = Ears(cfg)
+            ears[0].on_silent = on_silent
+            ptt.ears = ears[0] if ears[0].ok else None
+            if op is not None:
+                op.ears = ears[0]
+            register_mic_hooks()
+            log(f"микрофон подключён к тангенте: {ears[0].dev_name}")
+
+    ptt.on_rebind = ensure_ears
+    if ears[0]:
+        ears[0].on_silent = on_silent
+        register_mic_hooks()
     elif tray:
         tray.HOOKS.update(mic_now=lambda: "кнопка рации не найдена — запустите установщик ещё раз")
     op = Operator(deck, ptt.ears)

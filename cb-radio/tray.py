@@ -127,6 +127,7 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
         Item(inside_text, None, enabled=False),
         Item(lambda i: "Микрофон: " + str(hook("mic_now", "—")() or "—")[:60], None, enabled=False),
         Item(lambda i: "Последнее нажатие: " + str(hook("mic_info", "—")() or "—")[:60], None, enabled=False),
+        Item(lambda i: "Кнопка рации: " + str(hook("ptt_now", "—")() or "—")[:60], None, enabled=False),
         Menu.SEPARATOR,
         Item("Переназначить кнопку рации…", lambda icon, item: hook("ptt_rebind")()),
         Item("Исправить плагин телеметрии", lambda icon, item: hook("plugin_install")(),
