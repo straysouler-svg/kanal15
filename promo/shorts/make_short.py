@@ -118,6 +118,9 @@ def main(spec_path):
     if spec.get("layout") == "game":   # 2026-11-06: a «Канал 15» stream VOD without the streamer: the game picture only
         W, H, sq, y0 = 1920, 804, 804, spec.get("game_y", 150)
         x0 = spec.get("crop_x", (W - sq) // 2)
+    if spec.get("layout") == "rec":    # 2026-11-07: OBS profile «Канал 15 — Шортсы»: clean game 2580x1080, square 1:1
+        W, H, sq, y0 = 2580, 1080, 1080, 0
+        x0 = spec.get("crop_x", (W - sq) // 2)
     sub_f = str(sub).replace("\\", "/").replace(":", "\\:")
     cut = "".join(f"[0:v]trim={a - s0:.3f}:{b - s0:.3f},setpts=PTS-STARTPTS[v{i}];"
                   f"[0:a]atrim={a - s0:.3f}:{b - s0:.3f},asetpts=PTS-STARTPTS,"

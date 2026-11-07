@@ -23,9 +23,9 @@ BUCKET = "kanal15-reports"
 INBOX = CB.parent / "promo" / "telegram" / "inbox" / "reports"
 
 
-def s3(method, path, query="", data=b"", headers=None):
+def s3(method, path, query="", data=b"", headers=None, key_file=None):
     """Signed request (AWS Signature V4) with our private key. path = "/bucket/key"."""
-    kid, secret = [x.strip() for x in S3_KEY.read_text(encoding="utf-8-sig").splitlines()[:2]]
+    kid, secret = [x.strip() for x in (key_file or S3_KEY).read_text(encoding="utf-8-sig").splitlines()[:2]]
     now = datetime.datetime.now(datetime.timezone.utc)
     amz, day = now.strftime("%Y%m%dT%H%M%SZ"), now.strftime("%Y%m%d")
     ph = hashlib.sha256(data).hexdigest()

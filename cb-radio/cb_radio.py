@@ -30,6 +30,7 @@ import ctypes  # noqa: E402
 import hashlib  # noqa: E402
 import json  # noqa: E402
 import random  # noqa: E402
+import re  # noqa: E402
 import socket  # noqa: E402
 import struct  # noqa: E402
 import sys  # noqa: E402
@@ -45,6 +46,7 @@ ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) el
 CFG_FILE = ROOT / "config.json"
 STATE_FILE = ROOT / "state.json"
 LOG_FILE = ROOT / "cb_radio.log"
+
 AUDIO = ROOT / "audio" / "level3"
 SCENES = ROOT / "audio" / "scenes"
 FX = ROOT / "audio" / "fx"
@@ -469,6 +471,17 @@ import collections  # noqa: E402
 
 RECENT = collections.deque(maxlen=20)   # reaction files heard lately: one driver must not repeat himself
 FOREIGN = {p.name for p in (ROOT / "audio" / "reactions" / "foreign").glob("*") if p.is_dir()}
+FOREIGN_LAST = [None, -1e9]   # (language, monotonic end) of the last passing foreigner on air
+FOREIGN_HEARS_S = 30          # any words right after him are for him
+FOREIGN_WORD_S = 600          # «амиго», «хеллоу»… reach him for 10 min (he is still somewhere on the channel)
+_FOREIGN_WORDS = re.compile(
+    r"\b(амиго|амигос|хеллоу?|хелло|хэллоу?|хай|бонжур|бонжюр|мерси|гутен|гутн|данке|данкешон|чао|грацие?|грация|"
+    r"сеньор|синьор|мучачо|ола|хола|буэнос|камрад|ахой|добры день|дзень добры|сава|бонжорно|буонджорно|ауфидерзейн|"
+    r"hello|hi|amigo|bonjour|merci|guten|danke|ciao|grazie|hola|ahoj)\b", re.I)
+
+
+def foreign_word(text):
+    return bool(_FOREIGN_WORDS.search((text or "").lower().replace("ё", "е")))
 BUH_KIND = {"speeding": "speeding", "speeding_camera": "speeding", "red_signal": "red_signal", "crash": "crash",
             "no_lights": "no_lights", "avoid_sleeping": "avoid_sleeping", "wrong_way": "wrong_way"}
 COUNTRY_LANG = {"germany": "de", "austria": "de", "switzerland": "de", "poland": "pl", "france": "fr",
@@ -818,7 +831,7 @@ class Player:
             vol = 0.0 if TRAY_STATE.get("muted") else float(self.cfg["volume"])     # «Тишина в эфире» (tray)
             sd.play(data * vol, sr, device=self.cfg["device"])
             if OVERLAY:                       # stream overlay: subtitles of what is said (overlay.py)
-                OVERLAY.said(_rel(path), actor)
+                OVERLAY.said(_rel(path), actor, len(data) / sr)
         except Exception as e:  # missing file, busy/unplugged device: skip, keep the radio alive
             log(f"не смог проиграть {Path(path).name}: {e}")
             return "error"
@@ -1063,6 +1076,25 @@ class Operator:
         import intents
         now = time.monotonic()
         intent, who = intents.understand(text) if text else (None, None)
+        # 2026-11-07 (user): a passing foreigner. Your words right after him (and no Russian driver spoke since),
+        # or «амиго / хеллоу / бонжур…» within 10 min -> HE answers in his language, laughing («не понял, брат,
+        # но хорошей дороги»). Foreign words with no foreigner around -> nobody of ours answers them.
+        if heard and text and not who and intent not in ("who", "repeat"):
+            fl, ft = FOREIGN_LAST
+            fw = foreign_word(text)
+            right_after = t_rel - ft < FOREIGN_HEARS_S and PLAYER.last_t < ft
+            if fl and (right_after or (fw and t_rel - ft < FOREIGN_WORD_S)):
+                if OVERLAY:
+                    OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
+                log(f"тангента: «{text}» -> проезжему иностранцу ({fl})")
+                self.pending = (max(now, t_rel + random.uniform(1.0, 2.2)), "foreign_reply", fl, None, None)
+                return
+            if fw:
+                if OVERLAY:
+                    OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
+                log(f"тангента: «{text}» -> иностранное слово, иностранца рядом нет — наши молчат")
+                self.pending = None
+                return
         self.support = intent == "support"
         if self.support and not reaction_pool("intent", "support"):
             intent = "praise"            # no own lines for support yet: they answer as to praise («спасибо, сынок»)
@@ -1124,7 +1156,7 @@ class Operator:
         if who:
             prefer = who
         if OVERLAY and heard:
-            OVERLAY.you(text)
+            OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
         log(f"тангента: «{text}» -> {intent or '?'}{' для ' + who if who else ''}{' (ответ ему)' if reply else ''}"
             f"{' про ' + about if about else ''}"
             f"{' (вопрос)' if question else ''} => {group}/{kind or 'тишина'}"
@@ -1335,9 +1367,32 @@ class Operator:
         if done:
             self.on_air = True
 
+    def foreign_reply(self, lang):
+        """The passing foreigner answers you in his language (reactions/foreign_reply/<lang>), a bit far and noisy."""
+        pool = reaction_pool("foreign_reply", lang)
+        if not pool:
+            log(f"иностранцу ({lang}) ответить нечем — реплики не озвучены")
+            return
+        actor, wav = random.choice(fresh_first(pool))
+        heard(wav)
+        try:
+            x, sr = sf.read(wav, dtype="float32")
+            tmp = ROOT / "_foreign.wav"
+            sf.write(tmp, degrade(x, sr, random.uniform(0.5, 0.9)), sr)
+        except Exception as e:
+            log(f"иностранец не ответил: {e!r}")
+            return
+        log(f"ответ: проезжий иностранец ({lang}) — не понял, но хорошей дороги")
+        if OVERLAY:
+            OVERLAY.said(_rel(wav), actor)      # subtitle = Russian translation ("ru" in the phrases)
+        PLAYER.file(tmp)
+        FOREIGN_LAST[1] = time.monotonic()      # you can keep chatting with him a little
+
     def answer(self):
         _, group, kind, prefer, who = self.pending
         self.pending = None
+        if group == "foreign_reply":
+            return self.foreign_reply(kind)
         if group == "intent" and kind in SECRET_KINDS:
             return self.all_answer(who, kind)
         if group == "intent" and kind in ("dist", "eta", "meet"):
@@ -1794,9 +1849,10 @@ def send_report():
     z = make_report(show=False, hide_speech=ans == 7)
     rid = f"{datetime.now():%Y%m%d-%H%M%S}_{BUILD_NAME or VARIANT or 'public'}_{secrets.token_hex(3)}"
     try:
-        req = urllib.request.Request(REPORT_URL + rid + ".zip", data=z.read_bytes(), method="PUT",
-                                     headers={"Content-Type": "application/zip", "User-Agent": "Kanal15-Radio-Report"})
-        urllib.request.urlopen(req, timeout=60).read()
+        rk = _report_key()
+        if not rk:
+            raise RuntimeError("нет ключа отправки")
+        _s3_put_signed("kanal15-reports", f"in/{rid}.zip", z.read_bytes(), rk[0], rk[1])
     except Exception as e:
         log(f"журнал не отправился: {e!r} — показываю архив и чат с ботом")
         _msgbox(NL.join(["Не получилось отправить журнал (нет интернета?).", "",
@@ -1810,6 +1866,47 @@ def send_report():
                      "Если хотите рассказать, что случилось или что хочется в рации, напишите боту "
                      "@kanal15_publisher_bot и укажите этот номер."]), "Канал 15", 0x40)
     return z
+
+
+def _report_key():
+    """The upload-only key (service account kanal15-reporter: may only PUT into kanal15-reports/in/, can't read,
+    list or delete). In a build it sits in the tainik (phrases/x.dat), at the developer's — report_key.txt."""
+    rk = (SECRETS or {}).get("rk")
+    if rk:
+        return rk
+    try:
+        ls = [x.strip() for x in (ROOT / "report_key.txt").read_text(encoding="utf-8-sig").splitlines() if x.strip()]
+        return ls[:2] if len(ls) >= 2 else None
+    except OSError:
+        return None
+
+
+def _s3_put_signed(bucket, key, data, kid, secret, ctype="application/zip"):
+    """PUT one object to Yandex Object Storage, AWS Signature V4, standard library only."""
+    import datetime as _dt
+    import hashlib
+    import hmac
+    import urllib.parse
+    import urllib.request
+    host, region = "storage.yandexcloud.net", "ru-central1"
+    now = _dt.datetime.now(_dt.timezone.utc)
+    amz, day = now.strftime("%Y%m%dT%H%M%SZ"), now.strftime("%Y%m%d")
+    ph = hashlib.sha256(data).hexdigest()
+    hdr = {"host": host, "x-amz-content-sha256": ph, "x-amz-date": amz, "content-type": ctype}
+    uri = "/" + bucket + "/" + urllib.parse.quote(key, safe="/~")
+    signed = ";".join(sorted(hdr))
+    canon = NL.join(["PUT", uri, "", "".join(f"{k}:{hdr[k]}{NL}" for k in sorted(hdr)), signed, ph])
+    scope = f"{day}/{region}/s3/aws4_request"
+    sts = NL.join(["AWS4-HMAC-SHA256", amz, scope, hashlib.sha256(canon.encode()).hexdigest()])
+    k = hmac.new(("AWS4" + secret).encode(), day.encode(), hashlib.sha256).digest()
+    for part in (region, "s3", "aws4_request"):
+        k = hmac.new(k, part.encode(), hashlib.sha256).digest()
+    sig = hmac.new(k, sts.encode(), hashlib.sha256).hexdigest()
+    hdr["authorization"] = f"AWS4-HMAC-SHA256 Credential={kid}/{scope}, SignedHeaders={signed}, Signature={sig}"
+    req = urllib.request.Request(f"https://{host}{uri}", data=data, method="PUT",
+                                 headers={k2: v for k2, v in hdr.items() if k2 != "host"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return r.status
 
 
 def _show_report(z):
@@ -1929,7 +2026,10 @@ def main(argv):
         try:
             import overlay as overlay_mod
             if on:
-                OVERLAY = overlay_mod if overlay_mod.start(ov_port, PHRASES_JSON, BUILD_NAME or VARIANT, log) else None
+                # subtitle journal for shorts (subs/<date>.jsonl): only the author's radio run from source,
+                # never in players' builds (config "subs_journal" overrides)
+                jr = ROOT / "subs" if cfg.get("subs_journal", not BUILD_NAME and not getattr(sys, "frozen", False)) else None
+                OVERLAY = overlay_mod if overlay_mod.start(ov_port, PHRASES_JSON, BUILD_NAME or VARIANT, log, jr) else None
             if OVERLAY:
                 OVERLAY.add_texts(secret_texts())
             else:
@@ -2468,6 +2568,7 @@ def main(argv):
                                              "es": "по-испански", "it": "по-итальянски", "nl": "по-голландски",
                                              "cs": "по-чешски"}.get(lang, "не по-нашему"))
                         PLAYER.file(tmp)
+                        FOREIGN_LAST[:] = [lang, time.monotonic()]
                         next_at = max(next_at, driving_s + 15)
                         continue
             # far-away chatter near a big city when nobody is in range

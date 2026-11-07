@@ -64,3 +64,5 @@ probe_job.txt
 # ---------------------------------------------------------------- стримы: записи и секреты виджетов
 /promo/stream/vod/
 /promo/stream/.da_goal_url
+/promo/drivers_art/**/*.png
+/promo/drivers_art/**/*.jpg

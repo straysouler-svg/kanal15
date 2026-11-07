@@ -8850,6 +8850,128 @@
     }
    ]
   },
+  "foreign_reply": {
+   "_": "2026-11-07 (user): you answer a passing foreigner (right after his line, or any time with «амиго», «хеллоу», «бонжур»…) -> HE answers in his language, laughing: «не понял тебя, брат, но хорошей дороги». Our drivers do not answer foreign words. ru = subtitle (overlay / shorts).",
+   "de": [
+    {
+     "actor": "x_de",
+     "text": "(laughs) Ha! Ich verstehe kein Wort, Bruder, aber gute Fahrt!",
+     "ru": "Ха! Ни слова не понял, брат, но хорошей дороги!"
+    },
+    {
+     "actor": "x_de",
+     "text": "Russisch? (laughs) Keine Ahnung, was du sagst, aber Gruß zurück, Kollege!",
+     "ru": "По-русски? Понятия не имею, что ты говоришь, но и тебе привет, коллега!"
+    },
+    {
+     "actor": "x_de",
+     "text": "(laughs) Ja, ja, genau! ... Ich hab nichts verstanden. Gute Fahrt, Kumpel!",
+     "ru": "Да-да, точно! ...Я ничего не понял. Хорошей дороги, приятель!"
+    }
+   ],
+   "pl": [
+    {
+     "actor": "x_pl",
+     "text": "(laughs) Nic nie rozumiem, bracie, ale szerokiej drogi!",
+     "ru": "Ничего не понимаю, брат, но широкой дороги!"
+    },
+    {
+     "actor": "x_pl",
+     "text": "O, kolega ze wschodu! (laughs) Pozdrawiam, uważaj na siebie!",
+     "ru": "О, коллега с востока! Привет, береги себя!"
+    },
+    {
+     "actor": "x_pl",
+     "text": "Haha, co? Nie wiem, co mówisz, ale też cię pozdrawiam!",
+     "ru": "Ха-ха, что? Не знаю, что ты говоришь, но тоже тебе привет!"
+    }
+   ],
+   "fr": [
+    {
+     "actor": "x_fr",
+     "text": "(laughs) J'ai rien compris, mon frère, mais bonne route!",
+     "ru": "Ничего не понял, брат, но хорошей дороги!"
+    },
+    {
+     "actor": "x_fr",
+     "text": "Ah, un collègue de l'Est! (laughs) Salut l'ami, prudence sur la route!",
+     "ru": "А, коллега с востока! Привет, друг, осторожнее на дороге!"
+    },
+    {
+     "actor": "x_fr",
+     "text": "Euh... oui, oui! (laughs) Je sais pas ce que tu dis, mais bon courage!",
+     "ru": "Э-э... да-да! Не знаю, что ты говоришь, но удачи!"
+    }
+   ],
+   "es": [
+    {
+     "actor": "x_es",
+     "text": "(laughs) ¡No te entiendo nada, hermano, pero buen viaje!",
+     "ru": "Ничего не понимаю, брат, но хорошей дороги!"
+    },
+    {
+     "actor": "x_es",
+     "text": "¡Amigo! (laughs) ¡Saludos, y cuídate en la carretera!",
+     "ru": "Амиго! Привет, и береги себя на дороге!"
+    },
+    {
+     "actor": "x_es",
+     "text": "¿Qué? (laughs) Ni idea, compadre, ¡pero igualmente, buen camino!",
+     "ru": "Что? Без понятия, дружище, но и тебе хорошего пути!"
+    }
+   ],
+   "it": [
+    {
+     "actor": "x_it",
+     "text": "(laughs) Non ho capito niente, fratello, ma buon viaggio!",
+     "ru": "Ничего не понял, брат, но счастливого пути!"
+    },
+    {
+     "actor": "x_it",
+     "text": "Ciao, amico! (laughs) Guida piano, eh!",
+     "ru": "Чао, друг! Езжай потихоньку, а!"
+    },
+    {
+     "actor": "x_it",
+     "text": "Eh? (laughs) Non capisco, ma ti saluto lo stesso! Ciao ciao!",
+     "ru": "А? Не понимаю, но всё равно привет! Чао-чао!"
+    }
+   ],
+   "nl": [
+    {
+     "actor": "x_nl",
+     "text": "(laughs) Ik versta er niks van, broer, maar goede reis!",
+     "ru": "Ничего не понимаю, брат, но хорошей дороги!"
+    },
+    {
+     "actor": "x_nl",
+     "text": "Ha, een collega uit het oosten! Groetjes, rij voorzichtig!",
+     "ru": "Ха, коллега с востока! Привет, езжай аккуратно!"
+    },
+    {
+     "actor": "x_nl",
+     "text": "Wat zeg je? (laughs) Geen idee, maar jij ook een fijne dag!",
+     "ru": "Что ты говоришь? Понятия не имею, но и тебе хорошего дня!"
+    }
+   ],
+   "cs": [
+    {
+     "actor": "x_cs",
+     "text": "(laughs) Nerozumím ti ani slovo, brácho, ale šťastnou cestu!",
+     "ru": "Ни слова не понимаю, брат, но счастливого пути!"
+    },
+    {
+     "actor": "x_cs",
+     "text": "Jé, kolega z východu! Ahoj, jeď opatrně!",
+     "ru": "О, коллега с востока! Привет, езжай осторожно!"
+    },
+    {
+     "actor": "x_cs",
+     "text": "Cože? (laughs) Nevím, co říkáš, ale taky tě zdravím!",
+     "ru": "Что-что? Не знаю, что ты говоришь, но тоже тебе привет!"
+    }
+   ]
+  },
   "buh": {
    "_": "voice message from the accountant after a fine (phone sound, not CB). kind = fine offence; 'escalation' from the 3rd fine in a game day.",
    "speeding": [

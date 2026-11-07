@@ -30,6 +30,8 @@ def load_texts(phrases_json, build=""):
     def txt(ln):
         if isinstance(ln, str):
             return ln
+        if ln.get("ru"):                         # a foreigner's line: the subtitle is its Russian translation
+            return ln["ru"]
         if key and key in ln:
             return ln[key]
         if build and "v_neutral" in ln and key not in ln:
@@ -57,13 +59,28 @@ def add_texts(m):
     _TEXT.update(m or {})
 
 
-def _push(who, text, kind):
+JOURNAL = [None]   # 2026-11-07: folder for the subtitle journal (subs/<date>.jsonl) - only the user's own radio
+
+
+def _push(who, text, kind, key=None, dur=None, t=None):
+    now = time.time()
     with _lock:
         STATE["seq"] += 1
-        STATE["lines"].append({"who": who, "text": text, "kind": kind, "t": time.time(), "id": STATE["seq"]})
+        STATE["lines"].append({"who": who, "text": text, "kind": kind, "t": now, "id": STATE["seq"]})
+    if JOURNAL[0]:
+        # every line on air with its wall-clock time: promo/shorts/draft_clips.py turns an OBS clip into a
+        # finished subtitle spec (who said what and when) without speech recognition
+        try:
+            rec = {"t": round(t or now, 2), "who": key or "", "name": who, "text": text, "kind": kind}
+            if dur:
+                rec["d"] = round(dur, 2)
+            with (JOURNAL[0] / f"{time.strftime('%Y-%m-%d')}.jsonl").open("a", encoding="utf-8") as f:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
 
 
-def said(rel, actor):
+def said(rel, actor, dur=None):
     """A radio line started playing. rel = path under audio/ without extension (variants/<v>/ prefix allowed)."""
     if not rel:
         return
@@ -72,19 +89,22 @@ def said(rel, actor):
     if "/buh/" in rel or rel.startswith("reactions/buh"):
         with _lock:
             STATE["phone"] = time.time()
-        _push("Бухгалтерия", text, "phone")
+        _push("Бухгалтерия", text, "phone", "buh", dur)
         return
-    if text:
-        _push(_NAMES.get(actor, actor or "Эфир").split(" (")[0], text, "radio")
+    if text and (actor or "").startswith("x_"):   # passing foreigner: «Проезжий», the text is the translation
+        _push("Проезжий", text, "foreign", "foreign", dur)
+    elif text:
+        _push(_NAMES.get(actor, actor or "Эфир").split(" (")[0], text, "radio", actor, dur)
 
 
 def foreign(lang_name):
-    _push("Проезжий", f"говорит {lang_name}", "foreign")
+    _push("Проезжий", f"говорит {lang_name}", "foreign", "foreign")
 
 
-def you(text):
+def you(text, t_end=None):
+    """The player's words; t_end = wall-clock time he released the PTT (recognition comes a bit later)."""
     if text:
-        _push("Ты", text, "you")
+        _push("Ты", text, "you", "player", None, t_end)
 
 
 def inside(keys, chips=None):
@@ -97,7 +117,7 @@ def inside(keys, chips=None):
 def bond(text):
     """Friendship level changed: «Лиса: теперь вы приятели ♥♥» as a line on the bottom bar."""
     if text:
-        _push("Канал 15", text, "bond")
+        _push("Канал 15", text, "bond", "bond")
 
 
 def snapshot():
@@ -167,10 +187,71 @@ tick();
 </script></body></html>"""
 
 
+# 2026-11-07: vertical stream (Aitum Vertical, 1080x1920): /v
+#   0..170 top bar (logo + who is in range, chips wrap), 170..1250 game square, 1250..1500 subtitles (wrapped,
+#   bigger), 1500..1920 left free for the camera. Same /state as the horizontal page.
+PAGE_V = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Канал 15 — вертикальный оверлей</title>
+<style>
+:root{--gold:#f2c14e;--bar:rgba(10,12,18,.93);--text:#f2f2f2;--muted:#9aa3b2;--you:#8fd3ff}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transparent;position:relative;
+ font-family:"Segoe UI","Montserrat",Arial,sans-serif;color:var(--text)}
+#top{position:absolute;left:0;top:0;width:1080px;height:170px;background:var(--bar);box-sizing:border-box;padding:14px 34px;
+ border-bottom:2px solid rgba(242,193,78,.35);display:flex;flex-direction:column;justify-content:center;gap:10px}
+.logo{display:flex;align-items:baseline;gap:18px}
+.logo b{font-family:"Segoe UI Black","Segoe UI",Arial;font-size:50px;color:var(--gold);letter-spacing:1px}
+.logo span{font-size:24px;color:var(--muted)}
+.zone{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:22px;color:var(--muted);max-height:76px;overflow:hidden}
+.chip{background:rgba(242,193,78,.14);border:1px solid rgba(242,193,78,.55);color:var(--text);padding:3px 12px;border-radius:18px;
+ font-size:22px;white-space:nowrap}
+.chip.talk{background:var(--gold);color:#111;font-weight:700}
+.chip .s{margin-left:6px;font-size:19px}
+#subs{position:absolute;left:0;top:1250px;width:1080px;height:250px;background:var(--bar);box-sizing:border-box;padding:16px 34px;
+ border-top:2px solid rgba(242,193,78,.35);border-bottom:2px solid rgba(242,193,78,.35);display:flex;flex-direction:column;justify-content:center;gap:8px}
+.line{font-size:38px;line-height:1.22;transition:opacity .6s;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.line .who{color:var(--gold);font-weight:700;margin-right:10px}
+.line.you .who{color:var(--you)} .line.phone .who{color:#7ee08a} .line.bond .who{color:#ff8fb1} .line.bond{color:#ffd1dc}
+.line.foreign .who{color:#c8c8c8}
+.line.old{opacity:.45;font-size:28px;-webkit-line-clamp:1}
+.quiet{font-size:28px;color:var(--muted)}
+#phone{position:absolute;right:34px;top:1180px;background:var(--bar);border:2px solid #7ee08a;border-radius:16px;padding:10px 20px;
+ font-size:26px;display:none;align-items:center;gap:10px}
+#phone.on{display:flex;animation:ring .5s ease-in-out 4}
+@keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+</style></head><body>
+<div id="top"><div class="logo"><b>КАНАЛ 15</b><span>мультиплеер для интровертов</span></div><div class="zone" id="zone"></div></div>
+<div id="phone">📱 <span>Бухгалтерия — голосовое</span></div>
+<div id="subs"><div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div></div>
+<script>
+let last=-1, talker=null;
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+async function tick(){
+ try{
+  const s=await (await fetch('/state',{cache:'no-store'})).json();
+  const lines=s.lines.filter(l=>s.now-l.t<45);
+  const cur=lines.length?lines[lines.length-1]:null;
+  talker=(cur&&cur.kind==='radio'&&s.now-cur.t<8)?cur.who:null;
+  document.getElementById('zone').innerHTML=s.inside.length?s.inside.map(c=>'<span class="chip'+(c.n===talker?' talk':'')+'">'+esc(c.n)+(c.s?'<span class="s">'+esc(c.s)+'</span>':'')+'</span>').join('')
+                            :'<span class="quiet">в зоне рации никого</span>';
+  const id=cur?cur.id:-1;
+  if(id!==last){
+   last=id;
+   document.getElementById('subs').innerHTML=lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
+                           :'<div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div>';
+  }
+  document.getElementById('phone').classList.toggle('on',s.now-s.phone<9);
+ }catch(e){}
+ setTimeout(tick,300);
+}
+tick();
+</script></body></html>"""
+
+
 class _H(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/state"):
             body, ctype = json.dumps(snapshot(), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8"
+        elif self.path.rstrip("/").split("?")[0] == "/v":
+            body, ctype = PAGE_V.encode("utf-8"), "text/html; charset=utf-8"
         else:
             body, ctype = PAGE.encode("utf-8"), "text/html; charset=utf-8"
         self.send_response(200)
@@ -197,7 +278,13 @@ def stop():
             pass
 
 
-def start(port, phrases_json, build="", log=print):
+def start(port, phrases_json, build="", log=print, journal=None):
+    if journal:
+        try:
+            Path(journal).mkdir(parents=True, exist_ok=True)
+            JOURNAL[0] = Path(journal)
+        except Exception:
+            JOURNAL[0] = None
     if _SRV[0]:
         return _SRV[0]
     try:
