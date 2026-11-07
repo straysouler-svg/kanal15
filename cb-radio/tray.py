@@ -10,6 +10,7 @@ from pathlib import Path
 
 STATE = {"status": "запуск…", "st": "no_game", "inside": [], "muted": False, "quit": False}
 _icon = None
+DONATE_URL = "https://www.donationalerts.com/r/straysouler"   # «☕ На токены и хлебушек» (config "donate_url" overrides)
 _lock = threading.Lock()
 HOOKS = {}      # set by cb_radio: mics / mic_now / mic_info / mic_set / plugin_needed / plugin_install
 COLORS = {"driving": (60, 190, 90), "engine_off": (235, 190, 40), "paused": (235, 190, 40), "no_game": (150, 150, 150)}
@@ -71,6 +72,15 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
             try:
                 os.startfile(str(path))
             except OSError:
+                pass
+        return f
+
+    def open_url(url):
+        def f(icon, item):
+            try:
+                import webbrowser
+                webbrowser.open(url)
+            except Exception:
                 pass
         return f
 
@@ -141,6 +151,9 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
             Item("Что нового…", lambda icon, item: hook("changelog")()))),
         Item("Журнал эфира…", open_file(log_file)),
         Item("Отправить журнал разработчикам…", lambda icon, item: hook("report")()),
+        Menu.SEPARATOR,
+        # 2026-11-07 (user): a quiet voluntary donation link, nothing more - no pop-ups, no reminders, ever
+        Item("☕ На токены и хлебушек", open_url(cfg.get("donate_url") or DONATE_URL)),
         Menu.SEPARATOR,
         Item("Выключить рацию", quit_),
     )
