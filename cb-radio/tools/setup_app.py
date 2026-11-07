@@ -513,7 +513,7 @@ class Wizard:
 
     def p_ptt(self):
         self.title("Кнопка рации", "Кнопка на руле, которую вы зажимаете, чтобы говорить в эфир.")
-        self.text("Нажмите и отпустите нужную кнопку на руле или кнопочной панели.", pady=(4, 10))
+        self.text("Нажмите и отпустите нужную кнопку на руле, кнопочной панели, клавиатуре или мыши.", pady=(4, 10))
         self.ptt_lab = self.text("Жду нажатия…", font=("Segoe UI", 11, "bold"))
         row = tk.Frame(self.page, bg=PAGE_BG)
         row.pack(fill="x", pady=8)
@@ -541,15 +541,40 @@ class Wizard:
         except OSError:
             self.ptt_base = {}
         self.ptt = None
+        self.ptt_kb_listener = None
         slog(f"кнопка рации: контроллеры {list(self.ptt_base.values())}")
-        self.ptt_lab.config(text="Жду нажатия…" if self.ptt_base else "Руль не найден — подключите его и нажмите «Ещё раз».",
-                            fg=TXT)
+        if not self.ptt_base:
+            try:
+                from pynput import keyboard
+                self.ptt_kb_listener = keyboard.Listener(on_press=self._ptt_kb_press, on_release=self._ptt_kb_release)
+                self.ptt_kb_listener.start()
+                slog("кнопка рации: руля нет, слушаю клавиатуру и мышь")
+            except Exception as e:
+                slog(f"кнопка рации: pynput не работает {e!r}")
+        self.ptt_lab.config(text="Жду нажатия…", fg=TXT)
         self._ptt_poll()
+
+    def _ptt_kb_press(self, key):
+        pass  # wait for release
+
+    def _ptt_kb_release(self, key):
+        if self.ptt or self.i != 4:
+            return
+        from pynput.keyboard import Key
+        name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
+        self.ptt = ("keyboard", name)
+        self.ptt_lab.config(text=f"✔ клавиша {name}", fg="#2e7d32")
+        if self.ptt_kb_listener:
+            self.ptt_kb_listener.stop()
+        slog(f"кнопка рации: выбрана клавиша {name}")
 
     def _ptt_poll(self):
         if self.ptt or self.i != 4 or not self.ptt_lab.winfo_exists():
+            if self.ptt and self.ptt_kb_listener:
+                self.ptt_kb_listener.stop()
             return
-        if not self.ptt_base:                 # no wheel: nothing to poll (press «Ещё раз» after plugging it in)
+        if not self.ptt_base:                 # no wheel: keyboard listener is running
+            self.root.after(40, self._ptt_poll)
             return
         try:
             now = ri.read_buttons(ids=list(self.ptt_base))

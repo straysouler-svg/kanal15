@@ -278,11 +278,11 @@ def _oem_name(vid, pid):
 
 
 class PTT:
-    """Push-to-talk = one wheel button. Read straight from Windows (winmm joyGetPosEx, only that one device,
-    buttons 0-31): ~1.5 % of a core. pygame/SDL opened all 5 controllers with its own thread and cost 7-20 %
-    (measured 2026-11-03) - it stays only as a fallback (button >= 32, winmm can't see the device, or
-    "backend": "pygame" in config ptt). Survives the wheel reconnecting (Pit House re-plugs the R5 base
-    when a game starts)."""
+    """Push-to-talk = one wheel button or keyboard key. Read straight from Windows (winmm joyGetPosEx for wheels
+    buttons 0-31, pynput.keyboard.Listener for keyboard): ~1.5 % of a core. pygame/SDL opened all 5 controllers
+    with its own thread and cost 7-20 % (measured 2026-11-03) - it stays only as a fallback (button >= 32, winmm
+    can't see the device, or "backend": "pygame" in config ptt). Survives the wheel reconnecting (Pit House
+    re-plugs the R5 base when a game starts). 1.27: keyboard works for players without a wheel."""
     RESCAN_S = 2.0
 
     def __init__(self, cfg):
@@ -295,6 +295,7 @@ class PTT:
         self.ok = False
         self.backend, self.jid, self._next_scan, self._names = None, None, 0.0, None
         self._last_cfg = -1e9
+        self.kb_listener = None
         # your own key-up / key-release sounds ("ptt_sounds" in config.json)
         s = cfg.get("ptt_sounds") or {}
         self.snd = {}
@@ -306,6 +307,33 @@ class PTT:
         self.device = cfg.get("device")
         if self.btn is None:
             return
+        if self.dev == "keyboard" and isinstance(self.btn, str):     # 1.27: keyboard PTT for players without a wheel
+            try:
+                from pynput import keyboard
+                self.kb_down = False
+                def on_press(key):
+                    try:
+                        name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
+                        if name == self.btn and not self.kb_down:
+                            self.kb_down = True
+                            self._press()
+                    except Exception:
+                        pass
+                def on_release(key):
+                    try:
+                        name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
+                        if name == self.btn and self.kb_down:
+                            self.kb_down = False
+                            self._release()
+                    except Exception:
+                        pass
+                self.kb_listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+                self.kb_listener.start()
+                self.backend, self.ok = "keyboard", True
+                log(f"тангента: клавиша {self.btn}")
+                return
+            except Exception as e:
+                log(f"тангента через pynput не вышла ({e!r})")
         if self.btn < 32 and c.get("backend", "winmm") == "winmm":
             try:
                 self.mm = ctypes.WinDLL("winmm")
@@ -2100,6 +2128,72 @@ def main(argv):
             log(f"плагин из меню: {text}")
             tray.notify(text)
         tray.HOOKS.update(plugin_needed=lambda: gamecheck.needs_fix(GSEEN["dir"]), plugin_install=plugin_install)
+
+        # 1.27: rebind PTT from the tray menu (for players without a wheel who missed the installer step)
+        def ptt_rebind():
+            import tkinter as tk
+            from tkinter import ttk
+            import threading
+            root = tk.Tk()
+            root.title("Переназначить кнопку рации")
+            root.geometry("400x200")
+            root.resizable(False, False)
+            tk.Label(root, text="Нажмите нужную кнопку на руле, геймпаде,\nклавиатуре или мыши.", font=("Segoe UI", 10)).pack(pady=15)
+            status = tk.Label(root, text="Жду нажатия…", font=("Segoe UI", 11, "bold"), fg="#333")
+            status.pack(pady=10)
+            result = {"ptt": None, "base": {}, "kb_listener": None}
+            def poll_buttons():
+                if result["ptt"]:
+                    return
+                import ri
+                try:
+                    now = ri.read_buttons(ids=list(result["base"]))
+                except OSError:
+                    now = {}
+                for j, (name, b) in now.items():
+                    pressed = b & ~result["base"].get(j, (name, 0))[1]
+                    if pressed:
+                        result["ptt"] = (name, (pressed & -pressed).bit_length() - 1)
+                        status.config(text=f"✔ {result['ptt'][0]}, кнопка {result['ptt'][1]}", fg="#2e7d32")
+                        if result["kb_listener"]:
+                            result["kb_listener"].stop()
+                        root.after(1500, root.destroy)
+                        return
+                root.after(40, poll_buttons)
+            def kb_release(key):
+                if result["ptt"]:
+                    return
+                from pynput.keyboard import Key
+                name = key.name if hasattr(key, "name") else (key.char if hasattr(key, "char") and key.char else str(key))
+                result["ptt"] = ("keyboard", name)
+                status.config(text=f"✔ клавиша {name}", fg="#2e7d32")
+                if result["kb_listener"]:
+                    result["kb_listener"].stop()
+                root.after(1500, root.destroy)
+            try:
+                import ri
+                result["base"] = ri.read_buttons()
+            except Exception:
+                result["base"] = {}
+            if not result["base"]:
+                try:
+                    from pynput import keyboard
+                    result["kb_listener"] = keyboard.Listener(on_press=lambda k: None, on_release=kb_release)
+                    result["kb_listener"].start()
+                except Exception:
+                    pass
+            poll_buttons()
+            root.mainloop()
+            if result["ptt"]:
+                try:
+                    cfg["ptt"] = {"device": result["ptt"][0], "button": result["ptt"][1]}
+                    CFG_FILE.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+                    log(f"кнопка рации переназначена: {result['ptt']}")
+                    tray.notify(f"Кнопка рации: {result['ptt'][0]}, {result['ptt'][1]}.\nПерезапустите рацию, чтобы изменения вступили в силу.")
+                except Exception as e:
+                    log(f"кнопка рации: не удалось сохранить {e!r}")
+                    tray.notify(f"Не удалось сохранить настройку ({e})")
+        tray.HOOKS["ptt_rebind"] = ptt_rebind
 
         # 1.13: the game runs as administrator (many repacks mark it so) -> Windows keeps the radio away
         def admin_fix():
