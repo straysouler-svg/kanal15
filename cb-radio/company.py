@@ -54,8 +54,10 @@ class Company:
             units = savegame.parse(savegame.decrypt(p.read_bytes()))
             self._digest(units)
             self._mtime = m
+            n = len(self.hired)
+            drv = "твой водитель" if n == 1 else ("твоих водителя" if 2 <= n <= 4 else "твоих водителей")
             self.log(f"компания: сохранение {p.parent.name} — {len(self.offers)} рейсов на бирже, "
-                     f"{len(self.hired)} твоих водителей в рейсах")
+                     f"{n} {drv} в рейсах")
         except Exception as e:                               # half-written file, new format...: try next time
             self.log(f"компания: не прочитал сохранение ({e!r})")
         finally:

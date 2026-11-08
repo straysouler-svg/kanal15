@@ -4,9 +4,13 @@
   Новый водитель начинает с 25; кто уже встречался на трассе — чуть больше.
   + разговор с ним (+1, по имени +2, «спасибо»/похвала +3), первый разговор за игровой день +3, встреча на трассе +1;
     за день с одного водителя не больше +15.  − грубость −25.
+  Повтор той же темы с тем же водителем за игровые сутки — 0 очков (за «встреча на трассе» — тоже).
   Уровни: 0 незнакомый (<30) · 1 знакомый (30+) · 2 приятель (60+) · 3 друг (150+).
   Незнакомый не зовёт тебя по имени (реплики с обращением — только знакомым и дальше).
-  Приятель и друг охотнее выходят на связь сами: делятся дорогой, погодой; друг прощает грубость быстрее.
+  Личные реплики (поле "lv", сейчас family/salary/health = 2) звучат только с этого уровня:
+    у кого дружбы меньше — эфир уходит в уклончивые фразы (reactions/bond/evade, lv0–1) или общие «не знаю».
+  Уровневые пакеты: "lv" = минимум, "lvm" = максимум (lv0-строки — только незнакомцам, lv3 — только друзьям).
+  Каждые игровые сутки без разговора с водителем: −1 очко (не ниже 0).
 
 Настроение — у каждого своё на игровой день (бодрое / спокойное / усталое / хмурое), ночью чаще устают,
 в дождь чаще хмурятся. Из записанных реплик водитель чаще выбирает те, что по настроению (по тегам эмоций
@@ -76,11 +80,13 @@ class Bonds:
             self.st = {}
         self.text = {}          # rel ("reactions/player/greet/05", "<actor>/03", "scenes/x/02") -> text with tags
         self.name_lines = set()  # rels that call the player by name (have a v_neutral version)
+        self.lv = {}             # rel -> минимальный уровень дружбы ("lv" в phrases-файле, личные реплики)
         if phrases_json:
             self._load_texts(phrases_json)
         self.day = None          # game day number (from world)
         self.night = False
         self.rain = False
+        self.seen = {}           # actor -> [game day, set(why)]: повтор темы за сутки не даёт очков (в памяти сессии)
         self.shift = {}          # actor -> (mood steps up/down from the day's mood, monotonic time of the last change)
 
     # ------------------------------------------------------------ texts
@@ -92,16 +98,35 @@ class Bonds:
 
         def txt(ln):
             return ln if isinstance(ln, str) else ln.get("text", "")
+
+        def mark(rel, ln):
+            if not isinstance(ln, dict):
+                return
+            lo = hi = None
+            try:
+                if "lv" in ln:
+                    lo = max(0, min(3, int(ln["lv"])))
+            except (TypeError, ValueError):
+                lo = None                      # битое "lv" не роняет загрузку
+            try:
+                if "lvm" in ln:
+                    hi = max(0, min(3, int(ln["lvm"])))
+            except (TypeError, ValueError):
+                hi = None
+            if lo is not None or hi is not None:
+                self.lv[rel] = (lo, hi)        # (минимальный уровень, максимальный или None)
         for k, a in d.get("actors", {}).items():
             for i, ph in enumerate(a.get("phrases", []), 1):
                 rel = f"{k}/{i:02d}"
                 self.text[rel] = txt(ph)
+                mark(rel, ph)
                 if isinstance(ph, dict) and "v_neutral" in ph:
                     self.name_lines.add(rel)
         for sid, ls in d.get("scenes", {}).items():
             for i, ln in enumerate(ls, 1):
                 rel = f"scenes/{sid}/{i:02d}"
                 self.text[rel] = txt(ln)
+                mark(rel, ln)
                 if isinstance(ln, dict) and "v_neutral" in ln:
                     self.name_lines.add(rel)
         for g, ks in d.get("reactions", {}).items():
@@ -113,6 +138,7 @@ class Bonds:
                 for i, ln in enumerate(ls, 1):
                     rel = f"reactions/{g}/{k}/{i:02d}"
                     self.text[rel] = txt(ln)
+                    mark(rel, ln)
                     if isinstance(ln, dict) and "v_neutral" in ln:
                         self.name_lines.add(rel)
 
@@ -140,6 +166,14 @@ class Bonds:
         """Change friendship. Returns (old_level, new_level) when the level changed, else None."""
         if not actor or actor in ("buh",) or actor.startswith("driver."):
             return None
+        if n > 0 and why:
+            # повтор той же темы с тем же водителем за игровые сутки — 0 очков (защита от гринда)
+            rec = self.seen.get(actor)
+            if rec is None or rec[0] != self.day:
+                rec = self.seen[actor] = [self.day, set()]
+            if why in rec[1]:
+                return None
+            rec[1].add(why)
         r = self._rec(actor)
         old = level_of(r["p"])
         if n > 0:
@@ -170,10 +204,27 @@ class Bonds:
     def calls_by_name(self, rel):
         return self.key(rel) in self.name_lines
 
+    def lv_ok(self, actor, rel):
+        """Реплика с полем "lv" звучит с этого уровня дружбы и выше, с "lvm" — не выше (уровневые пакеты).
+        Без обоих полей — всем. Битые значения в phrases-файле пропускаются (как без полей)."""
+        need = self.lv.get(self.key(rel)) if rel else None
+        if need is None:
+            return True
+        lo, hi = need
+        lv = self.level(actor)
+        return (lo is None or lv >= lo) and (hi is None or lv <= hi)
+
     # ------------------------------------------------------------ mood
     def set_world(self, game_minute=None, night=False, rain=False):
         if game_minute is not None:
-            self.day = int(game_minute // 1440)
+            day = int(game_minute // 1440)
+            if self.day is not None and day != self.day:
+                old = self.day
+                for r in self.st.values():
+                    if r.get("p", 0) > 0 and r.get("day") != old:
+                        r["p"] -= 1                    # сутки без разговора с ним: −1, не ниже 0
+                self.save()
+            self.day = day
         self.night, self.rain = bool(night), bool(rain)
 
     # 2026-11-06 (user): mood can be raised and lowered. Steps: grumpy < tired < calm < cheerful.

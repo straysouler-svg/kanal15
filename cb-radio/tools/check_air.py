@@ -1,6 +1,7 @@
 """Integrity check of everything on air: every deck item / reaction line has a sane audio file, numbering
 matches the phrases file, every simulated driver has hello + bye, no mat for the no-mat characters."""
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -58,9 +59,10 @@ for g, ks in d["reactions"].items():
         for _, f in pool:
             sane(f)
 mat = ["бля", "сука", "хрен", "херн", "ёп", "жоп", "нахрен"]
+mat_re = re.compile(r"(?<![а-яё])(" + "|".join(mat) + r")")   # «тёплые» — не мат; слово целиком или с приставкой
 for k in ("soroka", "professor", "petrovna", "sova"):
     txt = " ".join(p if isinstance(p, str) else p["text"] for p in A[k]["phrases"]).lower()
-    if any(m in txt for m in mat):
+    if mat_re.search(txt):
         problems.append(f"{k}: мат")
 real = [k for k, a in A.items() if not a.get("extra")]
 print(f"в колоде {len(items)} ({sum(i.startswith('scene/') for i in items)} сценок), персонажей {len(real)}, "

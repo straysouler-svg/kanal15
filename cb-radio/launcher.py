@@ -3,9 +3,12 @@ files in app/ next to it. Updates (updater.py) replace data and .py files only �
 heuristics have nothing to object to («самообновляющийся exe» is a classic false-positive trigger).
 
 Before the radio starts, the launcher applies an update staged by the previous run (update/staged + READY):
-  - backs up every file it replaces to update/backup/, writes update/applied.json {"version", "ok": false};
+  - backs up every file it replaces to update/backup/ (plan.json goes there first: a matching backup on the
+    next attempt means «retry after a partial apply» — keep it), writes update/applied.json {"version", "ok": false};
   - the radio sets "ok": true after a minute of healthy work (updater.mark_ok);
-  - if a freshly applied version did not reach "ok" twice in a row, the launcher puts the backup back.
+  - if a freshly applied version did not reach "ok" twice in a row, the launcher puts the backup back;
+  - a failed apply KEEPS update/staged and retries the copy on the next start (3 attempts per file, a pause
+    between them): antivirus or the indexer can hold a fresh blob for a moment (2026-11-08, Данилин лог).
 This file is frozen into the exe and changes only with a full installer: keep it small and boring."""
 import json
 import os
@@ -21,9 +24,15 @@ UPD = ROOT / "update"
 
 
 def _log(msg):
+    line = time.strftime("%Y-%m-%d %H:%M:%S ") + msg
     try:
         with open(UPD / "update.log", "a", encoding="utf-8") as f:
-            f.write(time.strftime("%Y-%m-%d %H:%M:%S ") + msg + "\n")
+            f.write(line + "\n")
+    except OSError:
+        pass
+    try:                                   # mirror into the main log: installs/rollbacks must be visible to the user
+        with open(ROOT / "cb_radio.log", "a", encoding="utf-8") as f:
+            f.write(time.strftime("%H:%M:%S ") + "лаунчер: " + msg + "\n")
     except OSError:
         pass
 
@@ -35,6 +44,25 @@ def _move(src, dst):
     shutil.move(str(src), str(dst))
 
 
+def _apply_one(st, bak, rel, tries=3):
+    """Backs up the current file and puts the staged one in place; None = ok. Retries with a pause —
+    antivirus or the indexer can hold a fresh blob for a moment. A missing staging file means the file
+    was already put in place by a previous attempt; a missing backup copy means it is already backed up."""
+    cur, stage_f = ROOT / rel, st / "files" / rel
+    last = None
+    for _ in range(tries):
+        try:
+            if cur.exists() and not (bak / rel).exists():
+                _move(cur, bak / rel)
+            if stage_f.exists():
+                _move(stage_f, cur)
+            return None
+        except OSError as e:
+            last = e
+            time.sleep(0.7)
+    return last
+
+
 def apply_staged():
     st = UPD / "staged"
     if not (st / "READY").exists():
@@ -42,27 +70,24 @@ def apply_staged():
     try:
         plan = json.loads((st / "plan.json").read_text(encoding="utf-8"))
         bak = UPD / "backup"
-        if bak.exists():
-            shutil.rmtree(bak)
-        bak.mkdir(parents=True)
-        for rel in plan.get("files", []) + plan.get("delete", []):
-            cur = ROOT / rel
-            if cur.exists():
-                _move(cur, bak / rel)
-        for rel in plan.get("files", []):
-            _move(st / "files" / rel, ROOT / rel)
+        fresh = not (bak / "plan.json").exists() \
+            or (bak / "plan.json").read_text(encoding="utf-8") != json.dumps(plan, ensure_ascii=False)
+        if fresh and bak.exists():
+            shutil.rmtree(bak)                 # a new update: the old backup is of no use for rolling it back
+        bak.mkdir(parents=True, exist_ok=True)
         (bak / "plan.json").write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+        bad = [rel for rel in list(plan.get("files", [])) + list(plan.get("delete", []))
+               if _apply_one(st, bak, rel) is not None]
+        if bad:
+            raise OSError(f"не перенеслось (занято?): {', '.join(bad[:3])}")
         (UPD / "applied.json").write_text(json.dumps({"version": plan.get("version"), "from": plan.get("from"),
                                                      "ok": False, "starts": 0}), encoding="utf-8")
         shutil.rmtree(st)
         _log(f"обновление {plan.get('from')} -> {plan.get('version')} установлено: {len(plan.get('files', []))} файлов, "
              f"удалено {len(plan.get('delete', []))}")
     except Exception as e:  # noqa: BLE001 — never block the radio
-        _log(f"обновление не установилось: {e!r}")
-        try:
-            (st / "READY").unlink()
-        except OSError:
-            pass
+        _log(f"обновление не установилось: {e!r} — повторю при следующем запуске")
+        # READY stays: the next launch retries the copy, updater.check() won't re-download the same version
 
 
 def rollback_if_broken():

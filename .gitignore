@@ -5,8 +5,15 @@
 
 /*
 !/.gitignore
+!/AGENTS.md
+!/CLAUDE.md
 !/README.md
 !/MODLOG.md
+!/.claude/
+/.claude/*
+!/.claude/agents/
+/.claude/agents/*
+!/.claude/agents/*.md
 !/cb-radio/
 !/build/
 !/promo/
@@ -35,6 +42,7 @@
 !/build/cb_radio.ico
 
 # ---------------------------------------------------------------- продвижение: тексты и скрипты, без медиа
+/promo/design/
 /promo/**/media/
 /promo/shorts/work/
 /promo/shorts/out/

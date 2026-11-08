@@ -33,6 +33,7 @@ import random  # noqa: E402
 import re  # noqa: E402
 import socket  # noqa: E402
 import struct  # noqa: E402
+import threading  # noqa: E402
 import sys  # noqa: E402
 import time  # noqa: E402
 from datetime import datetime  # noqa: E402
@@ -282,17 +283,29 @@ def _input_name(key):
     return key.name if hasattr(key, "name") else (key.char if getattr(key, "char", None) else str(key))
 
 
+_WINMM_LOCK = threading.RLock()    # все вызовы winmm из любого потока — только через него (crash.log 08.11.2026);
+                                   # RLock: _scan_winmm лочит и вызывает _winmm_buttons
+
+
 def _winmm_buttons(mm, ids=range(16)):
-    """{id: (device name, pressed-buttons bitmask)} of winmm joysticks - shared by PTT and the rebind dialog."""
+    """{id: (device name, pressed-buttons bitmask)} of winmm joysticks - shared by PTT and the rebind dialog.
+    ctypes отпускает GIL на время нативного вызова, а winmm не потокобезопасен: PTT.poll (main) и опрос
+    диалога переназначения (поток pystray, каждые 40 мс) попадали в DLL одновременно и роняли процесс
+    heap corruption 0xc0000374 внутри winmm при USB-шторме. Лочим всё перечисление целиком."""
     out = {}
     for i in ids:
         caps = _JOYCAPSW()
-        if mm.joyGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) != 0:
-            continue
         ji = _JOYINFOEX()
         ji.dwSize, ji.dwFlags = ctypes.sizeof(ji), 0x80        # JOY_RETURNBUTTONS
-        if mm.joyGetPosEx(i, ctypes.byref(ji)) == 0:
-            out[i] = (_oem_name(caps.wMid, caps.wPid) or f"{caps.wMid:04X}:{caps.wPid:04X}", ji.dwButtons)
+        try:
+            with _WINMM_LOCK:
+                if mm.joyGetDevCapsW(i, ctypes.byref(caps), ctypes.sizeof(caps)) != 0:
+                    continue
+                if mm.joyGetPosEx(i, ctypes.byref(ji)) != 0:
+                    continue
+        except Exception:
+            continue                                  # winmm отказал — устройство пропускаем, эфир не падает
+        out[i] = (_oem_name(caps.wMid, caps.wPid) or f"{caps.wMid:04X}:{caps.wPid:04X}", ji.dwButtons)
     return out
 
 
@@ -422,15 +435,24 @@ class PTT:
         # with heap corruption 0xc0000374 INSIDE this call (crash.log 10:46, also 2026-11-04 16:45) right after all
         # USB devices dropped for a second — it was called every 2 s while re-enumerating. Now: rarely, not at once.
         now = time.monotonic()
-        if now - self._last_cfg >= self.CFG_CHANGED_S:
-            self._last_cfg = now
-            self.mm.joyConfigChanged(0)
-        devs = _winmm_buttons(self.mm)
+        try:
+            with _WINMM_LOCK:
+                if now - self._last_cfg >= self.CFG_CHANGED_S:
+                    self._last_cfg = now
+                    self.mm.joyConfigChanged(0)
+                devs = _winmm_buttons(self.mm)
+        except Exception:
+            devs = {}
         found = None
         for i, (name, _) in devs.items():
-            if self.jid is None and self.dev and self.dev in name.lower() \
-                    and self.mm.joyGetPosEx(i, ctypes.byref(self.ji)) == 0:
-                self.jid, found = i, name
+            if self.jid is None and self.dev and self.dev in name.lower():
+                try:
+                    with _WINMM_LOCK:
+                        ok = self.mm.joyGetPosEx(i, ctypes.byref(self.ji)) == 0
+                except Exception:
+                    ok = False
+                if ok:
+                    self.jid, found = i, name
         names = [n for n, _ in devs.values()]
         if names != self._names:
             self._names = names
@@ -488,7 +510,12 @@ class PTT:
                         self._scan_winmm()
                     if self.jid is None:
                         return
-                if self.mm.joyGetPosEx(self.jid, ctypes.byref(self.ji)) != 0:   # unplugged / re-plugged
+                try:
+                    with _WINMM_LOCK:
+                        err = self.mm.joyGetPosEx(self.jid, ctypes.byref(self.ji))
+                except Exception:
+                    err = -1
+                if err != 0:                                    # unplugged / re-plugged
                     self.jid = None
                     self._next_scan = time.monotonic() + 3.0     # let USB settle before asking winmm again
                     if self.down:
@@ -585,6 +612,9 @@ BUH_KIND = {"speeding": "speeding", "speeding_camera": "speeding", "red_signal":
 COUNTRY_LANG = {"germany": "de", "austria": "de", "switzerland": "de", "poland": "pl", "france": "fr",
                 "belgium": "fr", "luxembourg": "fr", "spain": "es", "italy": "it", "netherlands": "nl",
                 "czech": "cs", "slovakia": "cs"}
+COUNTRY_RU = {"germany": "Германия", "austria": "Австрия", "switzerland": "Швейцария", "poland": "Польша",
+              "france": "Франция", "belgium": "Бельгия", "luxembourg": "Люксембург", "spain": "Испания",
+              "italy": "Италия", "netherlands": "Нидерланды", "czech": "Чехия", "slovakia": "Словакия"}
 
 
 try:                                       # secrets (2026-11-06, tainik.py): the kinds are known only from the tainik
@@ -728,6 +758,8 @@ class Deck:
             # speaker's mood today comes a little earlier, one against it a little later
             cands = [p for p in cands if p.startswith("scene/") or not (
                 BONDS.level(actors_of(p)[0]) == 0 and BONDS.calls_by_name(p))] or cands
+            # personal lines ("lv" in the phrases file) — only from that friendship level; scenes exempt
+            cands = [p for p in cands if p.startswith("scene/") or BONDS.lv_ok(actors_of(p)[0], p)]
         if cands:
             pos = {p: i for i, p in enumerate(left)}
 
@@ -745,6 +777,8 @@ class Deck:
             # everything left in the deck is blocked right now (bye-phrases of absent actors,
             # scenes with someone off air): take an allowed item heard longest ago instead
             order = sorted(have, key=lambda p: hist.index(p) if p in hist else -1)
+            if BONDS:
+                order = [p for p in order if p.startswith("scene/") or BONDS.lv_ok(actors_of(p)[0], p)]
             pick = (next((p for p in order if self._ok(p, left_set, last_voice, True)), None)
                     or next((p for p in order if self._ok(p, left_set, last_voice, False)), None))
             if pick is None:
@@ -791,14 +825,19 @@ class Deck:
 # ---------------------------------------------------------------- friendship & mood (bonds.py, 2026-11-06)
 BONDS = None
 FEMALE = {"petrovna", "lastochka", "lisa", "sova", "vera", "soroka"}
+PERSONAL_KINDS = ("family", "salary", "health")     # на lv0–1 эфир уходит в уклончивые (reactions/bond/evade)
+BOND_UP = []          # (время озвучить, поставлено, актёр, новый уровень) — переходы дружбы вслух
 
 
 def bond_filter(cands):
-    """A stranger (friendship level 0) doesn't call you by name: drop his named lines if he has others."""
+    """A stranger (friendship level 0) doesn't call you by name: drop his named lines if he has others.
+    A line marked "lv" in the phrases file (personal topics) needs that friendship level — strictly."""
     if not BONDS:
         return cands
     keep = [x for x in cands if not (BONDS.level(x[0]) == 0 and BONDS.calls_by_name(_rel(x[1])))]
-    return keep or cands
+    if not keep:
+        keep = cands               # old behaviour: a stranger with only named lines still talks
+    return [x for x in keep if BONDS.lv_ok(x[0], _rel(x[1]))]
 
 
 def mood_pick(cands):
@@ -850,6 +889,9 @@ def bond_add(actor, n, why):
     log(f"ДРУЖБА: {msg}")
     if OVERLAY:
         OVERLAY.bond(msg)
+    if new > old and actor not in ("buh",) and not actor.startswith("driver."):
+        # переход вслух: актёр сам прокомментирует смену уровня, один переход за раз, с задержкой
+        BOND_UP.append((time.monotonic() + random.uniform(8.0, 20.0), time.monotonic(), actor, new))
 
 
 # ---------------------------------------------------------------- audio
@@ -1105,10 +1147,15 @@ class Ears:
                 db = 20 * np.log10(peak + 1e-9)
                 log(f"  микрофон: пик {db:.0f} дБ, средний {20 * np.log10(rms + 1e-9):.0f} дБ")
                 if peak <= 0.002:
-                    self.last_info = f"тишина ({db:.0f} дБ) — микрофон молчит"
-                    log(f"  микрофон «{self.dev_name}» молчит — выберите другой в меню значка (Микрофон)")
-                    if self.on_silent and len(audio) >= 0.8 * self.sr:   # a short tap is silent anyway (Kirill 06.11)
-                        self.on_silent(self.dev_name)
+                    # a LIVE mic breathes even in a quiet room (peak -60 dB, rms -85: range ~25 dB); a dead or
+                    # wrong device is a flat line (range a couple of dB). Only the flat one «молчит» (Данила 08.11)
+                    if db - 20 * np.log10(rms + 1e-9) < 10:
+                        self.last_info = f"тишина ({db:.0f} дБ) — микрофон молчит"
+                        log(f"  микрофон «{self.dev_name}» молчит — выберите другой в меню значка (Микрофон)")
+                        if self.on_silent and len(audio) >= 0.8 * self.sr:   # a short tap is silent anyway (Kirill 06.11)
+                            self.on_silent(self.dev_name)
+                    else:
+                        self.last_info = f"тишина ({db:.0f} дБ) — микрофон живой, говорите громче/ближе"
                 if peak > 0.002:                            # the fifine is quiet (~-45 dB peaks): normalise
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
                     segs, _ = self.model.transcribe(y, language="ru", beam_size=5, vad_filter=True,
@@ -1248,8 +1295,11 @@ class Operator:
         if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude",
                                                        "mock", "bot", "support"):
             # step 2 of «вариативность» (2026-11-05): asked him the same within 10 min -> he notices
-            last = self.asked.get((who, kind))
-            self.asked[(who, kind)] = now
+            # 2026-11-08: «как дела» и «как настроение» — один интент how_are_you, но разные вопросы:
+            # ключ повтора считаем по формулировке, иначе «как настроение» после «как дела» = ложный повтор
+            ask_kind = "how_are_you:mood" if kind == "how_are_you" and "настро" in text else kind
+            last = self.asked.get((who, ask_kind))
+            self.asked[(who, ask_kind)] = now
             if last and now - last < 600 and random.random() < 0.7 and any(x[0] == who for x in reaction_pool("player", "already")):
                 group, kind = "player", "already"
         if who:
@@ -1546,6 +1596,15 @@ class Operator:
             prefer = None                # not always the same person answering
         pool = reaction_pool(group, kind)
         question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support") and kind not in SECRET_KINDS
+        if group == "intent" and kind in PERSONAL_KINDS and BONDS and who:
+            # личная тема по имени: у адресата есть реплика, но дружбы не хватает (lv) -> он отвечает
+            # своей уклончивой (reactions/bond/evade, размечены lv0–1), а не общим «не знаю»
+            own = [x for x in pool if x[0] == who]
+            if own and not any(BONDS.lv_ok(who, _rel(f)) for _, f in own):
+                ev = [x for x in reaction_pool("bond", "evade") if x[0] == who]
+                if ev:
+                    log(f"  {who}: дружбы мало для личного — отвечает уклончиво")
+                    pool = ev
         if who and who not in {a for a, _ in pool}:
             # called by name but he has no line on this topic: "не знаю, не слышал" (a question),
             # "принял" / hello otherwise; whatever he has
@@ -1581,11 +1640,19 @@ class Operator:
             self.deck.grace = None
         if not pick and (question or kind == "dunno"):
             # nobody near has a recorded answer: somebody says he doesn't know / didn't get it
+            if group == "intent" and kind in PERSONAL_KINDS and BONDS:
+                # личная тема без адресата: пока никто не приятель, ближний отвечает уклончиво (свои lv0–1)
+                here = {a for a in (self.deck.allowed or ()) if not self.deck.offline(a)}
+                pick = self.deck.choose([x for x in reaction_pool("bond", "evade") if x[0] in here],
+                                        prefer=prefer)
+                if pick:
+                    log(f"  на {kind} отвечают уклончиво ({pick[0]})")
             for alt_kind in ("dunno", "not_heard"):
+                if pick:
+                    break
                 pick = self.deck.choose(mine(reaction_pool("player", alt_kind)), prefer=who or prefer)
                 if pick:
                     log(f"  на {group}/{kind} ответа нет — {alt_kind}")
-                    break
         if not pick and who and self.deck.allowed is not None and who in self.deck.allowed_far:
             # called BY NAME and he is just out of range: he answers through the noise. Without a name nobody
             # far answers (2026-11-06, Kirill: «ты ненастоящий» was answered by Petrovna who had driven off)
@@ -1684,7 +1751,10 @@ def line_of(group, kind, actor):
     pool = [x for x in reaction_pool(group, kind) if x[0] == actor]
     if not pool:
         return None
-    pick = mood_pick(fresh_first(bond_filter(pool)))
+    pool = bond_filter(pool)
+    if not pool:
+        return None               # only personal lines ("lv") and the friendship isn't there yet
+    pick = mood_pick(fresh_first(pool))
     heard(pick[1])
     return pick
 
@@ -2264,7 +2334,8 @@ def main(argv):
 
             try:
                 mm = ctypes.WinDLL("winmm")
-                mm.joyConfigChanged(0)
+                with _WINMM_LOCK:
+                    mm.joyConfigChanged(0)
                 result["base"] = _winmm_buttons(mm)
                 log(f"переназначение кнопки: найдено устройств {len(result['base'])}")
             except Exception as e:
@@ -2449,6 +2520,13 @@ def main(argv):
                               changelog=lambda: os.startfile(str(ROOT / "CHANGELOG.md")))
     except Exception as e:
         log(f"обновления не подключились: {e!r}")
+    log(f"папка рации: {ROOT}")               # диагностика: две копии программы в логе неотличимы иначе (Данила 08.11)
+    try:
+        _ap = json.loads((ROOT / "update" / "applied.json").read_text(encoding="utf-8"))
+        log(f"обновления: применена версия {_ap.get('version')} (ok={_ap.get('ok')}, стартов "
+            f"{_ap.get('starts', 0)})")
+    except (OSError, ValueError):
+        pass
     upd_ok_at = time.monotonic() + 20         # healthy for 20 s -> keep the update the launcher just applied
     air = apply_air(cfg, world, cfg.get("air", "normal"))
     log(f"эфир: {air['name']}")
@@ -2731,6 +2809,22 @@ def main(argv):
                 next_at = max(next_at, driving_s + 40)   # no chatter right on top of the answer
                 continue
             # the accountant's voice message (phone, not CB): plays while the game runs, after the delay
+            # переходы дружбы вслух (2026-11-08): уровень вырос — актёр говорит свою фразу перехода (bond/upN)
+            if BOND_UP and st in ("driving", "engine_off") and not op.pending:
+                now_ = time.monotonic()
+                BOND_UP[:] = [q for q in BOND_UP if now_ - q[1] < 900]
+                if world is not None:
+                    BOND_UP[:] = [q for q in BOND_UP if q[2] in world.inside]
+                i_ = next((i for i, q in enumerate(BOND_UP) if q[0] <= now_), None)
+                if i_ is not None:
+                    _, _, a_, lv_ = BOND_UP.pop(i_)
+                    pick = line_of("bond", f"up{lv_}", a_)
+                    if pick:
+                        log(f"эфир: {a_} — переход дружбы (up{lv_})")
+                        PLAYER.file(pick[1], a_)
+                        deck.on_air.add(a_)
+                        next_at = max(next_at, driving_s + random.uniform(15, 30))
+                    continue
             if buh_q and st in ("driving", "engine_off") and not op.pending and time.monotonic() >= buh_q[0][0]:
                 _, kind = buh_q.pop(0)
                 pool = reaction_pool("buh", kind) or reaction_pool("buh", "generic")
@@ -2809,7 +2903,7 @@ def main(argv):
                         x, sr = sf.read(wav, dtype="float32")
                         tmp = ROOT / "_foreign.wav"
                         sf.write(tmp, degrade(x, sr, random.uniform(0.6, 1.2)), sr)
-                        log(f"эфир: проезжий иностранец ({lang}, вы в стране {country})")
+                        log(f"эфир: проезжий иностранец ({lang}, вы в стране {COUNTRY_RU.get(country, country or 'неизвестной')})")
                         if OVERLAY:
                             OVERLAY.foreign({"de": "по-немецки", "pl": "по-польски", "fr": "по-французски",
                                              "es": "по-испански", "it": "по-итальянски", "nl": "по-голландски",
