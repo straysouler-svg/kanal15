@@ -129,12 +129,13 @@ def main(spec_path):
     # 2026-11-06: "layout": "stream" — a Twitch VOD of «Канал 15» (1920x1080, game 21:9 at y=150, camera in its
     # ragged frame on the left): game centre on top, subtitles under it, the streamer's camera below
     gy = spec.get("game_y", 150)
+    geq = f",eq={spec['eq']}" if spec.get("eq") else ""   # 2026-11-08: «eq»: "brightness=0.12" — lift night VOD game picture
     cx, cy, cw, ch = spec.get("cam", [20, 376, 318, 428])
     cam_w = round(cw * 1.55 / 2) * 2
     cam_h = round(ch * 1.55 / 2) * 2
     frame = (f"[cv]split=3[a][b][c];"
              f"[a]scale=-2:1920,crop=1080:1920,boxblur=30:3,eq=brightness=-0.25[bg];"
-             f"[b]crop=1080:804:{spec.get('game_x', 420)}:{gy}[g];"
+             f"[b]crop=1080:804:{spec.get('game_x', 420)}:{gy}{geq}[g];"
              f"[c]crop={cw}:{ch}:{cx}:{cy},scale={cam_w}:{cam_h}[cam];"
              f"[bg][g]overlay=0:170[t];[t][cam]overlay={(1080 - cam_w) // 2}:1225,fps=30," if stream else
              "[cv]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30," if phone else

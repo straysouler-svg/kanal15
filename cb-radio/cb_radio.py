@@ -2721,6 +2721,10 @@ def main(argv):
                         ev = world.update(p_[0], p_[1], w_acc, p_[2])
                         if ev:
                             log(f"трасса: {ev[0]} едет {ev[1]}, встреча у {ev[2]}")
+                        if world.teleport_event:
+                            world.teleport_event = False
+                            log(f"телепорт: скачок на другой конец карты; зона очищена, "
+                                f"{len(world.teleport_witness)} водителей остались на старом месте")
                         for k in world.entered:
                             place = world.place_of(k)
                             log(f"в зоне рации: {k}" + (f" (у {place[0]})" if place else ""))
@@ -2743,6 +2747,13 @@ def main(argv):
                             kn = world.knowledge(k)                          # he comes from where you go
                             if kn in ("camera", "police") and line_of("world", "warn_" + kn, k):
                                 wq.append(("world", "warn_" + kn, k, now_))
+                            # он видел, как ты исчез с трассы (телепорт): реплика «куда ты пропал?».
+                            # Только знакомый (lv1+) — на личный тон незнакомца не пускаем; witness живёт
+                            # до встречи на lv1+. Пул reactions/teleport/<actor> — реплики Летописца.
+                            elif (k in world.teleport_witness
+                                  and (not BONDS or BONDS.level(k) >= 1)
+                                  and line_of("teleport", k)):
+                                wq.append(("teleport", k, k, now_))
                             # friends come on air by themselves more often (road ahead, weather); strangers less
                             elif (kn == "clear" and random.random() < (0.15, 0.3, 0.5, 0.75)[lv]
                                   and line_of("world", "clear", k)):
@@ -2862,7 +2873,7 @@ def main(argv):
             if wq:
                 now_ = time.monotonic()
                 wq = [q for q in wq if now_ - q[3] < 180 and world and q[2] in world.inside]
-                ready = next((q for q in wq if q[1] == "meet_again" or q[2] in deck.on_air), None)
+                ready = next((q for q in wq if q[1] in ("meet_again", "teleport") or q[2] in deck.on_air), None)
                 if ready and driving_s > 4:
                     wq.remove(ready)
                     g_, k_, a_, _ = ready
@@ -2871,6 +2882,8 @@ def main(argv):
                         log(f"эфир: {g_}/{k_} ({a_})")
                         PLAYER.file(pick[1], a_)
                         deck.spoken[a_] = deck.spoken.get(a_, 0) + 1
+                        if world and g_ == "teleport":
+                            world.teleport_witness.pop(a_, None)     # отыграли «ты исчез с трассы»
                     next_at = max(next_at, driving_s + random.uniform(20, 45))
                     continue
             # silence guard: driving and nothing with a voice for max_silence -> pull somebody in

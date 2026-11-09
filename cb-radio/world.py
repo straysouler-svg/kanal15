@@ -157,6 +157,8 @@ class World:
         except (OSError, ValueError):
             self.hazards = []
         self.px = self.pz = None
+        self.teleport_witness = {}     # key -> game_min: видел, как игрок исчез с трассы (реплики у Летописца)
+        self.teleport_event = False    # один тик после скачка позиции — читает cb_radio
         self.hx, self.hz, self.pspeed = 1.0, 0.0, 0.0
         self.dest, self.ppath, self._path_t = None, [], 0.0   # your job: destination city + your way there
         self.company = None          # company.Company: real job offers + your hired drivers (from the save)
@@ -309,6 +311,24 @@ class World:
         return False
 
     # ---------------------------------------------------------------- encounters
+    TELEPORT_M = 50_000          # скачок > 50 км за тик телеметрии — только телепорт/загрузка сейва, не дорога
+
+    def _teleport(self, game_min):
+        """Быстрое перемещение в игре (или загрузка другого сейва). Все, кто был рядом, остался в старом
+        месте: зона очищается, бывшим собеседникам — кулдаун (в эфир после телепорта выходят только новые),
+        спавн не должен стрелять мгновенно. Свидетели исчезновения запоминаются — задел для реплик
+        «исчез с трассы» при следующей встрече (reactions/teleport/<actor>, см. cb_radio)."""
+        for k in self.inside:
+            d = self.drivers[k]
+            d.cooldown = getattr(d, "cooldown_s", self.cooldown_s)
+            d.companion = False
+            self.teleport_witness[k] = game_min
+        self.inside, self.entered, self.left = set(), [], []
+        self.quiet, self.since_meet = 0.0, 0.0
+        self.ppath, self._path_t, self.hired_pos = [], 0.0, {}
+        self.__dict__.pop("_hp_cache", None)
+        self.teleport_event = True
+
     def _city_ahead(self, lo=4000, hi=20000):
         if self.ppath:                                     # the next city on your way (the road may bend)
             for along, t in self.path_ahead():
@@ -447,12 +467,18 @@ class World:
     def update(self, px, pz, dt, game_min):
         if not self.ok:
             return None
+        self.teleport_event = False
+        teleport = self.px is not None and math.hypot(px - self.px, pz - self.pz) > self.TELEPORT_M
+        if teleport:
+            self._teleport(game_min)
         if self.px is not None:
             mx, mz = px - self.px, pz - self.pz
             m = math.hypot(mx, mz)
             if m > 1:
                 self.hx, self.hz = mx / m, mz / m
             self.pspeed = 0.8 * self.pspeed + 0.2 * (m / dt if dt > 0 else 0)
+        if teleport:
+            self.pspeed = 0.0          # скорость от скачка не считается: никаких мгновенных встреч
         self.px, self.pz = px, pz
         self._update_path(dt)
         self.game_min = game_min
@@ -493,6 +519,8 @@ class World:
         self.inside = now_in
         self.quiet = 0.0 if now_in else self.quiet + dt
         self.since_meet += dt
+        if teleport:
+            self.quiet, self.since_meet = 0.0, 0.0   # «переезд» — спавн только после тишины, не сразу
         if self.pspeed > 5 and (self.quiet > self.quiet_s or (len(now_in) < self.max_inside and self.since_meet > self.meet_every_s)):
             self.quiet = 0.0
             self.since_meet = 0.0
