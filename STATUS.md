@@ -4,13 +4,13 @@
 
 ## Где мы сейчас
 
-- **Живая версия: 1.31** — каналы обновлений `public` и `kirill-7db1196415a3aeb5` (Yandex Cloud, бакет `kanal15-updates`), GitHub-релиз v1.31 с ассетом `Kanal15-Setup-v1.31.exe`. Репозиторий: https://github.com/straysouler-svg/kanal15 (публичный).
-- **1.32 в работе, заморожена на полпути**: 36 телепорт-реплик интегрированы в `cb-radio/phrases/level3_eleven.json → reactions.teleport.<actor>`, теги приведены к эфирным английским. Осталось: включить VPN → check_quota → озвучка (16 строк ElevenLabs, 18 gpt-audio, 2 XTTS-Сорока; **Ласточка — СТРОГО голос Laura**) → remix → check_air → selftest → bump_version → сборка neutral+kirill → publish_update ×2 → коммит (без `cb-radio/config.json`) → MODLOG → пуш + релиз на GitHub.
+- **Живая версия: 1.32** (09.11) — каналы обновлений `public` и `kirill-7db1196415a3aeb5` (Yandex Cloud, бакет `kanal15-updates`) опубликованы и проверены манифестами (1.32, teleport и bond в составе), GitHub-релиз v1.32 с ассетом `Kanal15-Setup-v1.32.exe` (v1.31 удалён). Репозиторий: https://github.com/straysouler-svg/kanal15 (публичный). Коммит 3e496e6.
+- **1.32 — телепорт**: скачок >50 км за тик очищает зону рации (в эфир выходят только новые водители), свидетели исчезновения при встрече на lv1+ играют реплики «куда ты пропал» (36 реплик, 18 актёров, озвучены EL+gpt-audio+XTTS; Ласточка — Laura).
 - Крэш heap corruption (гонка winmm) исправлен `_WINMM_LOCK` в 1.31.
 
 ## Бюджеты и ключи
 
-- ElevenLabs: остаток ~87 тыс. символов. OpenRouter: потрачено ~$23.9 из $30.
+- ElevenLabs: остаток ~87,2 тыс. символов (после 1.32; сброс 2026-12-04). OpenRouter: ~$24,2 из $30 (после 1.32; 18 gpt-audio-строк телепорта).
 - Перед любой платной генерацией — check_quota. Платные вызовы только по запросу пользователя.
 - Claude Code у пользователя: посредник getapi.trade убран из `~/.claude/settings.json` 09.11 (бэкап `settings.json.backup-proxy-2026-11-09`), списание теперь на подписку Claude Pro (OAuth в `~/.claude/.credentials.json`). После перезапуска Claude проверить `/status`.
 
