@@ -79,3 +79,4 @@ probe_job.txt
 !/cb-radio/vendor/
 /cb-radio/vendor/*
 !/cb-radio/vendor/README.md
+STATUS.md
