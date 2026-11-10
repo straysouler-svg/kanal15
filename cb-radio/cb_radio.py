@@ -140,17 +140,101 @@ DEFAULT_CFG = {
 }
 
 
-def log(msg):
-    line = f"{datetime.now():%H:%M:%S} {msg}"
+def log(msg, ch=None):
+    """Журнал рации (переделка 09.11, спека в STATUS.md): новые строки СВЕРХУ файла (запись
+    порциями-буфером), схлопывание повторов ×N, префиксы-каналы [эфир]/[тангента]/[дружба]/[тех]/
+    [ОШИБКА], тех. шум — только при --verbose, кап ~10 МБ (хвост — в cb_radio_archive.log),
+    ошибки с traceback — в cb_radio_errors.log."""
+    now = datetime.now()
+    if ch is None:
+        low = msg.lower()
+        ch = ("ОШИБКА" if low.startswith(("traceback", "ошибк", "error", "крэш"))
+              else "тангента" if low.startswith("тангента")
+              else "дружба" if low.startswith(("дружба", "настроение", "переход"))
+              else "тех" if low.startswith(("компания", "обновления", "плагин", "значок", "папка рации",
+                                            "доставки", "установщик", "тангента через", "winmm", "selftest"))
+              else "эфир")
+    if ch == "тех" and not VERBOSE:
+        return
+    line = f"{now:%H:%M:%S} [{ch}] {msg}"
     try:
         print(line, flush=True)
     except (UnicodeEncodeError, OSError, ValueError, AttributeError):
         pass    # a cp1251 console can't print «→» (06.11: the radio died on start); the log file is what matters
+    if ch == "ОШИБКА":
+        _append_file(ERR_FILE, line + "\n", ERR_CAP)
+    if _log_buf and _log_buf[-1][0] == line:
+        _log_buf[-1][1] += 1
+        return
+    _log_buf.append([line, 1])
+    now_m = time.monotonic()
+    if now_m - _flush_t[0] > _FLUSH_EVERY:
+        _flush_log()
+
+
+LOG_CAP = 10 * 1024 * 1024            # головной cb_radio.log ~10 МБ, хвост — в архив
+ERR_CAP = 5 * 1024 * 1024
+ARC_KEEP = 90 * 1024 * 1024           # архив: одна ротация, суммарно ≤100 МБ
+ERR_FILE = ROOT / "cb_radio_errors.log"
+ARC_FILE = ROOT / "cb_radio_archive.log"
+VERBOSE = "--verbose" in sys.argv
+_FLUSH_EVERY = 2.0
+_log_buf = []          # [[text, count]] — порция до флаша
+_flush_t = [time.monotonic()]
+
+
+def _append_file(path, chunk, cap):
     try:
-        with LOG_FILE.open("a", encoding="utf-8") as f:
-            f.write(line + "\n")
+        old = path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
+        body = chunk + old
+        enc = body.encode("utf-8")
+        if len(enc) > cap:
+            keep = enc[: cap // 2].decode("utf-8", "ignore")
+            body = keep
+        path.write_text(body, encoding="utf-8")
     except OSError:
         pass
+
+
+def _flush_log():
+    """Записать накопленную порцию СВЕРХУ файла; при превышении капа — хвост в архив."""
+    if not _log_buf:
+        return
+    _flush_t[0] = time.monotonic()
+    chunk = "".join(t + (f"  ×{n}" if n > 1 else "") + "\n" for t, n in reversed(_log_buf))
+    _log_buf.clear()
+    try:
+        old = LOG_FILE.read_text(encoding="utf-8", errors="replace") if LOG_FILE.exists() else ""
+        body = chunk + old
+        enc = body.encode("utf-8")
+        if len(enc) > LOG_CAP:
+            head_b = enc[: LOG_CAP // 2]
+            tail_b = enc[LOG_CAP // 2:]
+            try:
+                arc_old = ARC_FILE.read_bytes() if ARC_FILE.exists() else b""
+                ARC_FILE.write_bytes((tail_b + arc_old)[:ARC_KEEP])
+            except OSError:
+                pass
+            body = head_b.decode("utf-8", "ignore")
+        LOG_FILE.write_text(body, encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _log_excepthook(exc_type, exc, tb):
+    import traceback
+    _append_file(ERR_FILE, "".join(traceback.format_exception(exc_type, exc, tb)), ERR_CAP)
+    sys.__excepthook__(exc_type, exc, tb)
+
+
+sys.excepthook = _log_excepthook
+try:
+    threading.excepthook = lambda a: _append_file(
+        ERR_FILE, "".join(__import__("traceback").format_exception(a.exc_type, a.exc_value, a.exc_tb)), ERR_CAP)
+except (AttributeError, OSError):
+    pass
+import atexit  # noqa: E402
+atexit.register(_flush_log)
 
 
 def load_cfg():
