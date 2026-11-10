@@ -732,6 +732,11 @@ class Deck:
 
     def draw(self):
         have = set(all_phrases())
+        if VITYOK_WEDDING_DONE[0]:
+            # 1.33 свадебная арка Витьки закрыта: паничные предсвадебные реплики уходят из эфира
+            have = {p for p in have
+                    if not (p.startswith("vitek/") and p.split("/")[1].isdigit()
+                            and int(p.split("/")[1]) in VITEK_PANIC)}
         left = [p for p in self.st["left"] if p in have]
         # phrases added since the deck was shuffled (new actor, new scene): mix them in now
         seen = set(self.st.get("history", [])) | set(left)
@@ -768,7 +773,9 @@ class Deck:
                     return 0.0
                 w = BONDS.weight(actors_of(p)[0], p)
                 return -0.4 if w > 1 else 0.4 if w < 1 else 0.0
-            pick = min(cands, key=lambda p: (self.spoken.get(actors_of(p)[0], 0) / self.weights.get(actors_of(p)[0], 1.0)
+            pick = min(cands, key=lambda p: ((self.spoken.get(actors_of(p)[0], 0)
+                                              + (8 if time.monotonic() < QUIET_UNTIL.get(actors_of(p)[0], 0) else 0))
+                                             / self.weights.get(actors_of(p)[0], 1.0)
                                              + mood_k(p), pos[p]))
         else:
             pick = next((p for p in left if self._ok(p, left_set, last_voice, False)), None)
@@ -827,6 +834,41 @@ BONDS = None
 FEMALE = {"petrovna", "lastochka", "lisa", "sova", "vera", "soroka"}
 PERSONAL_KINDS = ("family", "salary", "health")     # на lv0–1 эфир уходит в уклончивые (reactions/bond/evade)
 BOND_UP = []          # (время озвучить, поставлено, актёр, новый уровень) — переходы дружбы вслух
+MARK_Q = []           # (actor, mood) — маркеры настроения вслух (смена настроения, 2026-11-09)
+QUIET_UNTIL = {}      # actor -> monotonic: «успокойся» (да) — 10–15 мин тише и реже (1.33)
+LAST_OFFENDED = {}    # actor -> monotonic: кто обиделся — извинение маршрутизируется ему (1.33)
+DLC_PLAYED = set()    # арка Iceland: раз за сессию (окно до 2026-12-08)
+VITYOK_WEDDING_DONE = [False]   # арка Витьки закрыта → паничные singles спрятаны, тянет в calm
+VITYOK_QUEST_STATE = ROOT / "quest_state.json"      # прогресс сквозной арки (ступень 0..7)
+
+# паничные предсвадебные singles Витьки — прячутся из колоды после закрытия арки (drop-эффект в коде)
+VITEK_PANIC = {1, 2, 6, 7, 9, 12, 13, 14, 15, 16, 18, 24}
+
+_RELATIONS = [None]
+
+
+def relations():
+    """Граф знакомств из phrases/canon_relations_2026-11-08.md (map/actor_relations.json): 'Л' лично, 'Э' заочно."""
+    if _RELATIONS[0] is None:
+        try:
+            _RELATIONS[0] = json.loads((ROOT / "map" / "actor_relations.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _RELATIONS[0] = {}
+    return _RELATIONS[0]
+
+
+def quest_state():
+    try:
+        return json.loads(VITYOK_QUEST_STATE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def quest_save(st):
+    try:
+        VITYOK_QUEST_STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def bond_filter(cands):
@@ -848,10 +890,13 @@ def mood_pick(cands):
 
 
 def mood_nudge(actor, d, why):
-    """Cheer a driver up (+) or spoil his mood (-); a change shows on the stream overlay."""
+    """Cheer a driver up (+) or spoil his mood (-); a change shows on the stream overlay and,
+    1.33, queues a spoken mood marker (reactions/mood_mark/<mood>) — the player HEARS the mood."""
     if not BONDS:
         return
     ch = BONDS.nudge(actor, d, why)
+    if ch:
+        MARK_Q.append((actor, ch[1]))
     if not ch or not OVERLAY:
         return
     import bonds as _b
@@ -891,7 +936,11 @@ def bond_add(actor, n, why):
         OVERLAY.bond(msg)
     if new > old and actor not in ("buh",) and not actor.startswith("driver."):
         # переход вслух: актёр сам прокомментирует смену уровня, один переход за раз, с задержкой
-        BOND_UP.append((time.monotonic() + random.uniform(8.0, 20.0), time.monotonic(), actor, new))
+        # 1.33 (Игорь): обиженный не «радуется» переходу — апгрейд во время свежей обиды молчит
+        if time.monotonic() - LAST_OFFENDED.get(actor, -1e9) > 600:
+            BOND_UP.append((time.monotonic() + random.uniform(8.0, 20.0), time.monotonic(), actor, new))
+        else:
+            log(f"  дружба: {actor} обижен — переход вслух отложен")
 
 
 # ---------------------------------------------------------------- audio
@@ -1187,6 +1236,7 @@ class Operator:
         self.rollcalled = {}         # actor -> time until which he ignores another "кто в эфире?"
         self.repeats = {}            # line number (Player.said) -> times repeated; 2 max, then silence
         self.asked = {}              # (actor, intent) -> time: the same question twice -> «я ж уже говорил»
+        self.last_topic = {}         # 1.33: actor -> intent последней темы (смена темы сбрасывает «уже говорил»)
     REPEAT_MAX = 2
 
     def press(self, dur, interrupted, cut_speaker, job=None):
@@ -1220,6 +1270,10 @@ class Operator:
     def _decide(self, text, interrupted, prefer, t_rel, heard):
         import intents
         now = time.monotonic()
+        self.heard_text = text
+        self.knows_target = intents.knows_target(text) if intent == "knows" else None
+        if intent == "knows" and self.knows_target == who:
+            who = None            # «ты знаешь Бороду?» — вопрос ПРО него, отвечают другие
         intent, who = intents.understand(text) if text else (None, None)
         # 2026-11-07 (user): a passing foreigner. Your words right after him (and no Russian driver spoke since),
         # or «амиго / хеллоу / бонжур…» within 10 min -> HE answers in his language, laughing («не понял, брат,
@@ -1269,6 +1323,12 @@ class Operator:
             group, kind = "special", "who"                # roll call: everybody in range answers once
         elif intent in ("dist", "eta", "meet") or intent in SECRET_KINDS:
             group, kind = "intent", intent                # «живые ответы»: picked by distance / route / friendship
+        elif intent == "knows":
+            group, kind = "intent", "knows"               # «ты знаешь <X>?» — по графу canon_relations (1.33)
+        elif intent == "calm_down":
+            group, kind = "intent", "calm_down"           # «успокойся» — да/нет по настроению, с последствием
+        elif intent == "sorry":
+            group, kind = "intent", "sorry"               # извинение — обидевшемуся, не случайному адресату
         elif intent and intent.startswith("graf_") and reaction_pool("graf", intent[5:]):
             group, kind = "graf", intent[5:]              # the dog: only Vera answers (who = vera)
         elif intent and intent != "greet" and reaction_pool("intent", intent):
@@ -1298,6 +1358,12 @@ class Operator:
             # 2026-11-08: «как дела» и «как настроение» — один интент how_are_you, но разные вопросы:
             # ключ повтора считаем по формулировке, иначе «как настроение» после «как дела» = ложный повтор
             ask_kind = "how_are_you:mood" if kind == "how_are_you" and "настро" in text else kind
+            # 1.33 (Игорь): новая тема у того же адресата сбрасывает «уже рассказывал» —
+            # повторный вопрос считается повтором только ВНУТРИ одной темы
+            if self.last_topic.get(who) not in (None, ask_kind):
+                for k_ in [k for k in self.asked if k[0] == who]:
+                    del self.asked[k_]
+            self.last_topic[who] = ask_kind
             last = self.asked.get((who, ask_kind))
             self.asked[(who, ask_kind)] = now
             if last and now - last < 600 and random.random() < 0.7 and any(x[0] == who for x in reaction_pool("player", "already")):
@@ -1342,6 +1408,15 @@ class Operator:
                     self.deck.on_air.add(actor)
                     self.on_air = True
                     self._maybe_cross(actor, "intent")
+                return True
+            # 1.33 Исландия: нет своего города-направления — исландские маршруты («хрен выговоришь»)
+            isl = line_of("intent", "route", a) if random.random() < 0.6 else None
+            if isl:
+                log(f"ответ: куда едет — {a} (исландский маршрут)")
+                if PLAYER.file(isl[1], a) == "ok":
+                    bond_add(a, 2 if who == a else 1, "куда едет")
+                    self.deck.on_air.add(a)
+                    self.on_air = True
                 return True
         return False
 
@@ -1497,6 +1572,88 @@ class Operator:
             return True
         return False
 
+    def _knows_answer(self, who, prefer):
+        """«ты знаешь <X>?» — отвечает по графу canon_relations (1.33): Л/Э → реплика про знакомого,
+        «—» или цель неясна → честное «не знаю такого». Кто отвечает: названный, иначе кто в зоне."""
+        target = getattr(self, "knows_target", None)
+        here = [a for a in (self.deck.allowed or ()) if not self.deck.offline(a)]
+        far = [a for a in (self.deck.allowed_far or ()) if not self.deck.offline(a)]
+        order = ([who] if who in here or who in far else []) + \
+                ([prefer] if prefer in here else []) + random.sample(here, len(here))
+        rel = relations()
+        for a in order:
+            edge = (rel.get(a, {}) or {}).get(target) if target else None
+            pool = (reaction_pool("knows", f"{a}__{target}") if edge
+                    else reaction_pool("knows", f"{a}__knows_none"))
+            if edge and not pool:
+                pool = reaction_pool("knows", f"{a}__knows_none")   # реплики под пару ещё нет — честное «не знаю»
+            if not pool:
+                continue
+            pick = self.deck.choose(pool, prefer=a)
+            if not pick:
+                continue
+            actor, wav = pick
+            what = "лично" if edge == "Л" else ("заочно" if edge == "Э" else "не знакомы")
+            log(f"ответ: knows {target or '?'} ({actor}: {what})")
+            if PLAYER.file(wav, actor) == "ok":
+                self.deck.on_air.add(actor)
+                self.on_air = True
+                bond_add(actor, 2 if who == actor else 1, "knows")
+            return
+        log(f"на knows/{target} ответить некому")
+
+    def _calm_down_answer(self, who, prefer):
+        """«успокойся» — да/нет по внутреннему настроению; «да» успокаивает по-настоящему:
+        настроение вверх и 10–15 минут тише (инцидент: Витёк соглашался и сразу снова бешеный)."""
+        here = [a for a in (self.deck.allowed or ()) if not self.deck.offline(a)]
+        far = [a for a in (self.deck.allowed_far or ()) if not self.deck.offline(a)]
+        order = ([who] if who in here or who in far else []) + \
+                ([prefer] if prefer in here else []) + random.sample(here, len(here)) if here else []
+        for a in order:
+            mood = BONDS.mood(a) if BONDS else "calm"
+            p_no = {"grumpy": 0.45, "tired": 0.1, "calm": 0.15, "cheerful": 0.05}.get(mood, 0.2)
+            say_yes = random.random() >= p_no
+            pool = reaction_pool("calm_down", "yes" if say_yes else "no")
+            pick = self.deck.choose([x for x in pool if x[0] == a] or pool, prefer=a)
+            if not pick:
+                continue
+            actor, wav = pick
+            log(f"ответ: calm_down -> {'да' if say_yes else 'нет'} ({actor}, настроение {mood})")
+            if PLAYER.file(wav, actor) == "ok":
+                self.deck.on_air.add(actor)
+                self.on_air = True
+                if say_yes:
+                    mood_nudge(actor, 2, "успокоился")
+                    QUIET_UNTIL[actor] = time.monotonic() + random.uniform(600, 900)
+                    bond_add(actor, 1, "успокоился")
+            return
+        log("на «успокойся» ответить некому")
+
+    def _sorry_answer(self, who, prefer):
+        """Извинение маршрутизируется тому, кто обиделся в последние 10 минут (инцидент 09.11:
+        извинение ушло Бороде, а обиделся Профессор). Снимает обиду, возвращает в эфир."""
+        now = time.monotonic()
+        offended = [a for a, t in LAST_OFFENDED.items() if now - t < 600]
+        order = ([who] if who in offended else []) + [a for a in offended if a != who]
+        if not order:
+            order = ([who] if who else []) + ([prefer] if prefer else [])
+        for a in order:
+            pool = reaction_pool("intent", "sorry") or reaction_pool("player", "ack")
+            pick = self.deck.choose([x for x in pool if x[0] == a] or pool, prefer=a)
+            if not pick:
+                continue
+            actor, wav = pick
+            log(f"ответ: извинение -> {actor}")
+            if PLAYER.file(wav, actor) == "ok":
+                self.deck.on_air.add(actor)
+                self.on_air = True
+                if actor in LAST_OFFENDED:
+                    self.deck.off_until[actor] = 0.0        # обида снята, возвращается в эфир
+                    bond_add(actor, 5, "извинение")
+                    del LAST_OFFENDED[actor]
+            return
+        log("извинение: ответить некому")
+
     def all_answer(self, who, kind):
         """A secret (tainik.py): everybody in range answers, one after another (2026-11-06)."""
         here = ([a for a in self.deck.allowed if not self.deck.offline(a)] if self.deck.allowed is not None
@@ -1590,6 +1747,15 @@ class Operator:
                     self.on_air = True
                     self._maybe_cross(actor, group)
                 return
+        # 1.33 (Игорь): перебил в эфире — если реплик interrupt нет, отвечают обычным «принял», а не тишиной
+        if kind == "interrupt" and not reaction_pool("player", "interrupt"):
+            kind = "ack"
+        if group == "intent" and kind == "knows":
+            return self._knows_answer(who, prefer)
+        if group == "intent" and kind == "calm_down":
+            return self._calm_down_answer(who, prefer)
+        if group == "intent" and kind == "sorry":
+            return self._sorry_answer(who, prefer)
         if group == "intent" and kind in ("police", "road") and reaction_pool("intent", kind + "_unknown"):
             kind += "_unknown"       # nobody near could have seen it: an honest «не видел, я в ту же сторону»
         if not who and kind != "interrupt" and random.random() > 0.6:
@@ -1605,6 +1771,32 @@ class Operator:
                 if ev:
                     log(f"  {who}: дружбы мало для личного — отвечает уклончиво")
                     pool = ev
+        # 1.33 холодный старт: незнакомец (lv0) на первой встрече отвечает на вопрос встречным
+        # вопросом «а ты кто?» — вместо готового ответа
+        if question and BONDS and who and random.random() < 0.5:
+            w = getattr(self, "world", None)
+            met_n = (w.met.get(who, {}) if w else {}).get("count", 0)
+            if BONDS.level(who) == 0 and not met_n and reaction_pool("who_asks", who):
+                pick = self.deck.choose(reaction_pool("who_asks", who))
+                if pick:
+                    log(f"  {who}: незнакомец — спрашивает, кто спрашивает")
+                    if PLAYER.file(pick[1], pick[0]) == "ok":
+                        self.deck.on_air.add(pick[0])
+                        self.on_air = True
+                    return
+        # 1.33 слышимое настроение: «как дела» иногда честно отражает реальное настроение
+        if group == "intent" and kind == "how_are_you" and BONDS and random.random() < 0.35:
+            acts = [a for a, _ in pool]
+            if acts:
+                a = who if who in acts else (prefer if prefer in acts else random.choice(acts))
+                mk = line_of("mood_mark", BONDS.mood(a), a)
+                if mk:
+                    log(f"ответ: как дела — честно, настроение {BONDS.mood(a)} ({a})")
+                    if PLAYER.file(mk[1], a) == "ok":
+                        self.deck.on_air.add(a)
+                        self.on_air = True
+                        bond_add(a, 1, "how_are_you")
+                        return
         if who and who not in {a for a, _ in pool}:
             # called by name but he has no line on this topic: "не знаю, не слышал" (a question),
             # "принял" / hello otherwise; whatever he has
@@ -1694,11 +1886,29 @@ class Operator:
                 # 2026-11-06 (user, after Kirill's log): an insulted driver answers back once and then leaves
                 # the air for ~10 minutes - he is still on the road nearby, he just doesn't talk to you.
                 # Friendship & mood: a grumpy one sulks longer, a cheerful one / a friend gets over it sooner.
+                # 2026-11-09 (инцидент: Профессор обиделся на мусор STT): «мягкая грубость» — если в
+                # распознанной фразе нет твёрдых маркеров оскорбления (могло распознаться с искажением),
+                # штраф мягче и из эфира не уходит: сомнительное срабатывание не роняет дружбу на -25.
+                said = getattr(self, "heard_text", "").lower()
+                hard = any(w in said for w in ("иди", "пошел", "пошёл", "пошла", "нах", "бля", "жоп",
+                                               "заткнись", "отвали", "отстань", "дурак", "дура", "дебил",
+                                               "идиот", "козел", "козёл", "урод", "тупой", "тупая",
+                                               "мудак", "чмо", "лох", "придур", "задолбал", "хрен тебе"))
+                fresh_up = any(q[2] == actor for q in BOND_UP)   # 1.33 (Игорь): апгрейд и обида не в одну секунду
+                if (kind == "rude" and not hard) or fresh_up:
+                    log(f"  грубость без твёрдых маркеров в распознанном тексте — мягкий режим"
+                        if kind == "rude" and not hard else
+                        f"  {actor} только что стал ближе — обида смягчена")
+                    bond_add(actor, -5, "грубость (мягкая)")
+                    mood_nudge(actor, -1, "грубость (мягкая)")
+                    LAST_OFFENDED[actor] = time.monotonic()
+                    return
                 sulk = random.uniform(540, 720) * (0.6 if kind == "mock" else 1.0)   # humiliation: shorter sulk
                 if BONDS:
                     sulk = BONDS.sulk_s(actor, sulk)
                 self.deck.off_until[actor] = time.monotonic() + sulk
                 self.deck.on_air.discard(actor)
+                LAST_OFFENDED[actor] = time.monotonic()
                 log(f"  {actor} обиделся — молчит {sulk / 60:.0f} мин")
                 bond_add(actor, -25 if kind == "rude" else -15, "грубость" if kind == "rude" else "унижение")
                 mood_nudge(actor, -2 if kind == "rude" else -1, "грубость" if kind == "rude" else "унижение")
@@ -2715,6 +2925,12 @@ def main(argv):
                                 kind = "delivery_big" if big else ("delivery_many" if len(deliv_pending) > 1 else "delivery")
                                 if reaction_pool("buh", kind):
                                     buh_q.append((time.monotonic() + random.uniform(60, 180), kind))
+                                    # 1.33 (Игорь): одинаковые голосовые подряд не копятся — дедуп по kind
+                                    seen_k, ded = set(), []
+                                    for q in sorted(buh_q, key=lambda q: q[0]):
+                                        if q[1] not in seen_k:
+                                            seen_k.add(q[1]); ded.append(q)
+                                    buh_q[:] = ded
                                     buh_q.sort(key=lambda q: q[0])
                                 log(f"доставки твоих водителей: {len(deliv_pending)} -> бухгалтерия: {kind}")
                                 deliv_pending, last_deliv = [], time.monotonic()
@@ -2762,6 +2978,36 @@ def main(argv):
                                 wk = weather_kind(game, world)
                                 if line_of("weather", wk, k):
                                     wq.append(("weather", wk, k, now_))
+                            # 1.33 холодный старт: незнакомец выходит в эфир как незнакомец —
+                            # first_air вместо личного приветствия (lv0, первая встреча)
+                            if (BONDS and BONDS.level(k) == 0 and not world.met.get(k, {}).get("count")
+                                    and reaction_pool("first_air", k)):
+                                pick = line_of("first_air", k)
+                                if pick:
+                                    log(f"эфир: {k} — first_air (холодный старт)")
+                                    PLAYER.file(pick[1], k)
+                                    deck.on_air.add(k)
+                                    next_at = max(next_at, driving_s + random.uniform(15, 30))
+                                    continue
+                            # 1.33 Исландия (DLC 10.11): первые недели — реакции на новое DLC,
+                            # раз за сессию на водителя (окно до 2026-12-08, потом выключить вручную)
+                            if (time.time() < 1765152000 and k not in DLC_PLAYED
+                                    and random.random() < 0.3 and line_of("world", "dlc_iceland", k)):
+                                DLC_PLAYED.add(k)
+                                wq.append(("world", "dlc_iceland", k, now_))
+                            # 1.33 арка Витьки: ступени свадьбы по встречам, не чаще одной за сессию
+                            if k == "vitek" and reaction_pool("quest", "vityok_wedding"):
+                                st_q = quest_state().get("vityok_wedding", 0)
+                                if st_q < 8:
+                                    quest_save({"vityok_wedding": st_q + 1})
+                                    if st_q + 1 >= 8:
+                                        VITYOK_WEDDING_DONE[0] = True
+                                        log("арка Витьки закрыта: свадьба состоялась, паничные реплики уходят из эфира")
+                                    wq.append(("quest", "vityok_wedding", k, now_, st_q))
+                                elif (VITYOK_WEDDING_DONE[0] and BONDS and BONDS.mood(k) == "calm"
+                                      and random.random() < 0.3 and line_of("calm_vityok", "calm")):
+                                    # после свадьбы спокойный Витёк выходит в эфир чаще
+                                    wq.append(("calm_vityok", "calm", k, now_))
                         for k in world.left:
                             log(f"ушёл из зоны: {k}")
                             deck.on_air.discard(k)          # next time he comes he says hello again
@@ -2787,6 +3033,11 @@ def main(argv):
                             if fines_day[day] >= 3 and random.random() < 0.7:
                                 kind = "escalation"
                             buh_q.append((time.monotonic() + random.uniform(40, 150), kind))
+                            seen_k, ded = set(), []
+                            for q in sorted(buh_q, key=lambda q: q[0]):
+                                if q[1] not in seen_k:
+                                    seen_k.add(q[1]); ded.append(q)
+                            buh_q[:] = ded
                     w_acc = 0.0
                 if time.monotonic() - w_saved > 60:
                     world.save()
@@ -2836,6 +3087,31 @@ def main(argv):
                         deck.on_air.add(a_)
                         next_at = max(next_at, driving_s + random.uniform(15, 30))
                     continue
+            # 1.33 маркеры настроения вслух: смена настроения слышна (reactions/mood_mark/<mood>)
+            if MARK_Q and st in ("driving", "engine_off") and not op.pending:
+                a_, mood_ = MARK_Q.pop(0)
+                mk = line_of("mood_mark", mood_, a_) if BONDS else None
+                if mk and (world is None or a_ in world.inside):
+                    log(f"эфир: маркер настроения {mood_} ({a_})")
+                    PLAYER.file(mk[1], a_)
+                    deck.on_air.add(a_)
+                    next_at = max(next_at, driving_s + random.uniform(12, 25))
+                    continue
+            # 1.33 мемы: редкая болтовня (низкий эффективный вес 0.3–0.4, заменяемый пул)
+            if (random.random() < 0.05 and st == "driving" and not op.pending
+                    and world and world.inside):
+                mk = None
+                for _ in range(3):
+                    a_ = random.choice(sorted(world.inside))
+                    mk = line_of("memes", a_)
+                    if mk:
+                        break
+                if mk:
+                    log(f"эфир: мем ({mk[0]})")
+                    PLAYER.file(mk[1], mk[0])
+                    deck.on_air.add(mk[0])
+                    next_at = max(next_at, driving_s + random.uniform(20, 40))
+                    continue
             if buh_q and st in ("driving", "engine_off") and not op.pending and time.monotonic() >= buh_q[0][0]:
                 _, kind = buh_q.pop(0)
                 pool = reaction_pool("buh", kind) or reaction_pool("buh", "generic")
@@ -2873,11 +3149,18 @@ def main(argv):
             if wq:
                 now_ = time.monotonic()
                 wq = [q for q in wq if now_ - q[3] < 180 and world and q[2] in world.inside]
-                ready = next((q for q in wq if q[1] in ("meet_again", "teleport") or q[2] in deck.on_air), None)
+                ready = next((q for q in wq if q[1] in ("meet_again", "teleport", "vityok_wedding", "dlc_iceland",
+                                                       "calm_vityok") or q[2] in deck.on_air), None)
                 if ready and driving_s > 4:
                     wq.remove(ready)
-                    g_, k_, a_, _ = ready
-                    pick = line_of(g_, k_, a_)
+                    g_, k_, a_, _ = ready[:4]
+                    if g_ == "quest":
+                        # свадебная арка: ступени строго по порядку (5-й элемент — индекс ступени)
+                        pool = reaction_pool("quest", k_)
+                        idx = min(ready[4] if len(ready) > 4 else 0, len(pool) - 1)
+                        pick = pool[idx] if pool else None
+                    else:
+                        pick = line_of(g_, k_, a_)
                     if pick:
                         log(f"эфир: {g_}/{k_} ({a_})")
                         PLAYER.file(pick[1], a_)

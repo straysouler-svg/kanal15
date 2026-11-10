@@ -114,20 +114,29 @@ def main(argv):
                          render(dry(mp3), actors[ln["actor"]], ln.get("far", False), seed(sid, i), use_cab, ln.get("cab")), g.SR)
                 n += 1
     # reactions
+    def render_reactions(group, kind, lines):
+        nonlocal n
+        for i, ln in enumerate(lines, 1):
+            mp3 = src(A / "reactions" / group / kind / f"{i:02d}", actors[ln["actor"]])
+            if mp3:
+                sf.write(A / "reactions" / group / kind / f"{i:02d}.wav",
+                         render(dry(mp3), actors[ln["actor"]], ln.get("far", False), seed(group, kind, i), use_cab,
+                                ln.get("cab")),
+                         g.SR)
+                n += 1
+
     for group, kinds in data.get("reactions", {}).items():
         if group.startswith("_"):
             continue
         for kind, lines in kinds.items():
             if kind.startswith("_"):
                 continue
-            for i, ln in enumerate(lines, 1):
-                mp3 = src(A / "reactions" / group / kind / f"{i:02d}", actors[ln["actor"]])
-                if mp3:
-                    sf.write(A / "reactions" / group / kind / f"{i:02d}.wav",
-                             render(dry(mp3), actors[ln["actor"]], ln.get("far", False), seed(group, kind, i), use_cab,
-                                    ln.get("cab")),
-                             g.SR)
-                    n += 1
+            if isinstance(lines, dict):
+                # вложенные пулы (knows: <actor> -> <target> -> [lines]) -> плоские <actor>__<target>
+                for sub, sublines in lines.items():
+                    render_reactions(group, f"{kind}__{sub}", sublines)
+            else:
+                render_reactions(group, kind, lines)
     # kerchunks: somebody keys up in his cab and says nothing
     rng = np.random.default_rng(2026)
     keys = list(actors)

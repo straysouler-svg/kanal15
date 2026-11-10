@@ -1,0 +1,63 @@
+{
+ "input": "../../../build/shorts_probe/clips/s5.mp4",
+ "output": "shorts_vityok_ne_otvechaet.mp4",
+ "hook": [
+  "ВИТЁК?",
+  "КАКОЙ ВИТЁК?"
+ ],
+ "speakers": {
+  "player": {
+   "name": "ТЫ",
+   "color": "cream"
+  },
+  "student": {
+   "name": "СТУДЕНТ",
+   "color": "sage"
+  },
+  "kanal": {
+   "name": "КАНАЛ 15",
+   "color": "amber"
+  }
+ },
+ "cues": [
+  {
+   "start": 4.0,
+   "end": 9.0,
+   "speaker": "player",
+   "lines": [
+    "Это не микрофон был,",
+    "сорян. Привет, Студент."
+   ]
+  },
+  {
+   "start": 9.5,
+   "end": 14.5,
+   "speaker": "student",
+   "lines": [
+    "Привет, Железяка!",
+    "Ты на связи, ура!"
+   ]
+  },
+  {
+   "start": 18.0,
+   "end": 22.0,
+   "speaker": "player",
+   "lines": [
+    "Да тут же Витёк был,",
+    "Вить, привет."
+   ]
+  },
+  {
+   "start": 24.5,
+   "end": 28.5,
+   "speaker": "kanal",
+   "lines": [
+    "Витёка нет в зоне рации."
+   ]
+  }
+ ],
+ "shades": {
+  "top": 0.45,
+  "bottom": 0.65
+ }
+}

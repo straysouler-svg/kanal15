@@ -70,6 +70,25 @@ _xtts = {}
 _whisper = []
 _or_spent = [0.0]          # OpenRouter $ spent in this run (OR_BUDGET env = stop limit, default 1.0)
 
+import re as _re_mod  # noqa: E402
+
+XTTS_STRESS_RX = None
+
+
+def xtts_fix_stress(text):
+    """Фонетическая подмена коварных ударений (XTTS-клон): 'километр' -> 'киломеетр'. Только для синтеза."""
+    global XTTS_STRESS_RX
+    if XTTS_STRESS_RX is None:
+        XTTS_STRESS_RX = _re_mod.compile("|".join(XTTS_STRESS), _re_mod.IGNORECASE)
+    return XTTS_STRESS_RX.sub(lambda m: XTTS_STRESS[m.group(0).lower()], text)
+
+
+XTTS_STRESS = {          # коварные слова для клона (ударение удвоением гласной), только синтез
+    "километр": "киломеетр", "километра": "киломеетра", "километров": "киломеетров",
+    "красивые": "красиивые", "красивый": "красиивый", "красивее": "красиивее",
+    "договор": "договоор", "торты": "тоорты", "категор": "категоор",
+}
+
 
 def _heard_ratio(x, text):
     """How well Whisper hears the intended text in x (0..1) - catches XTTS mumbling/skips."""
@@ -146,6 +165,9 @@ def voice(a, text, rec=None):
         return mp3, x, len(text)
     import clone_xtts as cx
     v = a["voice"]
+    # 1.33: коварные ударения у XTTS-клона (Сорока) — фонетическая подмена ТОЛЬКО в тексте для синтеза,
+    # отображаемые тексты не трогаем (приём проекта «железяака» — удвоение ударной гласной).
+    text = xtts_fix_stress(text)
     if v not in _xtts:
         _xtts[v] = cx.load_model(ROOT / "voices" / v)
     best = (-1.0, None)

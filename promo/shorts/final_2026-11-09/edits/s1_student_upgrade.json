@@ -1,0 +1,70 @@
+{
+ "input": "../../../build/shorts_probe/clips/s1.mp4",
+ "output": "shorts_student_upgrade.mp4",
+ "hook": [
+  "ОН СОВРАЛ МАМЕ",
+  "РАЦИЯ ЗАМЕТИЛА"
+ ],
+ "speakers": {
+  "player": {
+   "name": "ТЫ",
+   "color": "cream"
+  },
+  "student": {
+   "name": "СТУДЕНТ",
+   "color": "sage"
+  },
+  "kanal": {
+   "name": "КАНАЛ 15",
+   "color": "amber"
+  }
+ },
+ "cues": [
+  {
+   "start": 2.0,
+   "end": 5.2,
+   "speaker": "player",
+   "lines": [
+    "Студент, куда едешь?"
+   ]
+  },
+  {
+   "start": 6.5,
+   "end": 11.5,
+   "speaker": "student",
+   "lines": [
+    "В П-познань… далеко?",
+    "Мама думает,"
+   ]
+  },
+  {
+   "start": 9.2,
+   "end": 12.0,
+   "speaker": "student",
+   "lines": [
+    "я в соседнем городе."
+   ]
+  },
+  {
+   "start": 12.4,
+   "end": 15.2,
+   "speaker": "kanal",
+   "lines": [
+    "Теперь вы приятели ♥♥"
+   ],
+   "highlight": "приятели"
+  },
+  {
+   "start": 17.0,
+   "end": 20.5,
+   "speaker": "player",
+   "lines": [
+    "Нельзя так маме врать."
+   ]
+  }
+ ],
+ "shades": {
+  "top": 0.45,
+  "bottom": 0.65
+ }
+}

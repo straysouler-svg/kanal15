@@ -1,0 +1,59 @@
+{
+ "input": "../../../build/shorts_probe/clips/s3.mp4",
+ "output": "shorts_francuz_v_efire.mp4",
+ "hook": [
+  "НИ СЛОВА",
+  "НЕ ПОНЯЛ"
+ ],
+ "speakers": {
+  "player": {
+   "name": "ТЫ",
+   "color": "cream"
+  },
+  "efir": {
+   "name": "ЭФИР",
+   "color": "amber"
+  }
+ },
+ "cues": [
+  {
+   "start": 9.0,
+   "end": 11.5,
+   "speaker": "player",
+   "lines": [
+    "Раули."
+   ]
+  },
+  {
+   "start": 12.5,
+   "end": 17.0,
+   "speaker": "efir",
+   "lines": [
+    "Ничего не понял, брат,",
+    "но хорошей дороги!"
+   ],
+   "highlight": "хорошей дороги"
+  },
+  {
+   "start": 29.0,
+   "end": 32.0,
+   "speaker": "player",
+   "lines": [
+    "Классан, Сильву Плея."
+   ]
+  },
+  {
+   "start": 33.0,
+   "end": 36.0,
+   "speaker": "efir",
+   "lines": [
+    "Ничего не понял, брат,",
+    "но хорошей дороги!"
+   ]
+  }
+ ],
+ "shades": {
+  "top": 0.45,
+  "bottom": 0.65
+ }
+}

@@ -52,6 +52,14 @@ for g, ks in d["reactions"].items():
     for kk, ls in ks.items():
         if kk.startswith("_"):
             continue
+        if isinstance(ls, dict):
+            # вложенные пулы (knows: <actor> -> <target>) -> плоские <actor>__<target>
+            for sub, subls in ls.items():
+                pool = c.reaction_pool(g, f"{kk}__{sub}")
+                lines += len(pool)
+                if len(pool) != len(subls):
+                    problems.append(f"reactions {g}/{kk}__{sub}: файлов {len(pool)}, строк {len(subls)}")
+            continue
         pool = c.reaction_pool(g, kk)
         lines += len(pool)
         if len(pool) != len(ls):

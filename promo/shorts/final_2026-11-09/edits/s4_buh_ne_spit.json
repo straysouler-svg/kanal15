@@ -1,0 +1,64 @@
+{
+ "input": "../../../build/shorts_probe/clips/s4.mp4",
+ "output": "shorts_buhgalteriya_ne_spit.mp4",
+ "hook": [
+  "СПОКОЙНОЙ НОЧИ.",
+  "БУХГАЛТЕРИЯ"
+ ],
+ "speakers": {
+  "player": {
+   "name": "ТЫ",
+   "color": "cream"
+  },
+  "soroka": {
+   "name": "СОРОКА",
+   "color": "sage"
+  },
+  "buh": {
+   "name": "БУХГАЛТЕРИЯ",
+   "color": "amber"
+  }
+ },
+ "cues": [
+  {
+   "start": 2.0,
+   "end": 5.5,
+   "speaker": "player",
+   "lines": [
+    "Встаю на стоянку,",
+    "всем спокойной ночи."
+   ]
+  },
+  {
+   "start": 6.0,
+   "end": 10.5,
+   "speaker": "soroka",
+   "lines": [
+    "Пока, Железяка!",
+    "Береги себя, хорошо?"
+   ]
+  },
+  {
+   "start": 11.0,
+   "end": 14.0,
+   "speaker": "buh",
+   "lines": [
+    "Шеф! Опять штраф!",
+    "За один день!"
+   ]
+  },
+  {
+   "start": 14.2,
+   "end": 16.3,
+   "speaker": "buh",
+   "lines": [
+    "Всё. Я закрываю кассу.",
+    "Дальше ездите на свои."
+   ]
+  }
+ ],
+ "shades": {
+  "top": 0.45,
+  "bottom": 0.65
+ }
+}
