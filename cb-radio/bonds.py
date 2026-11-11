@@ -41,6 +41,28 @@ MOODS = {
 }
 OPPOSITE = {"cheerful": {"tired", "grumpy"}, "grumpy": {"cheerful"}, "tired": {"cheerful"}, "calm": set()}
 _TAG = re.compile(r"\[([^\]]+)\]")
+# 2026-11-10 mood2: русские ремарки gpt-audio / XTTS «(смеётся)», «(вздыхает)» — по началу слова.
+# Раньше читались только английские теги, и у десяти водителей 77–93 % реплик были «без настроения».
+_REMARK = re.compile(r"\(([а-яё][а-яё ,\-]{2,30})\)", re.I)
+RU_STEMS = {
+    "cheerful": ("смеётся", "смеется", "смеясь", "усмеха", "хихик", "радост", "весел", "восторж", "гордо", "хохо"),
+    "calm": ("тихо", "тепло", "мягк", "заботлив", "спокойн", "ласков", "задумч", "нежно"),
+    "tired": ("вздыха", "устал", "зева", "сонн", "грустн", "печальн"),
+    "grumpy": ("сухо", "ворч", "сердит", "раздраж", "строго", "хмур", "возмущ", "недоволь", "бурч"),
+}
+RU_SKIP = ("нервн",)          # «нервно смеётся» — не веселье
+
+# Темперамент: доли дневного настроения (в духе, спокоен, устал, хмурый). Раньше у всех было 30/35/20/15.
+# Можно переопределить в phrases-файле: actors.<key>.temper = [0.3, 0.35, 0.2, 0.15].
+TEMPER_DEFAULT = (0.30, 0.35, 0.20, 0.15)
+TEMPER = {
+    "mihalych": (0.20, 0.45, 0.15, 0.20), "stas": (0.50, 0.20, 0.20, 0.10), "yanek": (0.10, 0.70, 0.12, 0.08),
+    "lastochka": (0.35, 0.30, 0.15, 0.20), "boroda": (0.45, 0.10, 0.10, 0.35), "soroka": (0.50, 0.40, 0.10, 0.00),
+    "student": (0.40, 0.25, 0.30, 0.05), "professor": (0.25, 0.50, 0.15, 0.10), "petrovna": (0.35, 0.45, 0.15, 0.05),
+    "ten": (0.05, 0.50, 0.35, 0.10), "vitek": (0.40, 0.15, 0.20, 0.25), "sova": (0.15, 0.60, 0.20, 0.05),
+    "ment": (0.20, 0.40, 0.20, 0.20), "kardan": (0.50, 0.20, 0.15, 0.15), "lisa": (0.35, 0.40, 0.10, 0.15),
+    "rustam": (0.35, 0.50, 0.10, 0.05), "bahti": (0.50, 0.25, 0.15, 0.10), "vera": (0.10, 0.55, 0.15, 0.20),
+}
 
 
 def level_of(points):
@@ -58,15 +80,32 @@ def tags_of(text):
     return out
 
 
+def remarks_of(text):
+    """Russian stage remarks in round brackets: «(смеётся)», «(тихо, тепло)» -> ["смеётся", "тихо", "тепло"]."""
+    out = []
+    for t in _REMARK.findall(text or ""):
+        t = t.lower()
+        if any(s in t for s in RU_SKIP):
+            continue
+        out.extend(w for w in re.split(r"[\s,]+", t) if w)
+    return out
+
+
 def line_mood(text):
-    """Which mood a recorded line sounds like (by its emotion tags), or None."""
+    """Which mood a recorded line sounds like (by its emotion tags and Russian remarks), or None.
+    A tie between two moods is no mood at all (it used to fall to the first one, «в духе»)."""
     tg = tags_of(text)
-    best, n = None, 0
+    ru = remarks_of(text)
+    score = {}
     for m, d in MOODS.items():
-        k = len(tg & d["tags"])
-        if k > n:
-            best, n = m, k
-    return best
+        k = len(tg & d["tags"]) + sum(1 for w in ru if w.startswith(RU_STEMS[m]))
+        if k:
+            score[m] = k
+    if not score:
+        return None
+    top = max(score.values())
+    best = [m for m, k in score.items() if k == top]
+    return best[0] if len(best) == 1 else None
 
 
 class Bonds:
@@ -81,6 +120,10 @@ class Bonds:
         self.text = {}          # rel ("reactions/player/greet/05", "<actor>/03", "scenes/x/02") -> text with tags
         self.name_lines = set()  # rels that call the player by name (have a v_neutral version)
         self.lv = {}             # rel -> минимальный уровень дружбы ("lv" в phrases-файле, личные реплики)
+        self.line_moods = {}     # rel -> настроение реплики, заданное явно полем "mood" (сильнее тегов)
+        self.sched = {}          # actor -> (начало, конец смены в игровых часах) из actors.<key>.schedule
+        self.temper = dict(TEMPER)
+        self.hour = None         # игровой час (set_world)
         if phrases_json:
             self._load_texts(phrases_json)
         self.day = None          # game day number (from world)
@@ -102,6 +145,8 @@ class Bonds:
         def mark(rel, ln):
             if not isinstance(ln, dict):
                 return
+            if ln.get("mood") in MOODS:
+                self.line_moods[rel] = ln["mood"]
             lo = hi = None
             try:
                 if "lv" in ln:
@@ -116,6 +161,17 @@ class Bonds:
             if lo is not None or hi is not None:
                 self.lv[rel] = (lo, hi)        # (минимальный уровень, максимальный или None)
         for k, a in d.get("actors", {}).items():
+            try:
+                s0, s1 = (float(v) for v in str(a.get("schedule", "")).split("-"))
+                self.sched[k] = (s0 % 24, s1 % 24)
+            except (TypeError, ValueError):
+                pass                           # "any" / нет расписания: остаётся старое правило «ночью устают»
+            try:
+                t = [max(0.0, float(v)) for v in a["temper"]]
+                if len(t) == 4 and sum(t) > 0:
+                    self.temper[k] = tuple(v / sum(t) for v in t)
+            except (KeyError, TypeError, ValueError):
+                pass
             for i, ph in enumerate(a.get("phrases", []), 1):
                 rel = f"{k}/{i:02d}"
                 self.text[rel] = txt(ph)
@@ -235,6 +291,7 @@ class Bonds:
                         r["p"] -= 1                    # сутки без разговора с ним: −1, не ниже 0
                 self.save()
             self.day = day
+            self.hour = (game_minute % 1440) / 60.0
         self.night, self.rain = bool(night), bool(rain)
 
     # 2026-11-06 (user): mood can be raised and lowered. Steps: grumpy < tired < calm < cheerful.
@@ -279,18 +336,30 @@ class Bonds:
             return None
         h = int(hashlib.md5(f"{actor}|{self.day}".encode()).hexdigest(), 16)
         r = (h % 1000) / 1000.0
-        base = "cheerful" if r < 0.3 else "calm" if r < 0.65 else "tired" if r < 0.85 else "grumpy"
+        ch, ca, ti, gr = getattr(self, "temper", TEMPER).get(actor, TEMPER_DEFAULT)
+        base = "cheerful" if r < ch else "calm" if r < ch + ca else "tired" if r < ch + ca + ti else "grumpy"
         r2 = ((h // 1000) % 1000) / 1000.0
-        if self.night and base in ("cheerful", "calm") and r2 < 0.4:
+        if self._late(actor) and base in ("cheerful", "calm") and r2 < 0.4:
             base = "tired"
-        if self.rain and base == "calm" and r2 > 0.7:
+        if self.rain and base == "calm" and r2 > 0.7 and gr > 0:   # кто хмурым не бывает — и в дождь не хмурится
             base = "grumpy"
         return base
+
+    def _late(self, actor):
+        """Tired time: the last third of the driver's OWN shift (for the night shift the night is a working day).
+        No schedule known -> the old rule: at night."""
+        sc = getattr(self, "sched", {}).get(actor)
+        hour = getattr(self, "hour", None)
+        if not sc or hour is None:
+            return self.night
+        length = (sc[1] - sc[0]) % 24 or 24
+        return (hour - sc[0]) % 24 >= length * 2 / 3
 
     def weight(self, actor, rel):
         """How much the actor's mood favours this recorded line: 3 = fits, 0.4 = the opposite, 1 = neutral."""
         m = self.mood(actor)
-        lm = line_mood(self.text.get(self.key(rel), ""))
+        k = self.key(rel)
+        lm = getattr(self, "line_moods", {}).get(k) or line_mood(self.text.get(k, ""))
         if not m or not lm:
             return 1.0
         if lm == m:

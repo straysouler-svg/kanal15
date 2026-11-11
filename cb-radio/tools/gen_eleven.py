@@ -4,7 +4,7 @@
   gen_eleven.py level3 [actor]    voice CHANGED phrases of level3_eleven.json -> audio/level3/<actor>/NN.wav
   gen_eleven.py force [actor]     re-voice everything (spends credits)
   gen_eleven.py seed [actor]      mark current texts as voiced (no API calls)
-Key: elevenlabs_key.txt (one line). Network is used only here, never in cb_radio.py.
+Key: elevenlabs_key.txt (one line; запасные — elevenlabs_key2.txt и далее, сами подхватятся при исчерпании квоты). Network is used only here, never in cb_radio.py.
 """
 import io
 import json
@@ -19,11 +19,19 @@ import soundfile as sf
 from scipy.signal import resample_poly
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # исландские Í/ð в текстах не должны ронять прогон
+except Exception:
+    pass
 import gen_level3 as g  # noqa: E402  (radio FX, SR = 48000)
 import remix  # noqa: E402  (cab background + radio FX: remix.render)
 
 ROOT = g.ROOT
-KEY = (ROOT / "elevenlabs_key.txt").read_text(encoding="utf-8").strip()
+import re as _re_keys  # noqa: E402
+KEYS = [f.read_text(encoding="utf-8").strip()
+        for f in sorted(ROOT.glob("elevenlabs_key*.txt"), key=lambda p: p.name)
+        if _re_keys.fullmatch(r"elevenlabs_key\d*\.txt", f.name)]  # .old.txt и прочие копии — не ключи
+KEY = KEYS[0]  # основной; при исчерпании квоты tts() переключается на следующие
 API = "https://api.elevenlabs.io/v1/text-to-speech/{vid}?output_format=mp3_44100_128"
 
 # Free tier: only premade voices work via API (library voices -> 402 paid_plan_required).
@@ -43,10 +51,14 @@ AUDITION = {
 
 
 def tts(vid, text, model="eleven_v3", stability=0.5):
+    global KEY
     body = json.dumps({"text": text, "model_id": model,
                        "voice_settings": {"stability": stability, "similarity_boost": 0.75}}).encode("utf-8")
-    req = urllib.request.Request(API.format(vid=vid), data=body, method="POST",
-                                 headers={"xi-api-key": KEY, "Content-Type": "application/json"})
+
+    def make_req(key):
+        return urllib.request.Request(API.format(vid=vid), data=body, method="POST",
+                                      headers={"xi-api-key": key, "Content-Type": "application/json"})
+    req = make_req(KEY)
     for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=180) as r:
@@ -54,6 +66,11 @@ def tts(vid, text, model="eleven_v3", stability=0.5):
             break
         except urllib.error.HTTPError as e:
             msg = e.read().decode("utf-8", "replace")
+            if "quota_exceeded" in msg and KEYS.index(KEY) + 1 < len(KEYS):
+                KEY = KEYS[KEYS.index(KEY) + 1]   # квота кончилась — следующий ключ
+                print(f"   квота ключа исчерпана, переключаюсь на ключ {KEYS.index(KEY) + 1}")
+                req = make_req(KEY)
+                continue
             if e.code == 429 and attempt < 4:
                 time.sleep(5)
                 continue
@@ -63,7 +80,18 @@ def tts(vid, text, model="eleven_v3", stability=0.5):
                 time.sleep(5)
                 continue
             raise SystemExit(f"ElevenLabs сеть: {e}")
-    x, sr = sf.read(io.BytesIO(mp3), dtype="float32")
+    x = None
+    for attempt in range(5):
+        try:
+            x, sr = sf.read(io.BytesIO(mp3), dtype="float32")
+            break
+        except sf.LibsndfileError:           # через VPN иногда приходит мусор вместо mp3 при HTTP 200
+            if attempt < 4:
+                time.sleep(5)
+                with urllib.request.urlopen(req, timeout=180) as r:
+                    mp3 = r.read()
+                continue
+            raise SystemExit(f"ElevenLabs: ответ не mp3 после 5 попыток ({len(mp3)} байт, начало: {mp3[:80]!r})")
     if x.ndim > 1:
         x = x.mean(axis=1)
     if sr != g.SR:
@@ -205,6 +233,16 @@ AUDITION2 = {
     "boroda": "[aggressive] Мужики, на развязке полосатые с радаром! [laughs] А я сто десять валю, мне похер. Отбой.",
 }
 
+# Профессор: переезд с gpt-audio на ElevenLabs (стабильный голос, без разброса питча).
+CANDIDATES3 = {
+    "professor": {"Brian": "nPczCjzI2devNBz1zQrb", "Bill": "pqHfZKP75CvOlQylNhV4",
+                  "Roger": "CwhRBWXzGAHq8TQ4Fs17", "Callum": "N2lVS1w4EtoT3dr4eOWO"},
+}
+AUDITION3 = {
+    "professor": "[calm] Коллеги по эфиру, напомню: тормозной путь растёт квадратично от скорости. "
+                 "[pause] Это не я придумал, это физика. [chuckles softly] Профессор, отбой.",
+}
+
 
 def audition(cands=None, texts=None, out_name="eleven"):
     cands, texts = cands or CANDIDATES, texts or AUDITION
@@ -314,6 +352,13 @@ def reactions(data, force=False):
         for kind, lines in kinds.items():
             if kind.startswith("_"):
                 continue
+            if isinstance(lines, dict):      # вложенные пулы (knows/<actor> -> <target>) -> плоские <actor>__<target>
+                for target, sublines in lines.items():
+                    flat = f"{kind}__{target}"
+                    d = root / group / flat
+                    used += voice_lines(d, sublines, data, force, f"{group}/{flat}")
+                    (d / "index.json").write_text(json.dumps({"actors": [ln["actor"] for ln in sublines]}), encoding="utf-8")
+                continue
             d = root / group / kind
             used += voice_lines(d, lines, data, force, f"{group}/{kind}")
             (d / "index.json").write_text(json.dumps({"actors": [ln["actor"] for ln in lines]}), encoding="utf-8")
@@ -344,6 +389,8 @@ if __name__ == "__main__":
         audition()
     elif cmd == "audition2":
         audition(CANDIDATES2, AUDITION2, "eleven2")
+    elif cmd == "audition3":
+        audition(CANDIDATES3, AUDITION3, "eleven3")
     elif cmd in ("level3", "force", "seed"):
         args = [x for x in sys.argv[2:]]
         level3(args[0] if args else None, force=cmd == "force", seed=cmd == "seed")

@@ -2,6 +2,7 @@
 No API calls, no credits.
 
   remix.py              everything (singles, scenes, reactions, kerchunks)
+  remix.py boroda ...   only lines of the given actor(s)
   remix.py --backup     first copy the current wavs to audio/_backup_<time>
   remix.py --nocab      render without the cab background (old sound)
 """
@@ -82,6 +83,7 @@ def seed(*parts):
 
 def main(argv):
     use_cab = "--nocab" not in argv
+    only = {x for x in argv if not x.startswith("--")} or None
     data = json.loads((ROOT / "phrases" / "level3_eleven.json").read_text(encoding="utf-8"))
     actors = data["actors"]
     if "--backup" in argv:
@@ -95,6 +97,8 @@ def main(argv):
     n = 0
     # singles (dropped ones are kept in level3_clean as NN_dropped.wav)
     for key, a in actors.items():
+        if only and key not in only:
+            continue
         drop = set(a.get("drop", []))
         for i in range(1, len(a["phrases"]) + 1):
             mp3 = src(A / "level3_clean" / key / f"{i:02d}", a)
@@ -108,6 +112,8 @@ def main(argv):
     # scenes
     for sid, lines in data.get("scenes", {}).items():
         for i, ln in enumerate(lines, 1):
+            if only and ln["actor"] not in only:
+                continue
             mp3 = src(A / "scenes" / sid / f"{i:02d}", actors[ln["actor"]])
             if mp3:
                 sf.write(A / "scenes" / sid / f"{i:02d}.wav",
@@ -117,6 +123,8 @@ def main(argv):
     def render_reactions(group, kind, lines):
         nonlocal n
         for i, ln in enumerate(lines, 1):
+            if only and ln["actor"] not in only:
+                continue
             mp3 = src(A / "reactions" / group / kind / f"{i:02d}", actors[ln["actor"]])
             if mp3:
                 sf.write(A / "reactions" / group / kind / f"{i:02d}.wav",
@@ -138,6 +146,9 @@ def main(argv):
             else:
                 render_reactions(group, kind, lines)
     # kerchunks: somebody keys up in his cab and says nothing
+    if only:
+        print(f"пересобрано файлов: {n} (только: {', '.join(sorted(only))})")
+        return
     rng = np.random.default_rng(2026)
     keys = list(actors)
     for i in range(1, 9):

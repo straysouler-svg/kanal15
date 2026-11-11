@@ -140,7 +140,7 @@ DEFAULT_CFG = {
 }
 
 
-def log(msg, ch=None):
+def log(msg, ch=None, tb=None):
     """Журнал рации (переделка 09.11, спека в STATUS.md): новые строки СВЕРХУ файла (запись
     порциями-буфером), схлопывание повторов ×N, префиксы-каналы [эфир]/[тангента]/[дружба]/[тех]/
     [ОШИБКА], тех. шум — только при --verbose, кап ~10 МБ (хвост — в cb_radio_archive.log),
@@ -162,7 +162,7 @@ def log(msg, ch=None):
     except (UnicodeEncodeError, OSError, ValueError, AttributeError):
         pass    # a cp1251 console can't print «→» (06.11: the radio died on start); the log file is what matters
     if ch == "ОШИБКА":
-        _append_file(ERR_FILE, line + "\n", ERR_CAP)
+        _err_write(line, tb or "")
     if _log_buf and _log_buf[-1][0] == line:
         _log_buf[-1][1] += 1
         return
@@ -196,6 +196,35 @@ def _append_file(path, chunk, cap):
         pass
 
 
+def _err_write(head, tb_text):
+    """cb_radio_errors.log (11.11): каждая запись с датой; стек — при первом появлении,
+    повторы той же ошибки — счётчиком «×N» в заголовке, трассировка один раз."""
+    now = datetime.now()
+    ent = _ERR_SEEN.get(head)
+    try:
+        old = ERR_FILE.read_text(encoding="utf-8", errors="replace") if ERR_FILE.exists() else ""
+        if ent is None:
+            hdr = f"{now:%Y-%m-%d} {head}"
+            _ERR_SEEN[head] = [1, hdr]
+            rec = hdr + "\n" + (tb_text.strip() + "\n" if tb_text.strip() else "") + "\n"
+            body = rec + old
+        else:
+            ent[0] += 1
+            new_hdr = f"{ent[1]}  ×{ent[0]}"
+            body = old.replace(ent[1] + "\n", new_hdr + "\n", 1)
+            if body == old:                      # заголовок не нашёлся (кап обрезал) — пишем заново
+                body = new_hdr + "\n" + old
+        enc = body.encode("utf-8")
+        if len(enc) > ERR_CAP:
+            body = enc[: ERR_CAP // 2].decode("utf-8", "ignore")
+        ERR_FILE.write_text(body, encoding="utf-8")
+    except OSError:
+        pass
+
+
+_ERR_SEEN = {}
+
+
 def _flush_log():
     """Записать накопленную порцию СВЕРХУ файла; при превышении капа — хвост в архив."""
     if not _log_buf:
@@ -223,14 +252,22 @@ def _flush_log():
 
 def _log_excepthook(exc_type, exc, tb):
     import traceback
-    _append_file(ERR_FILE, "".join(traceback.format_exception(exc_type, exc, tb)), ERR_CAP)
+    from datetime import datetime as _dt
+    _err_write(f"{_dt.now():%H:%M:%S} [ОШИБКА] {exc_type.__name__}: {exc}",
+               "".join(traceback.format_exception(exc_type, exc, tb)))
     sys.__excepthook__(exc_type, exc, tb)
 
 
 sys.excepthook = _log_excepthook
 try:
-    threading.excepthook = lambda a: _append_file(
-        ERR_FILE, "".join(__import__("traceback").format_exception(a.exc_type, a.exc_value, a.exc_tb)), ERR_CAP)
+    def _thread_excepthook(a):
+        import traceback
+        from datetime import datetime as _dt
+        _err_write(f"{_dt.now():%H:%M:%S} [ОШИБКА] поток {a.thread.name if a.thread else '?'}: "
+                   f"{a.exc_type.__name__}: {a.exc_value}",
+                   "".join(traceback.format_exception(a.exc_type, a.exc_value, a.exc_tb)))
+
+    threading.excepthook = _thread_excepthook
 except (AttributeError, OSError):
     pass
 import atexit  # noqa: E402
@@ -856,6 +893,9 @@ class Deck:
                 if not BONDS or p.startswith("scene/"):
                     return 0.0
                 w = BONDS.weight(actors_of(p)[0], p)
+                a = actors_of(p)[0]
+                if CARE_STAY.get(a, 0) > time.monotonic():
+                    w -= 0.5        # 3.1: после честного «устал» спросивший десять минут рядом — говорит раньше
                 return -0.4 if w > 1 else 0.4 if w < 1 else 0.0
             pick = min(cands, key=lambda p: ((self.spoken.get(actors_of(p)[0], 0)
                                               + (8 if time.monotonic() < QUIET_UNTIL.get(actors_of(p)[0], 0) else 0))
@@ -920,9 +960,46 @@ PERSONAL_KINDS = ("family", "salary", "health")     # на lv0–1 эфир ух
 BOND_UP = []          # (время озвучить, поставлено, актёр, новый уровень) — переходы дружбы вслух
 MARK_Q = []           # (actor, mood) — маркеры настроения вслух (смена настроения, 2026-11-09)
 QUIET_UNTIL = {}      # actor -> monotonic: «успокойся» (да) — 10–15 мин тише и реже (1.33)
+HUSH_UNTIL = [0.0]    # monotonic: «помолчим» — общая болтовня эфира молчит до этого момента (2026-11-10)
+HUSH_S = (480, 720)   # сколько длится тишина, секунд; любая реплика игрока в тангенту снимает её раньше
+HUSH_BACK = [None]    # (frozenset тех, кто был рядом, monotonic начала) — кто возвращается первым (1.2, 11.11)
+
+# ---------------- «передай» и «ты как, не спишь?» (тексты drafts_player_role_2026-11-10, утверждены 11.11)
+QUEST_FILE = ROOT / "quest_state.json"     # {"errand": {from,to,day}|null, "errand_asked_day": N, "care_day": N}
+ERRAND_PAIRS = {"yanek": "mihalych", "mihalych": "stas", "petrovna": "vitek", "rustam": "bahti",
+                "bahti": "rustam", "ten": "student", "lastochka": "boroda", "professor": "lastochka",
+                "kardan": "lisa", "lisa": "kardan", "vera": "ment", "sova": "ten"}   # только канон (2.1)
+QUEST_ST = {}                  # содержимое quest_state.json, грузится в main (quest_load)
+ERRAND_Q = []                  # (monotonic, from, "ask"/"late", to) — озвучка поручения
+CARE_Q = []                    # (monotonic, actor) — вопрос «ты как, не спишь?»
+CARE_WIN = [0.0, None]         # окно ответа: до monotonic, кто спросил
+CARE_STAY = {}                 # actor -> monotonic: после честного «устал» спросивший 10 минут рядом (вес выше)
+CARE_REST = [None]             # игровые минуты последнего отдыха (стоянка/выключенный двигатель)
+ERRAND_DAYS = 3                # срок поручения, игровых дней
+CARE_NIGHT_MIN = 180           # ночной непрерывный ход до вопроса, игровых минут (3 часа)
+
+
+def quest_st_load():
+    try:
+        return json.loads(QUEST_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def quest_st_save():
+    """Сливает наши ключи (errand/errand_asked_day/care_day) в quest_state.json, не трогая прогресс арок."""
+    try:
+        st = json.loads(QUEST_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        st = {}
+    st.update({k: v for k, v in QUEST_ST.items() if k in ("errand", "errand_asked_day", "care_day")})
+    try:
+        QUEST_FILE.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError as e:
+        log(f"не сохранил quest_state: {e!r}")
 LAST_OFFENDED = {}    # actor -> monotonic: кто обиделся — извинение маршрутизируется ему (1.33)
 DLC_PLAYED = set()    # арка Iceland: раз за сессию (окно до 2026-12-08)
-MEME_LAST = [0.0]     # последний мем в эфире; 0.05 за полусекундный тик давал мем каждые ~10 с (Кардана «заклинило», 2026-11-10)
+MEME_ACTOR = [None]     # 11.11: кто сказал последний мем — один актёр не говорит два мема подряд
 MEET_STAMP = {}       # actor -> monotonic последнего «опять пересеклись»; остров мал, маршруты петляют — Кардан входил 4 раза за 20 мин (2026-11-10)
 WTH_STAMP = {}        # (actor, weather_kind) -> monotonic; дождь дважды за 5 минут (2026-11-10)
 VITYOK_WEDDING_DONE = [False]   # арка Витьки закрыта → паничные singles спрятаны, тянет в calm
@@ -953,8 +1030,13 @@ def quest_state():
 
 
 def quest_save(st):
+    try:                                  # 11.11: сливаем с прочими ключами («передай», «не спишь?»), не затираем
+        old = json.loads(VITYOK_QUEST_STATE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        old = {}
+    old.update(st)
     try:
-        VITYOK_QUEST_STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+        VITYOK_QUEST_STATE.write_text(json.dumps(old, ensure_ascii=False, indent=1), encoding="utf-8")
     except OSError:
         pass
 
@@ -975,6 +1057,17 @@ def mood_pick(cands):
     if not BONDS or len(cands) < 2:
         return random.choice(cands)
     return random.choices(cands, weights=[BONDS.weight(a, _rel(f)) for a, f in cands])[0]
+
+
+def mood_name(actor):
+    """Русское название текущего настроения актёра — для строки эфира в логе (11.11)."""
+    if BONDS:
+        try:
+            import bonds as _b
+            return _b.MOODS[BONDS.mood(actor)]["name"]
+        except Exception:
+            pass
+    return "?"
 
 
 def mood_nudge(actor, d, why):
@@ -1417,6 +1510,8 @@ class Operator:
             group, kind = "intent", "name_call"           # обращение по имени-отчеству/фамилии (1.34)
         elif intent == "calm_down":
             group, kind = "intent", "calm_down"           # «успокойся» — да/нет по настроению, с последствием
+        elif intent == "hush":
+            group, kind = "intent", "hush"                # «помолчим» — один отвечает, эфир стихает
         elif intent == "sorry":
             group, kind = "intent", "sorry"               # извинение — обидевшемуся, не случайному адресату
         elif intent and intent.startswith("graf_") and reaction_pool("graf", intent[5:]):
@@ -1467,6 +1562,14 @@ class Operator:
             f"{' (вопрос)' if question else ''} => {group}/{kind or 'тишина'}"
             if heard else f"тангента{' (перебил)' if interrupted else ''} -> {kind or 'тишина'}")
         delay = random.uniform(0.8, 2.2) if heard else random.uniform(1.2, 3.2)
+        if heard and text and intent != "hush" and time.monotonic() < HUSH_UNTIL[0]:
+            HUSH_UNTIL[0] = 0.0                          # сам заговорил — тишина кончилась
+            HUSH_BACK[0] = None                          # «кто возвращается первым» больше не играет
+            log("тишина снята: игрок заговорил")
+        self.said_text = text                            # для «передай»: «привет от…» ловим по форме реплики
+        if heard and text and time.monotonic() < CARE_WIN[0] and self._care_answer(text):
+            self.pending = None                          # ответ на «ты как, не спишь?» обработан — двойного ответа нет
+            return
         self.pending = (max(now, t_rel + delay), group, kind, prefer, who) if kind else None
         if intent == "bye":
             self.on_air = False                          # you left the channel: next time they greet you again
@@ -1737,6 +1840,74 @@ class Operator:
             return
         log(f"на knows/{target} ответить некому")
 
+    def _hush_answer(self, who, prefer):
+        """«помолчим» — один из тех, кто рядом, коротко отвечает, и общая болтовня стихает на HUSH_S секунд.
+        Свои реплики — reactions/intent/hush; пока их нет (тексты на одобрении) — обычное «принял».
+        В тишине звучат только ответы на реплики игрока и доклады бухгалтерии (11.11, решение пользователя)."""
+        here = [a for a in (self.deck.allowed or ()) if not self.deck.offline(a)]
+        pool = [x for x in reaction_pool("intent", "hush") if x[0] in here] or                [x for x in reaction_pool("player", "ack") if x[0] in here]
+        if BONDS and pool and not who:                   # отвечает тот, кто ближе по дружбе: он и поймёт
+            best = max(BONDS.level(x[0]) for x in pool)
+            pool = [x for x in pool if BONDS.level(x[0]) == best]
+        pick = self.deck.choose([x for x in pool if x[0] == who] or pool, prefer=who or prefer) if pool else None
+        HUSH_UNTIL[0] = time.monotonic() + random.uniform(*HUSH_S)
+        HUSH_BACK[0] = (frozenset(here), time.monotonic())     # 1.2: кто возвращается первым после тишины
+        log(f"ответ: hush -> тишина на {int(HUSH_UNTIL[0] - time.monotonic())} с"
+            f" ({pick[0] if pick else 'ответить некому'})")
+        if pick and PLAYER.file(pick[1], pick[0]) == "ok":
+            self.deck.on_air.add(pick[0])
+            self.on_air = True
+
+    def _care_answer(self, text):
+        """Ответ на «ты как, не спишь?» (3.1): любой честный ответ +2 дружбы; «устал» — спросивший
+        десять минут остаётся рядом (вес в болтовне выше). Реплика не про сон — False, обычный разбор."""
+        a = CARE_WIN[1]
+        t = (text or "").lower()
+        tired = any(w in t for w in ("устал", "засыпаю", "тяжело", "не сплю", "хочу спать", "выдохся", "нет сил"))
+        ok = not tired and any(w in t for w in ("норм", "держусь", "бодрый", "всё ок", "все ок",
+                                                "отлично", "хорошо", "справляюсь"))
+        if not (tired or ok):
+            return False
+        kind = "tired" if tired else "ok"
+        CARE_WIN[0] = 0.0
+        log(f"ответ: «не спишь?» -> {kind} ({a})")
+        pick = line_of("care", kind, a)
+        if pick and PLAYER.file(pick[1], a) == "ok":
+            self.deck.on_air.add(a)
+            self.on_air = True
+        bond_add(a, 2, f"честный ответ ({kind})")
+        if tired:
+            CARE_STAY[a] = time.monotonic() + 600
+        return True
+
+    def _errand_deliver(self, who, kind):
+        """«передай» (2.1): адресат в зоне, игрок здоровается с ним или просит передать ->
+        ответ адресата, обоим +2 дружбы, поручение закрыто."""
+        e = QUEST_ST.get("errand")
+        if not e:
+            return False
+        to = e["to"]
+        if self.deck.allowed is not None and to not in self.deck.allowed:
+            return False
+        if self.deck.offline(to):
+            return False
+        t = (getattr(self, "said_text", "") or "").lower()
+        passed = bool(re.search(r"переда(й|вай|л|ли|ют)|привет от|просил передать|тебе передают", t))
+        if not (who == to and kind in ("greet", "ack") or passed):
+            return False
+        pool = reaction_pool("errand", f"reply__{e['from']}__{to}")
+        pick = self.deck.choose(pool, prefer=to)
+        log(f"ответ: поручение доставлено ({e['from']} -> {to})")
+        if pick and PLAYER.file(pick[1], pick[0]) == "ok":
+            self.deck.on_air.add(pick[0])
+            self.on_air = True
+        bond_add(to, 2, "передал слово")
+        bond_add(e["from"], 2, "передали его слово")
+        mood_nudge(to, 1, "передали слово")
+        del QUEST_ST["errand"]
+        quest_st_save()
+        return True
+
     def _calm_down_answer(self, who, prefer):
         """«успокойся» — да/нет по внутреннему настроению; «да» успокаивает по-настоящему:
         настроение вверх и 10–15 минут тише (инцидент: Витёк соглашался и сразу снова бешеный)."""
@@ -1893,8 +2064,12 @@ class Operator:
             kind = "ack"      # уже звали за эту встречу — обычная короткая отбивка, не тишина
         if group == "intent" and kind == "calm_down":
             return self._calm_down_answer(who, prefer)
+        if group == "intent" and kind == "hush":
+            return self._hush_answer(who, prefer)
         if group == "intent" and kind == "sorry":
             return self._sorry_answer(who, prefer)
+        if self._errand_deliver(who, kind):          # «передай»: встреча с адресатом закрывает поручение
+            return
         if group == "intent" and kind in ("police", "road") and reaction_pool("intent", kind + "_unknown"):
             kind += "_unknown"       # nobody near could have seen it: an honest «не видел, я в ту же сторону»
         if not who and kind != "interrupt" and random.random() > 0.6:
@@ -2464,15 +2639,15 @@ def make_report(show=True, hide_speech=False):
     out.mkdir(exist_ok=True)
     z = out / f"Kanal15-report-{datetime.now():%Y%m%d-%H%M%S}.zip"
     with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED) as zf:
-        for name in ("cb_radio.log", "crash.log", "update/update.log", "update/applied.json", "version.json",
+        for name in ("cb_radio.log", "cb_radio_errors.log", "crash.log", "update/update.log", "update/applied.json", "version.json",
                      "config.json", "install.json"):
             p = ROOT / name
             if p.exists():
                 data = p.read_bytes()
                 if name == "cb_radio.log":
                     data = b"\n".join(data.splitlines()[-4000:])     # the last few hours are enough
-                    if hide_speech:
-                        data = _hide_speech(data)
+                if name in ("cb_radio.log", "cb_radio_errors.log") and hide_speech:
+                    data = _hide_speech(data)      # в ошибках тоже бывают слова игрока (intent, понимание речи)
                 zf.writestr(name, data)
         zf.writestr("about.json", json.dumps({"version": VERSION, "date": VERSION_DATE, "build": BUILD_NAME,
                                               "speech_hidden": bool(hide_speech),
@@ -2531,7 +2706,10 @@ def main(argv):
         for p in all_phrases():
             if who and not set(who) & set(actors_of(p)):
                 continue
-            print(p)
+            try:
+                print(p)
+            except (OSError, ValueError, AttributeError):   # 11.11: без консоли (pythonw/закрытый stdout) --listen не должен падать
+                log(p)
             PLAYER.item(p)
             time.sleep(0.6)
         return
@@ -2669,7 +2847,8 @@ def main(argv):
                 try:
                     got(("keyboard", _input_name(key)), f"клавиша {_input_name(key)}")
                 except Exception as e:
-                    log(f"ошибка обработки клавиши: {e!r}")
+                    import traceback
+                    log(f"ошибка обработки клавиши: {e!r}", tb=traceback.format_exc())
 
             def ms_click(x, y, button, pressed):
                 if not pressed or result["ptt"] or result["stopped"]:
@@ -2679,7 +2858,8 @@ def main(argv):
                         return            # a click on this very dialog (e.g. «Отмена») must not become the button
                     got(("mouse", _input_name(button)), f"мышь: {_input_name(button)}")
                 except Exception as e:
-                    log(f"ошибка обработки мыши: {e!r}")
+                    import traceback
+                    log(f"ошибка обработки мыши: {e!r}", tb=traceback.format_exc())
 
             try:
                 mm = ctypes.WinDLL("winmm")
@@ -2842,6 +3022,10 @@ def main(argv):
     except Exception as e:
         BONDS = None
         log(f"дружба не подключилась: {e!r}")
+    global QUEST_ST
+    QUEST_ST = quest_st_load()                   # «передай»/«не спишь?»: поручение и служебные дни (11.11)
+    if QUEST_ST.get("errand"):
+        log(f"поручение активно: {QUEST_ST['errand']['from']} -> {QUEST_ST['errand']['to']}")
     upd = None
     try:                                      # 2026-11-05: quiet background updates (updater.py, launcher.py)
         import updater as updater_mod
@@ -2920,6 +3104,7 @@ def main(argv):
     murmur_acc, next_murmur = 0.0, random.uniform(60, 150)
     foreign_acc, next_foreign = 0.0, random.uniform(180, 420)
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
+    meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
     driving_s = 0.0
     next_at = random.uniform(*cfg["first_after_s"])
@@ -2938,6 +3123,8 @@ def main(argv):
             now = time.monotonic()
             dt, last = now - last, now
             st = game.state(cfg["require_engine_on"])
+            if st != "driving":
+                CARE_REST[0] = None                  # стоянка/пауза — отдых: ночной счётчик «не спишь?» сбрасывается
             if now >= GSEEN.get("ev_next", 0.0):         # 1.26: the fines plugin goes into the game quietly, no prompts
                 GSEEN["ev_next"] = now + 60
                 try:
@@ -3031,6 +3218,25 @@ def main(argv):
                 if w_acc >= 1.0:
                     p_ = game.pos()
                     if p_:
+                        gmin = p_[2]
+                        if CARE_REST[0] is None:
+                            CARE_REST[0] = gmin
+                        # «ты как, не спишь?» (3.1): игровая ночь, без остановки дольше порога,
+                        # рядом друг (lv2+); не чаще раза за игровую ночь
+                        gday = gmin // 1440
+                        if (st == "driving" and world and BONDS and world.is_night(gmin)
+                                and gmin - CARE_REST[0] >= CARE_NIGHT_MIN
+                                and QUEST_ST.get("care_day") != gday and not CARE_Q
+                                and not (CARE_WIN[0] > time.monotonic())):
+                            cands = [a for a in world.inside if not deck.offline(a)
+                                     and BONDS.level(a) >= 2
+                                     and any(x[0] == a for x in reaction_pool("care", "ask"))]
+                            if cands:
+                                a_ = max(cands, key=BONDS.level)
+                                QUEST_ST["care_day"] = gday
+                                quest_st_save()
+                                CARE_Q.append((time.monotonic() + random.uniform(5, 15), a_))
+                                log(f"«не спишь?»: ночь, без отдыха {(gmin - CARE_REST[0]) // 60} ч — спросит {a_}")
                         if time.monotonic() >= job_t:          # your job: where the navigator takes you
                             job_t = time.monotonic() + 10
                             if world.set_job(fines.dest() or None):
@@ -3095,6 +3301,27 @@ def main(argv):
                             lv = BONDS.level(k) if BONDS else 1
                             if world.met_before(k):
                                 bond_add(k, 1, "встреча на трассе")
+                            # «передай» (11.11): приятель/друг просит передать пару слов тому,
+                            # кого игрок встретит; одно поручение за раз, просьба — раз в игровой день
+                            gday = world.game_min // 1440
+                            e_ = QUEST_ST.get("errand")
+                            if e_ and e_["from"] == k and gday > e_["day"] + ERRAND_DAYS:
+                                if reaction_pool("errand", "late"):
+                                    ERRAND_Q.append((time.monotonic() + random.uniform(4, 12), k, "late", e_["to"]))
+                                    log(f"поручение: срок вышел ({k} -> {e_['to']}, день {e_['day']})")
+                                del QUEST_ST["errand"]
+                                quest_st_save()
+                                e_ = None
+                            if (not e_ and k in ERRAND_PAIRS and BONDS and BONDS.level(k) >= 1
+                                    and world.met_before(k)
+                                    and QUEST_ST.get("errand_asked_day") != gday
+                                    and reaction_pool("errand", f"ask__{k}__{ERRAND_PAIRS[k]}")):
+                                b_ = ERRAND_PAIRS[k]
+                                QUEST_ST["errand"] = {"from": k, "to": b_, "day": gday}
+                                QUEST_ST["errand_asked_day"] = gday
+                                quest_st_save()
+                                ERRAND_Q.append((time.monotonic() + random.uniform(4, 12), k, "ask", b_))
+                                log(f"поручение: {k} просит передать {b_}")
                             if (world.met_before(k) and now_ - MEET_STAMP.get(k, -1e9) > 1200
                                     and line_of("world", "meet_again", k)):
                                 MEET_STAMP[k] = now_
@@ -3204,6 +3431,7 @@ def main(argv):
             if op.waiting:
                 op.poll_ears()               # your words are being recognised
                 continue
+            hush = time.monotonic() < HUSH_UNTIL[0]   # 11.11: в тишине звучат только ответы игроку и бухгалтерия
             if op.due():
                 if st == "driving":
                     op.answer()
@@ -3215,9 +3443,65 @@ def main(argv):
                     op.pending = None        # paused / no game: the answer is lost
                 next_at = max(next_at, driving_s + 40)   # no chatter right on top of the answer
                 continue
+            # 1.2 «помолчим»: тишина истекла сама (игрок её не срывал) — кто-то из приятелей возвращается первым
+            if (HUSH_BACK[0] and HUSH_UNTIL[0] and time.monotonic() >= HUSH_UNTIL[0]
+                    and st in ("driving", "engine_off") and not op.pending):
+                near = HUSH_BACK[0][0]
+                HUSH_BACK[0] = None
+                HUSH_UNTIL[0] = 0.0
+                pool = [x for x in reaction_pool("intent", "hush_back") if x[0] in near]
+                if BONDS:
+                    pool = [x for x in pool if BONDS.level(x[0]) >= 2] or pool
+                pick = deck.choose(pool) if pool else None
+                if pick:
+                    log(f"эфир: тишина кончилась, первым возвращается {pick[0]}")
+                    PLAYER.file(pick[1], pick[0])
+                    deck.on_air.add(pick[0])
+                    bond_add(pick[0], 1, "вернулся после тишины")
+                    next_at = max(next_at, driving_s + random.uniform(15, 30))
+                    continue
+            # «передай»: озвучка просьбы / «срок вышел» (в тишине не играет)
+            if ERRAND_Q and st in ("driving", "engine_off") and not op.pending and not hush:
+                t0, a_, ek, b_ = ERRAND_Q[0]
+                if time.monotonic() >= t0:
+                    ERRAND_Q.pop(0)
+                    pool = reaction_pool("errand", f"ask__{a_}__{b_}" if ek == "ask" else "late")
+                    pick = deck.choose([x for x in pool if x[0] == a_] or pool, prefer=a_)
+                    if pick:
+                        log(f"эфир: поручение {ek} ({a_} -> {b_})" if ek == "ask"
+                            else f"эфир: поручение просрочено ({a_})")
+                        PLAYER.file(pick[1], pick[0])
+                        deck.on_air.add(pick[0])
+                        next_at = max(next_at, driving_s + random.uniform(15, 30))
+                        continue
+            # «ты как, не спишь?»: озвучка вопроса, открывается окно ответа 20 с (в тишине не играет)
+            if CARE_Q and st in ("driving", "engine_off") and not op.pending and not hush:
+                t0, a_ = CARE_Q[0]
+                if time.monotonic() >= t0:
+                    CARE_Q.pop(0)
+                    pick = line_of("care", "ask", a_)
+                    if pick:
+                        log(f"эфир: «не спишь?» ({a_})")
+                        PLAYER.file(pick[1], a_)
+                        deck.on_air.add(a_)
+                        CARE_WIN[0] = time.monotonic() + 20
+                        CARE_WIN[1] = a_
+                        next_at = max(next_at, driving_s + random.uniform(15, 30))
+                        continue
+            # окно ответа закрыто молчанием — реплика «silence» (ответ игроку: в тишине допустима)
+            if CARE_WIN[0] and time.monotonic() >= CARE_WIN[0] and st in ("driving", "engine_off") and not op.pending:
+                a_ = CARE_WIN[1]
+                CARE_WIN[0] = 0.0
+                pick = line_of("care", "silence", a_)
+                if pick:
+                    log(f"эфир: «не спишь?» — игрок молчит ({a_})")
+                    PLAYER.file(pick[1], a_)
+                    deck.on_air.add(a_)
+                    next_at = max(next_at, driving_s + random.uniform(15, 30))
+                    continue
             # the accountant's voice message (phone, not CB): plays while the game runs, after the delay
             # переходы дружбы вслух (2026-11-08): уровень вырос — актёр говорит свою фразу перехода (bond/upN)
-            if BOND_UP and st in ("driving", "engine_off") and not op.pending:
+            if BOND_UP and st in ("driving", "engine_off") and not op.pending and not hush:
                 now_ = time.monotonic()
                 BOND_UP[:] = [q for q in BOND_UP if now_ - q[1] < 900]
                 if world is not None:
@@ -3250,7 +3534,7 @@ def main(argv):
                                             time.monotonic(), a_, 2, "intro"))
                     continue
             # 1.33 маркеры настроения вслух: смена настроения слышна (reactions/mood_mark/<mood>)
-            if MARK_Q and st in ("driving", "engine_off") and not op.pending:
+            if MARK_Q and st in ("driving", "engine_off") and not op.pending and not hush:
                 a_, mood_ = MARK_Q.pop(0)
                 mk = line_of("mood_mark", mood_, a_) if BONDS else None
                 if mk and (world is None or a_ in world.inside):
@@ -3260,17 +3544,22 @@ def main(argv):
                     next_at = max(next_at, driving_s + random.uniform(12, 25))
                     continue
             # 1.33 мемы: редкая болтовня (низкий эффективный вес 0.3–0.4, заменяемый пул)
-            if (time.monotonic() - MEME_LAST[0] > random.uniform(150, 300) and st == "driving"
-                    and not op.pending and world and world.inside):
+            # 11.11: интервал — по времени в пути (пауза в меню не копит мем); мем ждёт общую паузу
+            # next_at и сдвигает её; один актёр не говорит два мема подряд
+            if st == "driving":
+                meme_acc += dt
+            if (meme_acc >= next_meme and st == "driving" and not hush
+                    and not op.pending and world and world.inside and driving_s >= next_at):
                 mk = None
                 for _ in range(3):
                     a_ = random.choice(sorted(world.inside))
-                    mk = line_of("memes", a_, a_)
+                    mk = line_of("memes", a_, a_) if a_ != MEME_ACTOR[0] else None
                     if mk:
                         break
                 if mk:
-                    MEME_LAST[0] = time.monotonic()
-                    log(f"эфир: мем ({mk[0]})")
+                    MEME_ACTOR[0] = mk[0]
+                    meme_acc, next_meme = 0.0, random.uniform(240, 480)
+                    log(f"эфир: мем ({mk[0]}/{mk[1].stem}, {mood_name(mk[0])})")
                     PLAYER.file(mk[1], mk[0])
                     deck.on_air.add(mk[0])
                     next_at = max(next_at, driving_s + random.uniform(20, 40))
@@ -3293,7 +3582,7 @@ def main(argv):
                 continue
             driving_s += dt
             # your hired driver passing by: one line, his own voice (tied to his id), not more than 1 per 8 min
-            if hq:
+            if hq and not hush:
                 now_ = time.monotonic()
                 hq = [q for q in hq if now_ - q[3] < 300]
                 if hq and now_ >= hq[0][0] and now_ - last_hired > 480:
@@ -3315,6 +3604,12 @@ def main(argv):
                 ready = next((q for q in wq if q[1] in ("meet_again", "teleport", "vityok_wedding", "dlc_iceland",
                                                        "calm_vityok") or q[2] in deck.on_air), None)
                 if ready and driving_s > 4:
+                    if hush:
+                        # 11.11: «помолчим» — приветствия не доигрываем и не копим, пропускаем; остальное ждёт конца тишины
+                        if ready[1] in ("meet_again", "teleport") or ready[0] == "teleport":
+                            wq.remove(ready)
+                            log(f"тишина: приветствие {ready[0]}/{ready[1]} ({ready[2]}) пропущено")
+                        continue
                     wq.remove(ready)
                     g_, k_, a_, _ = ready[:4]
                     if g_ == "quest":
@@ -3347,7 +3642,7 @@ def main(argv):
                         world.quiet = world.quiet_s + 1          # a meeting on the next world step
                     foreign_acc = next_foreign                   # and something on air right now
             # a foreign driver passing by: one line in the language of the country you drive in
-            if world and FOREIGN:
+            if world and FOREIGN and not hush:
                 foreign_acc += dt
                 if foreign_acc >= next_foreign:
                     foreign_acc, next_foreign = 0.0, random.uniform(240, 600)
@@ -3372,12 +3667,14 @@ def main(argv):
                         next_at = max(next_at, driving_s + 15)
                         continue
             # far-away chatter near a big city when nobody is in range
-            if world and not world.inside:
+            if world and not world.inside and not hush:
                 murmur_acc += dt
                 if murmur_acc >= next_murmur and world.near_big_city():
                     play_murmur(world)
                     murmur_acc, next_murmur = 0.0, random.uniform(90, 200)
-            if driving_s >= next_at:
+            if driving_s >= next_at and time.monotonic() < HUSH_UNTIL[0]:
+                next_at = driving_s + 20                 # «помолчим»: болтовня ждёт, проверим через 20 с
+            elif driving_s >= next_at:
                 # 2026-11-06: two or more near you — now and then one asks the channel, another answers
                 if random.random() < ASK_P and air_ask(deck):
                     driving_s = 0.0
@@ -3389,7 +3686,7 @@ def main(argv):
                 if not p:                                # nobody in range (or nothing allowed): try later
                     next_at = driving_s + 20
                     continue
-                log(f"эфир: {p}")
+                log(f"эфир: {p} ({mood_name(p.split('/')[0])})")
                 r = PLAYER.item(p)
                 if r == "paused":
                     log("  прервано (пауза)")
@@ -3404,7 +3701,8 @@ def main(argv):
                 next_k = driving_s + random.uniform(*kgap)
         except Exception as e:  # never let one bad moment kill the radio
             import traceback
-            log(f"ошибка: {e!r} @ " + " | ".join(x.strip().split("\n")[-1] for x in traceback.format_tb(e.__traceback__)[-2:]))
+            log(f"ошибка: {e!r} @ " + " | ".join(x.strip().split("\n")[-1] for x in traceback.format_tb(e.__traceback__)[-2:]),
+                tb="".join(traceback.format_exception(type(e), e, e.__traceback__)))
             time.sleep(1)
 
 

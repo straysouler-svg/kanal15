@@ -5,6 +5,7 @@
 
 /*
 !/.gitignore
+!/.gitattributes
 !/AGENTS.md
 !/CLAUDE.md
 !/README.md
@@ -51,6 +52,8 @@
 /promo/**/*.mp3
 /promo/**/*.mp4
 /promo/**/*.pdf
+/promo/**/*.png
+/promo/**/*.jpg
 
 # ---------------------------------------------------------------- никогда
 *key*.txt

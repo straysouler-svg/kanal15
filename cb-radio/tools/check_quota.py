@@ -26,17 +26,27 @@ def get(url, key):
             raise RuntimeError(f"не JSON (HTTP {r.status}, url {r.url}): {body!r}") from None
 
 
+def _keys(stem):
+    """Ключи вида <stem>.txt, <stem>2.txt, ... — копии вида <stem>.old.txt не считаются."""
+    import re
+    rx = re.compile(stem + r"\d*\.txt")
+    return [f.read_text(encoding="utf-8").strip()
+            for f in sorted(ROOT.glob(f"{stem}*.txt"), key=lambda p: p.name) if rx.fullmatch(f.name)]
+
+
 def elevenlabs():
-    key = (ROOT / "elevenlabs_key.txt").read_text(encoding="utf-8").strip()
-    d = get("https://api.elevenlabs.io/v1/user/subscription", key)
-    used, limit = d.get("character_count"), d.get("character_limit")
-    reset = (d.get("next_character_count_reset_unix") or 0) / 86400
-    import datetime
-    reset_d = datetime.datetime.fromtimestamp(d["next_character_count_reset_unix"]).date() \
-        if d.get("next_character_count_reset_unix") else "?"
-    print(f"ElevenLabs: {used:,} / {limit:,} символов (осталось {limit - used:,}), "
-          f"тариф {d.get('tier')}, сброс {reset_d}")
-    print(f"  voice cloning (instant): {d.get('can_use_instant_voice_cloning')}")
+    keys = _keys("elevenlabs_key")
+    for i, key in enumerate(keys, 1):
+        d = get("https://api.elevenlabs.io/v1/user/subscription", key)
+        used, limit = d.get("character_count"), d.get("character_limit")
+        reset_d = "?"
+        if d.get("next_character_count_reset_unix"):
+            import datetime
+            reset_d = datetime.datetime.fromtimestamp(d["next_character_count_reset_unix"]).date()
+        tag = f" (ключ {i})" if len(keys) > 1 else ""
+        print(f"ElevenLabs{tag}: {used:,} / {limit:,} символов (осталось {limit - used:,}), "
+              f"тариф {d.get('tier')}, сброс {reset_d}")
+        print(f"  voice cloning (instant): {d.get('can_use_instant_voice_cloning')}")
 
 
 def openrouter():
