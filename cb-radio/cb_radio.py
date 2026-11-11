@@ -820,6 +820,7 @@ class Deck:
         self.off_until = {}      # actor -> monotonic time
         self.signed_off = {}     # actor -> monotonic time of his sign-off
         self.grace = None        # an actor who may still answer although he signed off (a «пока» to his «пока»)
+        self.left_at = {}        # actor -> monotonic: ушёл из зоны (11.11, 3.2: окно «ещё слышит», 120 с)
 
     def _save(self):
         try:
@@ -855,8 +856,8 @@ class Deck:
                 if a in self.on_air:
                     return False                           # already on air: no second hello
             elif item in r["signoff"]:
-                if a not in self.on_air:
-                    return False                           # bye from someone we never heard
+                if a not in self.on_air and a != self.grace:
+                    return False                           # bye from someone we never heard (grace: 3.2 — только что уехал)
             elif (a not in self.on_air and strict and r["greet"] & left
                   and not item.startswith("scene/")):
                 return False                               # should say hello first (not needed in a talk)
@@ -1535,9 +1536,14 @@ class Operator:
         group = "player"
         about = None
         if who and self.deck.allowed is not None and who not in (self.deck.allowed | self.deck.allowed_far):
-            # a name of somebody NOT in range: a question ABOUT him ("Сороку никто не видел?"), not to him -
-            # those in range answer; with no recorded line on that, "не знаю / не видел"
-            about, who = who, None
+            if time.monotonic() - self.deck.left_at.get(who, -1e9) < 120:
+                # 11.11 (разбор стрима 3.2): уехал из зоны секунды назад — ещё слышит.
+                # Не «вопрос ПРО него»: он отвечает САМ через помехи (дальний), а не «не знаю» от постороннего
+                pass
+            else:
+                # a name of somebody NOT in range: a question ABOUT him ("Сороку никто не видел?"), not to him -
+                # those in range answer; with no recorded line on that, "не знаю / не видел"
+                about, who = who, None
         reply = False
         if (not who and not about and heard and PLAYER.last_speaker and t_rel - PLAYER.last_t < 25
                 and intent not in ("who", "repeat") and not (intent or "").startswith("graf_")):
@@ -2197,7 +2203,9 @@ class Operator:
             pool = mine(pool) or pool
         # 2026-11-05 (Zhenya): Самарканд said «всё, на ночёвку», the player said «давай, пока» 10 s later -> silence.
         # Somebody who has just signed off still answers a goodbye / thanks addressed to him.
-        if who and kind in ("bye", "thanks") and time.monotonic() - self.deck.signed_off.get(who, -1e9) < 180:
+        # 11.11 (3.2): то же для только что уехавших из зоны (120 с) — их «пока» не блокируем
+        if who and kind in ("bye", "thanks") and (time.monotonic() - self.deck.signed_off.get(who, -1e9) < 180
+                                                  or time.monotonic() - self.deck.left_at.get(who, -1e9) < 120):
             self.deck.grace = who
         try:
             pick = self.deck.choose(pool, prefer=prefer, avoid=self.last_file)
@@ -2218,16 +2226,21 @@ class Operator:
                 pick = self.deck.choose(mine(reaction_pool("player", alt_kind)), prefer=who or prefer)
                 if pick:
                     log(f"  на {group}/{kind} ответа нет — {alt_kind}")
-        if not pick and who and self.deck.allowed is not None and who in self.deck.allowed_far:
-            # called BY NAME and he is just out of range: he answers through the noise. Without a name nobody
-            # far answers (2026-11-06, Kirill: «ты ненастоящий» was answered by Petrovna who had driven off)
-            near, self.deck.allowed = self.deck.allowed, set(self.deck.allowed_far)
+        if not pick and who and self.deck.allowed is not None and (
+                who in self.deck.allowed_far or time.monotonic() - self.deck.left_at.get(who, -1e9) < 120):
+            # called BY NAME and he is just out of range (or left the zone seconds ago, 3.2): he answers
+            # through the noise. Without a name nobody far answers (2026-11-06, Kirill: «ты ненастоящий»
+            # was answered by Petrovna who had driven off)
+            near, self.deck.allowed = self.deck.allowed, set(self.deck.allowed_far) | {who}
+            if time.monotonic() - self.deck.left_at.get(who, -1e9) < 120:
+                self.deck.grace = who        # уехавший: его «пока» легально, хотя on_air уже очищен
             try:
                 pick = (self.deck.choose(pool, prefer=prefer)
                         or (self.deck.choose(mine(reaction_pool("player", "dunno"))) if question or kind == "dunno" else None)
                         or (None if question or kind == "dunno" else self.deck.choose(mine(reaction_pool("player", "ack")))))
             finally:
                 self.deck.allowed = near
+                self.deck.grace = None
             if pick:
                 log(f"  отвечает дальний: {pick[0]}")
         if not pick and who:
@@ -3629,6 +3642,9 @@ def main(argv):
                                     wq.append(("calm_vityok", "calm", k, now_))
                         for k in world.left:
                             log(f"ушёл из зоны: {k}")
+                            deck.left_at = {a: t for a, t in deck.left_at.items()
+                                            if time.monotonic() - t < 900}
+                            deck.left_at[k] = time.monotonic()   # 3.2: 120 с он «ещё слышит» прощание
                             NAME_CALL_DONE.discard(k)      # обращение по имени снова доступно на новой встрече
                             deck.on_air.discard(k)          # next time he comes he says hello again
                             deck.prefer.discard(k)
