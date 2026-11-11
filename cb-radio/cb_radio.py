@@ -815,7 +815,7 @@ class Deck:
         self.on_air = set()      # greeted / spoke this session
         self.spoken = {}         # actor -> transmissions this session (for balancing)
         self.allowed = None      # actors within radio range (living highway); None = everybody
-        self.allowed_far = set() # beyond range but within 2x: may answer in a scene, barely heard
+        self.allowed_far = set() # beyond range but within 2x: answers only when called BY NAME (through the noise)
         self.prefer = set()      # just came into range: let them talk first
         self.off_until = {}      # actor -> monotonic time
         self.signed_off = {}     # actor -> monotonic time of his sign-off
@@ -838,8 +838,10 @@ class Deck:
             return False
         if self.allowed is not None:
             if item.startswith("scene/"):
-                # a conversation starts with somebody near you; the other side may be far (barely heard)
-                if acts[0] not in self.allowed or not set(acts) <= (self.allowed | self.allowed_far):
+                # 11.11 (разбор стрима 3.1): в сценке звучат только те, кто В зоне рации.
+                # Раньше второй участник мог быть дальним (2x) — игрок слышал уехавшего
+                # как рядом, звал его и получал «не знаю» от постороннего
+                if not set(acts) <= self.allowed:
                     return False
             elif not set(acts) <= self.allowed:
                 return False                               # out of radio range
@@ -884,7 +886,7 @@ class Deck:
         fresh = [p for p in cands if set(actors_of(p)) & self.prefer]
         if fresh:
             cands = fresh                                  # who just came into range speaks first
-        elif self.allowed and len(self.allowed | self.allowed_far) >= 2 and random.random() < 0.6:
+        elif self.allowed and len(self.allowed) >= 2 and random.random() < 0.6:
             scenes = [p for p in cands if p.startswith("scene/")]
             if scenes:
                 cands = scenes                             # two of them nearby: let them talk to each other
