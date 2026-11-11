@@ -1,6 +1,8 @@
 """Предстрим-проверка «Канала 15» (2026-11-10): одна команда перед «Начать трансляцию».
 Причина появления: стрим 10.11 ушёл весь без голоса — AuxAudioDevice1 был muted в микшере OBS.
-Проверяет: рацию, телеметрию, микрофон (в Windows, в рации, в OBS — жив ли id и НЕ замьючен),
+С 11.11 микрофон — сценовый («Микрофон (В пути)» / «Микрофон (Верт: В пути)»),
+глобальный «Микр/доп» заглушён намеренно: голос звучит только в сценах дороги.
+Проверяет: рацию, телеметрию, микрофон (в Windows, в рации, в OBS — сцены, мьют, живость id),
 профиль/коллекцию OBS. Запуск: venv\\Scripts\\python.exe promo/stream/preflight.py
 """
 import ctypes
@@ -105,23 +107,44 @@ def obs():
         return f"активная коллекция «{coll}», а надо «Канал_15.json» (профиль «{prof}»)", False
     col = json.loads((OBS_DIR / "basic" / "scenes" / coll).read_text(encoding="utf-8"))
     devs = capture_devices()
-    problems = []
-    for k in col:
-        if not k.startswith("AuxAudio") or not isinstance(col[k], dict):
-            continue
-        m = col[k]
+
+    def dev_dead(m):
         did = (m.get("settings") or {}).get("device_id", "")
         guid = did.split(".")[-1].strip("{}").lower() if did else ""
-        name = m.get("name", k)
-        if guid and guid in devs and not devs[guid][1]:
-            problems.append(f"{name}: устройство мертво (переткнуто?)")
+        return guid and guid in devs and not devs[guid][1]
+
+    problems = []
+    # Глобальные каналы (Desktop/Aux): проверяем только живость устройства.
+    # «Микр/доп» с 11.11 намеренно замьючен — микрофон перенесён в сцены (см. ниже).
+    for k in col:
+        if not k.startswith(("AuxAudio", "DesktopAudio")) or not isinstance(col[k], dict):
+            continue
+        m = col[k]
+        if dev_dead(m):
+            problems.append(f"{m.get('name', k)}: устройство мертво (переткнуто?)")
+    # Сценовые микрофоны: должны стоять в сценах «В пути», быть живы и не замьючены —
+    # именно так голос звучит только в дороге и не льётся на заставки.
+    srcs = {s.get("name"): s for s in col.get("sources", [])}
+    scenes = {s.get("name"): s for s in col.get("sources", [])
+              if "items" in (s.get("settings") or {})}
+    for scene_name, mic_name in (("В пути", "Микрофон (В пути)"),
+                                 ("Верт: В пути", "Микрофон (Верт: В пути)")):
+        sc = scenes.get(scene_name)
+        names = [i.get("name") for i in (sc["settings"]["items"] if sc else [])]
+        if mic_name not in names:
+            problems.append(f"в сцене «{scene_name}» нет «{mic_name}»")
+            continue
+        m = srcs.get(mic_name) or {}
         if m.get("muted"):
-            problems.append(f"{name}: ЗАМЬЮЧЕН в микшере")
+            problems.append(f"{mic_name}: ЗАМЬЮЧЕН в микшере")
         if m.get("volume", 1.0) < 0.05:
-            problems.append(f"{name}: громкость ~0")
+            problems.append(f"{mic_name}: громкость ~0")
+        if dev_dead(m):
+            problems.append(f"{mic_name}: устройство мертво (переткнуто?)")
     if problems:
         return "; ".join(problems), False
-    return f"профиль «{prof}», коллекция «Канал 15», аудиоканалы живы и не замьючены", True
+    return (f"профиль «{prof}», коллекция «Канал 15», микрофон сценовый "
+            f"(только «В пути»), аудиоканалы живы", True)
 
 
 def obs_running():
