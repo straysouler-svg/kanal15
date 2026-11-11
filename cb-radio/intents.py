@@ -229,6 +229,18 @@ def intent(text):
     return None
 
 
+def intent_all(text):
+    """Все интенты реплики в порядке, как сказаны (по позиции первого стема). 2026-11-11: «как дела,
+    куда едешь, как погода?» -> ['how_are_you', 'where', 'weather'] — водитель отвечает на первый."""
+    t = " " + " ".join(w for w in norm(text).split() if not w.startswith(_NAME_STEMS)) + " "
+    hits = []
+    for name, stems in INTENTS:
+        pos = [i for i in (t.find(" " + s.replace("ё", "е")) for s in stems) if i >= 0]
+        if pos:
+            hits.append((min(pos), name))
+    return [name for _, name in sorted(hits)]
+
+
 QUESTION_WORDS = ("кто", "что", "где", "как", "какой", "какая", "какие", "какое", "когда", "куда", "откуда", "почему",
                   "зачем", "сколько", "чей", "чья", "есть ли", "не знаешь", "не знаете", "не видел", "не видели",
                   "не слышал", "не слышали", "никто не", "кто-нибудь", "ли ")

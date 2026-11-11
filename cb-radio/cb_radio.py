@@ -1487,6 +1487,15 @@ class Operator:
         now = time.monotonic()
         self.heard_text = text
         intent, who = intents.understand(text) if text else (None, None)
+        # 2026-11-11: несколько вопросов одной репликой («как дела, куда едешь, как погода?») — отвечаем
+        # на ПЕРВЫЙ сказанный, остальные отбиваем (раньше срабатывал приоритетный интент, не первый).
+        # Грубость в связке не переупорядочиваем: обида важнее порядка.
+        if intent and not intent.startswith("graf_") and intent not in ("handle", "name_call", "knows"):
+            multi = intents.intent_all(text)
+            if len(multi) > 1 and intent in multi and "rude" not in multi:
+                if multi[0] != intent:
+                    intent = multi[0]
+                log(f"тангента: вопросов несколько ({', '.join(multi)}) — отвечаю на первый: {intent}")
         self.knows_target = intents.knows_target(text) if intent == "knows" else None
         if intent == "knows" and self.knows_target == who:
             who = None            # «ты знаешь Бороду?» — вопрос ПРО него, отвечают другие
@@ -1530,6 +1539,10 @@ class Operator:
         question = intents.is_question(text) if text else False
         if intent == "repeat":
             group, kind = "special", "repeat"             # he says his last line again (or keeps quiet)
+        elif about:
+            # 2026-11-11: «Профессор, как дела?» когда его нет в зоне — это вопрос ПРО него:
+            # ближние отвечают «не знаю / не видел его», а не за него (баг: Ласточка отвечала за Профессора)
+            group, kind = "player", "dunno"
         elif interrupted and not intent and random.random() < 0.7:     # a clear question is answered anyway
             kind = "interrupt"
         elif heard and not text:
