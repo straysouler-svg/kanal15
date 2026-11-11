@@ -5,7 +5,7 @@
   + разговор с ним (+1, по имени +2, «спасибо»/похвала +3), первый разговор за игровой день +3, встреча на трассе +1;
     за день с одного водителя не больше +15.  − грубость −25.
   Повтор той же темы с тем же водителем за игровые сутки — 0 очков (за «встреча на трассе» — тоже).
-  Уровни: 0 незнакомый (<30) · 1 знакомый (30+) · 2 приятель (60+) · 3 друг (150+).
+  Уровни: 0 незнакомый (<35) · 1 знакомый (35+) · 2 приятель (60+) · 3 друг (150+).
   Незнакомый не зовёт тебя по имени (реплики с обращением — только знакомым и дальше).
   Личные реплики (поле "lv", сейчас family/salary/health = 2) звучат только с этого уровня:
     у кого дружбы меньше — эфир уходит в уклончивые фразы (reactions/bond/evade, lv0–1) или общие «не знаю».
@@ -20,7 +20,7 @@ import json
 import re
 from pathlib import Path
 
-LEVELS = [(0, "незнакомый"), (30, "знакомый"), (60, "приятель"), (150, "друг")]
+LEVELS = [(0, "незнакомый"), (35, "знакомый"), (60, "приятель"), (150, "друг")]
 HEARTS = ["", "♥", "♥♥", "♥♥♥"]
 START = 25
 DAY_CAP = 15
@@ -200,6 +200,16 @@ class Bonds:
         """Audio rel path -> phrases key: drops "variants/<v>/" and "level3/"."""
         rel = re.sub(r"^variants/[^/]+/", "", rel or "")
         return rel[7:] if rel.startswith("level3/") else rel
+
+    def introduced(self, actor):
+        """Представился ли актёр игроку полным именем (ритуал перехода в lv2, 1.34)."""
+        return bool(self._rec(actor).get("introduced"))
+
+    def mark_introduced(self, actor):
+        r = self._rec(actor)
+        if not r.get("introduced"):
+            r["introduced"] = True
+            self.save()
 
     def calls_by_name(self, rel):
         return self.key(rel) in self.name_lines

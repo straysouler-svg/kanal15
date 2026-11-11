@@ -1,6 +1,6 @@
 {
-  "gap_min_s": 120,
-  "gap_max_s": 300,
+  "gap_min_s": 90,
+  "gap_max_s": 180,
   "first_after_s": [
     30,
     90
@@ -8,16 +8,21 @@
   "volume": 0.8,
   "device": null,
   "require_engine_on": true,
-  "lock_port": 47819,
   "kerchunk_gap_s": [
     60,
     160
   ],
+  "greet_reply_chance": 0.85,
   "ptt": {
     "device": "R5 Base",
     "button": 22
   },
-  "greet_reply_chance": 0.85,
+  "lock_port": 47819,
+  "update": {
+    "url": "",
+    "channel": "public",
+    "auto": true
+  },
   "ptt_sounds": {
     "press": "beep",
     "release": "roger",

@@ -3064,5 +3064,125 @@
   "z": -72202.0,
   "src": "fit",
   "population": 60000
+ },
+ "reykjavik": {
+  "name": "Reykjavík",
+  "country": "iceland",
+  "x": -71792.0,
+  "z": -102455.0,
+  "src": "anchor_delivery",
+  "population": 140000
+ },
+ "keflavik": {
+  "name": "Keflavík",
+  "country": "iceland",
+  "x": -73433.7,
+  "z": -101588.1,
+  "src": "anchor_delivery",
+  "population": 16000
+ },
+ "selfoss": {
+  "name": "Selfoss",
+  "country": "iceland",
+  "x": -69459.5,
+  "z": -101215.8,
+  "src": "anchor_delivery",
+  "population": 7000
+ },
+ "vik": {
+  "name": "Vík í Mýrdal",
+  "country": "iceland",
+  "x": -64514.7,
+  "z": -98219.6,
+  "src": "anchor_delivery",
+  "population": 270
+ },
+ "hofn": {
+  "name": "Höfn í Hornafirði",
+  "country": "iceland",
+  "x": -55122.9,
+  "z": -103083.3,
+  "src": "anchor_delivery",
+  "population": 2500
+ },
+ "egilsstadir": {
+  "name": "Egilsstaðir",
+  "country": "iceland",
+  "x": -53117.3,
+  "z": -108976.9,
+  "src": "anchor_delivery",
+  "population": 2500
+ },
+ "akureyri": {
+  "name": "Akureyri",
+  "country": "iceland",
+  "x": -62254.1,
+  "z": -111397.1,
+  "src": "anchor_delivery",
+  "population": 18000
+ },
+ "husavik": {
+  "name": "Húsavík",
+  "country": "iceland",
+  "x": -60397.0,
+  "z": -113503.2,
+  "src": "anchor_delivery",
+  "population": 2500
+ },
+ "blonduos": {
+  "name": "Blönduós",
+  "country": "iceland",
+  "x": -67684.2,
+  "z": -111263.3,
+  "src": "anchor_delivery",
+  "population": 900
+ },
+ "borgarnes": {
+  "name": "Borgarnes",
+  "country": "iceland",
+  "x": -71737.5,
+  "z": -104770.5,
+  "src": "anchor_delivery",
+  "population": 2000
+ },
+ "holmavik": {
+  "name": "Hólmavík",
+  "country": "iceland",
+  "x": -71143.3,
+  "z": -111530.9,
+  "src": "anchor_delivery",
+  "population": 400
+ },
+ "isafjordur": {
+  "name": "Ísafjörður",
+  "country": "iceland",
+  "x": -74733.6,
+  "z": -113677.7,
+  "src": "anchor_delivery",
+  "population": 3000
+ },
+ "olafsvik": {
+  "name": "Ólafsvík",
+  "country": "iceland",
+  "x": -76169.7,
+  "z": -106806.8,
+  "src": "anchor_delivery",
+  "population": 1010
+ },
+ "patreksfjord": {
+  "name": "Patreksfjörður",
+  "country": "iceland",
+  "x": -76890.3,
+  "z": -110896.8,
+  "src": "anchor_delivery",
+  "population": 720
+ },
+ "thorshofn": {
+  "name": "Þórshöfn",
+  "country": "iceland",
+  "x": -55432.4,
+  "z": -114410.8,
+  "src": "anchor_delivery",
+  "population": 380
  }
 }

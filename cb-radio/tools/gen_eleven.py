@@ -47,17 +47,22 @@ def tts(vid, text, model="eleven_v3", stability=0.5):
                        "voice_settings": {"stability": stability, "similarity_boost": 0.75}}).encode("utf-8")
     req = urllib.request.Request(API.format(vid=vid), data=body, method="POST",
                                  headers={"xi-api-key": KEY, "Content-Type": "application/json"})
-    for attempt in range(3):
+    for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=180) as r:
                 mp3 = r.read()
             break
         except urllib.error.HTTPError as e:
             msg = e.read().decode("utf-8", "replace")
-            if e.code == 429 and attempt < 2:
+            if e.code == 429 and attempt < 4:
                 time.sleep(5)
                 continue
             raise SystemExit(f"ElevenLabs {e.code}: {msg}")
+        except urllib.error.URLError as e:
+            if attempt < 4:                 # обрывы через прокси — норма, просто повторяем
+                time.sleep(5)
+                continue
+            raise SystemExit(f"ElevenLabs сеть: {e}")
     x, sr = sf.read(io.BytesIO(mp3), dtype="float32")
     if x.ndim > 1:
         x = x.mean(axis=1)

@@ -70,10 +70,17 @@ def trim(x, sr=48000, keep=0.12):
 def _post(body):
     req = urllib.request.Request(URL, data=json.dumps(body).encode("utf-8"),
                                  headers={"Authorization": "Bearer " + KEY, "Content-Type": "application/json"})
-    try:
-        return urllib.request.urlopen(req, timeout=180)
-    except urllib.error.HTTPError as e:
-        raise SystemExit(f"OpenRouter {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
+    import time as _time
+    for attempt in range(5):
+        try:
+            return urllib.request.urlopen(req, timeout=180)
+        except urllib.error.HTTPError as e:
+            raise SystemExit(f"OpenRouter {e.code}: {e.read().decode('utf-8', 'replace')[:300]}")
+        except urllib.error.URLError:
+            if attempt < 4:                 # обрывы через прокси — норма, повторяем
+                _time.sleep(5)
+                continue
+            raise SystemExit("OpenRouter сеть: соединение не восстановилось за 5 попыток")
 
 
 LANGS = {"de": "по-немецки", "pl": "по-польски", "fr": "по-французски", "es": "по-испански",
