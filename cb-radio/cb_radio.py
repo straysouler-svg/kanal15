@@ -3305,6 +3305,7 @@ def main(argv):
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
     driving_s = 0.0
     next_at = random.uniform(*cfg["first_after_s"])
+    wq_until = 0.0                         # 11.11: залп приветствий при массовом входе в зону — не чаще одного за 25-45 с
     max_silence = float(cfg.get("max_silence_s", 240))   # user 2026-11-04: «главное чтобы не было тихого эфира»
     quiet_drive, seen_voices = 0.0, 0
     kgap = cfg.get("kerchunk_gap_s") or []
@@ -3798,8 +3799,9 @@ def main(argv):
             if wq:
                 now_ = time.monotonic()
                 wq = [q for q in wq if now_ - q[3] < 180 and world and q[2] in world.inside]
-                ready = next((q for q in wq if q[1] in ("meet_again", "teleport", "vityok_wedding", "dlc_iceland",
-                                                       "calm_vityok") or q[2] in deck.on_air), None)
+                ready = next((q for q in wq if (q[1] in ("meet_again", "teleport", "vityok_wedding", "dlc_iceland",
+                                                       "calm_vityok") or q[2] in deck.on_air)
+                              and (hush or q[1].startswith("warn_") or driving_s >= wq_until)), None)
                 if ready and driving_s > 4:
                     if hush:
                         # 11.11: «помолчим» — приветствия не доигрываем и не копим, пропускаем; остальное ждёт конца тишины
@@ -3823,6 +3825,8 @@ def main(argv):
                         if world and g_ == "teleport":
                             world.teleport_witness.pop(a_, None)     # отыграли «ты исчез с трассы»
                     next_at = max(next_at, driving_s + random.uniform(20, 45))
+                    if not ready[1].startswith("warn_"):
+                        wq_until = driving_s + random.uniform(25, 45)   # следующее приветствие — с паузой
                     continue
             # silence guard: driving and nothing with a voice for max_silence -> pull somebody in
             if PLAYER.voices != seen_voices:
