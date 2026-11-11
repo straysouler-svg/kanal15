@@ -46,5 +46,6 @@
     "enabled": true,
     "port": 47823
   },
-  "static": "low"
+  "static": "low",
+  "horn_pilot": true
 }
