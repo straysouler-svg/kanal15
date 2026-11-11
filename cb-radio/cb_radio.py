@@ -134,6 +134,8 @@ DEFAULT_CFG = {
     "require_engine_on": True,
     "kerchunk_gap_s": [100, 320],  # empty push-to-talk clicks between phrases; [] = off
     "greet_reply_chance": 0.85,    # someone answers an actor's hello
+    "horn_pilot": False,           # «мигни — бибикну», пилот 11.11: сцена сигнала у soroka/vitek/ten (только тест)
+    "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
     "update": {"url": "", "channel": "public", "auto": True},   # tools/pack_release.py fills url + channel per build
@@ -326,6 +328,13 @@ class Game:
         if not self._p:
             return False
         return bool(ctypes.string_at(self._p, 600)[581])
+
+    def lights_high(self):
+        """Дальний свет включён (Funbit map byte 592 = lightsBeamHigh, структура Funbit 11.11;
+        вживую ещё не проверен — см. prompts/report_shturman_2026-11-11.md). «Моргание» = нарастающий фронт."""
+        if not self._p:
+            return False
+        return bool(ctypes.string_at(self._p, 600)[592])
 
     def pos(self):
         """(x, z, game minutes) - truck world position and the game clock (minutes since game start)."""
@@ -1232,6 +1241,31 @@ class Player:
                 self.last_speaker, self.last_t = actor, time.monotonic()
             self.speaker = None
 
+    def street(self, data, sr, actor=None):
+        """Звук «с улицы» (гудок с дороги, пилот «мигни — бибикну»): БЕЗ радиофильтра и помех —
+        он не из рации. Громкость по конфигу, «Тишина в эфире» вежливо глушит и его; ПТТ/пауза прерывают."""
+        try:
+            vol = 0.0 if TRAY_STATE.get("muted") else float(self.cfg["volume"])
+            sd.play(np.asarray(data, dtype=np.float32) * vol, sr, device=self.cfg["device"])
+        except Exception as e:  # busy/unplugged device: skip, keep the radio alive
+            log(f"не смог проиграть звук с дороги: {e}")
+            return "error"
+        self.playing = True
+        try:
+            t0, dur = time.monotonic(), len(data) / sr
+            while time.monotonic() - t0 < dur + 0.1:
+                if self.ptt:
+                    self.ptt.poll()
+                    if self.ptt.down:
+                        return "ptt"
+                time.sleep(0.02)
+                if self.game and self.game.state(self.cfg["require_engine_on"]) != "driving":
+                    sd.stop()
+                    return "paused"
+            return "ok"
+        finally:
+            self.playing = False
+
     def item(self, name):
         if name.startswith("scene/"):
             d = SCENES / name.split("/", 1)[1]
@@ -2016,6 +2050,8 @@ class Operator:
             return self.foreign_reply(kind)
         if group == "intent" and kind in SECRET_KINDS:
             return self.all_answer(who, kind)
+        if group == "intent" and kind == "dist" and horn_scene(self, who):
+            return                                       # «мигни — бибикну» (пилот под флагом horn_pilot)
         if group == "intent" and kind in ("dist", "eta", "meet"):
             if self._live(kind, who, prefer):
                 return
@@ -2288,6 +2324,154 @@ def weather_kind(game, world):
     if game and game.wipers():
         return "rain"
     return "dry_night" if world and world.is_night(world.game_min) else "dry_day"
+
+
+def weather_kind(game, world):
+    """rain = your wipers are on (the drivers in range are in your area); else dry day / dry night."""
+    if game and game.wipers():
+        return "rain"
+    return "dry_night" if world and world.is_night(world.game_min) else "dry_day"
+
+
+# ---------------------------------------------------------------- «мигни — бибикну» (пилот 11.11)
+# Сцена сигнала: «ты далеко?» -> просьба (день «бибикни» / ночь и дождь «мигни») -> окно ожидания ->
+# «вижу/слышу» -> двойной гудок (сжатый в рации + настоящий с задержкой звука м ÷ 340). Под флагом
+# cfg["horn_pilot"] (по умолчанию выключен — в общий релиз не попадает). Честность: порог 150-1500 м —
+# ближе «рядом где-то» обычным ответом, дальше «не услышишь»; никаких «в правом ряду».
+HORN_PILOT_ACTORS = ("soroka", "vitek", "ten")
+HORN_NEAR_M, HORN_FAR_M = 150.0, 1500.0
+HORN_WAIT_S = (15.0, 20.0)
+HORN_DONE = {}            # actor -> monotonic: сцена уже сыграна за эту встречу (снимаем, когда ушёл из зоны)
+_MM_HORN = [None]
+
+
+def _horn_mm():
+    if _MM_HORN[0] is None:
+        _MM_HORN[0] = ctypes.WinDLL("winmm")
+    return _MM_HORN[0]
+
+
+def _horn_button_down(c):
+    """«Кнопка гудка» из config horn_button — как тангента: имя устройства (часть) + 0-based кнопка, winmm."""
+    dev, btn = str((c or {}).get("device", "")).lower(), (c or {}).get("button")
+    if not dev or not isinstance(btn, int) or not 0 <= btn < 32:
+        return False
+    try:
+        with _WINMM_LOCK:
+            for _, (name, mask) in _winmm_buttons(_horn_mm()).items():
+                if dev in name.lower() and (mask >> btn) & 1:
+                    return True
+    except Exception:
+        return False
+    return False
+
+
+def _horn_pick(mouth, who):
+    """Актёр пилота в пороге 150-1500 м, сцена с которым за эту встречу ещё не шла. -> (actor, meters) | None."""
+    w = getattr(mouth, "world", None)
+    if not w or mouth.deck.allowed is None:
+        return None
+    here = [a for a in mouth.deck.allowed if not mouth.deck.offline(a)]
+    for a in list(HORN_DONE):                        # ушёл из зоны — «встреча» кончилась
+        if a not in here:
+            HORN_DONE.pop(a, None)
+    order = ([who] if who in HORN_PILOT_ACTORS else []) + [a for a in here if a in HORN_PILOT_ACTORS]
+    best = None
+    for a in dict.fromkeys(order):
+        if a not in here or mouth.deck.offline(a) or a in HORN_DONE:
+            continue
+        dd = w.distance(a)
+        m = None if dd is None else dd * w.range
+        if m is not None and HORN_NEAR_M <= m <= HORN_FAR_M and (best is None or m < best[1]):
+            best = (a, m)
+    return best
+
+
+def _horn_watch(mouth, seconds):
+    """Окно ожидания сигнала игрока: нарастающий фронт дальнего (Funbit 592) или «кнопка гудка».
+    ПТТ и пауза прерывают окно. -> True, если сигнал был."""
+    t0 = time.monotonic()
+    game = getattr(mouth, "game", None)
+    cfg = PLAYER.cfg or {}
+    was_high = game.lights_high() if game else False
+    while time.monotonic() - t0 < seconds:
+        if PLAYER.ptt:
+            PLAYER.ptt.poll()
+            if PLAYER.ptt.down:
+                return False
+        if game and game.state(cfg.get("require_engine_on", True)) != "driving":
+            return False
+        high = game.lights_high() if game else False
+        if high and not was_high:
+            return True
+        was_high = high
+        if _horn_button_down(cfg.get("horn_button")):
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def horn_scene(mouth, who):
+    """Сцена «мигни — бибикну» для интента dist. True — сцена сыграна (обычный ответ не нужен).
+    Не работает в «помолчим» (игрок сам сорвал тишину вопросом — сцена допустима; включённая тишина
+    из трея молчит вместе с эфиром, уважаем её)."""
+    cfg = PLAYER.cfg or {}
+    if not cfg.get("horn_pilot") or time.monotonic() < HUSH_UNTIL[0]:
+        return False
+    w = getattr(mouth, "world", None)
+    pick = _horn_pick(mouth, who)
+    if pick is None:
+        # пилотный по имени и на связи, но дальше порога — честное «не услышишь» вместо обычного dist_far
+        if (who in HORN_PILOT_ACTORS and w and mouth.deck.allowed is not None
+                and who in mouth.deck.allowed and not mouth.deck.offline(who)):
+            dd = w.distance(who)
+            m = None if dd is None else dd * w.range
+            if m is not None and m > HORN_FAR_M and who not in HORN_DONE:
+                p = line_of("horn", "far", who)
+                if p and PLAYER.file(p[1], who) == "ok":
+                    mouth.deck.on_air.add(who)
+                    mouth.on_air = True
+                    bond_add(who, 2 if who else 1, "далеко — не услышишь")
+                    HORN_DONE[who] = time.monotonic()
+                    log(f"мигни-бибикну: {who} в {m:.0f} м — дальше порога, «не услышишь»")
+                    return True
+        return False
+    import horn as horn_mod
+    actor, meters = pick
+    game = getattr(mouth, "game", None)
+    night = w.is_night(w.game_min)
+    rain = bool(game and game.wipers())
+    kind = "ask_night" if (night or rain) else "ask_day"
+    p = line_of("horn", kind, actor)
+    if not p:
+        return False
+    log(f"мигни-бибикну: {actor} в {meters:.0f} м ({'ночь' if night else 'день'}{' + дождь' if rain else ''})")
+    if PLAYER.file(p[1], actor) != "ok":
+        return False
+    mouth.deck.on_air.add(actor)
+    mouth.on_air = True
+    bond_add(actor, 1, "сигналы")
+    HORN_DONE[actor] = time.monotonic()
+    if not _horn_watch(mouth, random.uniform(*HORN_WAIT_S)):
+        p2 = line_of("horn", "missed", actor)
+        if p2 and PLAYER.file(p2[1], actor) == "ok":
+            mouth.deck.on_air.add(actor)
+            log("мигни-бибикну: сигнала не было — «не разглядел», без упрёка")
+        return True
+    p2 = line_of("horn", "seen", actor)
+    if p2 and PLAYER.file(p2[1], actor) == "ok":
+        mouth.deck.on_air.add(actor)
+    # двойной гудок (одобрено 11.11): водитель держит тангенту — сначала сжатый в рации,
+    # через расстояние ÷ 340 м/с — настоящий, с дороги, без радиофильтра
+    timbre, pat = horn_mod.HORN_RHYTHMS.get(actor, horn_mod.HORN_RHYTHMS["default"])
+    hd = w.heading(w.drivers[actor])
+    oncoming = hd[0] * w.hx + hd[1] * w.hz < -0.3
+    buf = horn_mod.horn_buffer(timbre, meters, side="left" if oncoming else "center", pattern=pat)
+    PLAYER.street(degrade(buf, horn_mod.SR_DEFAULT, w.distance(actor)), horn_mod.SR_DEFAULT)   # по рации
+    if PLAYER.idle(min(meters / horn_mod.C_AIR, 5.0)):
+        PLAYER.street(buf, horn_mod.SR_DEFAULT)                                               # с дороги
+        log(f"мигни-бибикну: гудок {actor} с задержкой {meters / horn_mod.C_AIR:.1f} с")
+    return True
 
 
 def play_murmur(world):

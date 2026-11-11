@@ -6,7 +6,9 @@
 
 API:
     horn_buffer(timbre, distance_m, rel_speed_ms=0, side='left'|'center',
-                sr=48000, duration=2.5) -> np.ndarray (n, 2) float32
+                sr=48000, duration=2.5, pattern=None) -> np.ndarray (n, 2) float32
+    pattern = None — один сплошной гудок на всю длительность;
+    [(start_s, dur_s), ...] — ритм от характера (два коротких, частит «та-та-та»...).
 """
 
 import numpy as np
@@ -15,6 +17,30 @@ C_AIR = 340.0          # скорость звука, м/с
 SR_DEFAULT = 48000
 AUDIBILITY_FLOOR = 0.03   # ниже этой амплитуды — тишина (порог слышимости)
 REF_DIST = 60.0           # масштаб затухания
+
+# Ритмы гудка по рисункам Летописца (phrases/drafts_horn_2026-11-11.md, раздел «Рисунок гудка»):
+# ключ -> (тембр-класс, pattern). Пилот 11.11: soroka/витёк — high, тень — bass.
+HORN_RHYTHMS = {
+    "mihalych": ("old_low", [(0.0, 0.9), (1.25, 1.0)]),
+    "stas": ("old_low", [(0.0, 0.16), (0.28, 0.16), (0.56, 0.16), (0.84, 0.16)]),
+    "yanek": ("old_low", [(0.0, 1.9)]),
+    "lastochka": ("high", [(0.0, 0.35), (0.6, 0.35)]),
+    "boroda": ("bass", [(0.0, 2.3)]),
+    "soroka": ("high", [(0.0, 0.4), (0.65, 0.4)]),
+    "student": ("old_low", [(0.0, 0.5), (1.0, 0.8)]),
+    "professor": ("old_low", [(0.0, 0.4), (0.8, 0.4)]),
+    "petrovna": ("old_low", [(0.0, 0.3), (0.55, 0.3), (1.1, 0.3)]),
+    "ten": ("bass", [(0.0, 0.7)]),
+    "vitek": ("high", [(0.0, 0.14), (0.24, 0.14), (0.48, 0.14), (0.72, 0.14), (0.96, 0.14)]),
+    "sova": ("old_low", [(0.0, 0.55)]),
+    "ment": ("old_low", [(0.0, 0.4), (1.4, 0.4), (2.8, 0.4)]),
+    "kardan": ("bass", [(0.0, 1.6)]),
+    "lisa": ("old_low", [(0.0, 0.3), (0.55, 0.38)]),
+    "rustam": ("old_low", [(0.0, 0.8), (1.2, 0.8)]),
+    "bahti": ("bass", [(0.0, 0.22), (0.42, 0.3)]),
+    "vera": ("bass", [(0.0, 0.3)]),
+    "default": ("old_low", None),
+}
 
 # Тембры: (freq, amp) — основа, второй тон, обертона.
 # Тембр от машины, ритм (длительность/повторы) задаётся снаружи.
@@ -51,10 +77,13 @@ def _distance_profile(distance_m, rel_speed_ms, n, sr):
 
 
 def horn_buffer(timbre, distance_m, rel_speed_ms=0.0, side="left",
-                sr=SR_DEFAULT, duration=2.5):
-    """Вернуть стерео-буфер гудка. rel_speed_ms>0 включает проезд с Доплером."""
+                sr=SR_DEFAULT, duration=2.5, pattern=None):
+    """Вернуть стерео-буфер гудка. rel_speed_ms>0 включает проезд с Доплером.
+    pattern = [(start_s, dur_s), ...] — ритм; None — сплошной гудок на всю длительность."""
     if timbre not in TIMBRES:
         raise ValueError(f"unknown timbre {timbre!r}: {sorted(TIMBRES)}")
+    if pattern:
+        duration = max(duration, max(s + d for s, d in pattern) + 0.4)
     n = int(round(duration * sr))
     t = np.arange(n) / sr
     spec = TIMBRES[timbre]
@@ -71,8 +100,16 @@ def horn_buffer(timbre, distance_m, rel_speed_ms=0.0, side="left",
 
     # Огибающая: быстрая атака, спад в конце, лёгкая АМ-шероховатость.
     att, rel = 0.04, 0.15
-    env = np.minimum(t / att, 1.0)
-    env *= np.minimum(np.maximum((duration - t) / rel, 0.0), 1.0)
+    if pattern:
+        env = np.zeros(n)
+        for s0, d0 in pattern:
+            i0, i1 = int(s0 * sr), min(n, int((s0 + d0) * sr))
+            seg = np.minimum((t[i0:i1] - s0) / att, 1.0)
+            seg *= np.minimum(np.maximum((s0 + d0 - t[i0:i1]) / rel, 0.0), 1.0)
+            env[i0:i1] = np.maximum(env[i0:i1], seg)
+    else:
+        env = np.minimum(t / att, 1.0)
+        env *= np.minimum(np.maximum((duration - t) / rel, 0.0), 1.0)
     am = 1.0 + spec["am_depth"] * np.sin(2 * np.pi * spec["am_rate"] * t)
     amp = amp * env * am
 
