@@ -15,7 +15,8 @@
   "greet_reply_chance": 0.85,
   "ptt": {
     "device": "R5 Base",
-    "button": 22
+    "button": 22,
+    "backend": "pygame"
   },
   "lock_port": 47819,
   "update": {
