@@ -39,6 +39,10 @@ def main():
     ap.add_argument("--rest-scale", type=float, default=1.0, help="множитель длительности стоянок")
     ap.add_argument("--pair-sync", type=float, default=0.0,
                     help="0..1: тяготение пар ур.>=3 к маршрутам друг друга (вариант живости)")
+    ap.add_argument("--diminish", action="store_true",
+                    help="убывающая отдача: греет первая встреча пары за сутки, повторные — доля")
+    ap.add_argument("--stationary", action="store_true",
+                    help="контроль: игрок стоит на месте — сколько жизни в мире без него")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -67,7 +71,8 @@ def main():
     w.meet_every_s = 1e18
     w.quiet_s = 1e18
 
-    rl = Roadlife(w, names, seed=args.seed, meet_radius=args.meet_radius)
+    rl = Roadlife(w, names, seed=args.seed, meet_radius=args.meet_radius,
+                  diminishing=args.diminish)
     rl.REAL_SEC_PER_GAME_MIN = TICK_S * 60.0 / 300.0
 
     # --- ночные рейсы Студента (решение 11.11, только стенд): 3 ночи в месяц по зерну
@@ -88,6 +93,10 @@ def main():
         hubs = sorted(w.cities, key=lambda t: -pops.get(t, 0))[:20]
     rng = random.Random(args.seed + 1)
     hub_route = rng.sample(hubs, min(len(hubs), 14))
+    rl.player_mode = ("стоит на месте в стартовом городе (контрольный прогон)" if args.stationary
+                      else f"кольцо по {len(hub_route)} крупным городам (случайная выборка по зерну), "
+                           f"22 м/с, ночью стоянка; старт мира — копия world_state.json "
+                           f"(последняя поездка пользователя)")
     px, pz = w.roads.xz(hub_route[0])
     ppath = []
     pi = 0
@@ -104,22 +113,34 @@ def main():
     rain_days = {}
     ticks = int(args.days * 1440 / 5)
     prev_rest = {k: 0.0 for k in w.drivers}
+    nr_reroute_day = None                            # ночной рейс: маршрут к Тени раз в ночь
     for i in range(ticks):
         dt = TICK_S
         gm += 5.0
         night = world_mod.World.is_night(gm)
         day = int(gm // 1440)
-        # ночной рейс Студента: в выбранные ночи смена «any» (едет вопреки расписанию)
+        # ночной рейс Студента: в выбранные ночи смена «any» (едет вопреки расписанию),
+        # маршрут — в сторону Тени: чтобы они оказались на одном перегоне (решение 11.11)
         if sd is not None:
             sd.schedule = "any" if day in student_nights else student_sched
+            if day in student_nights and int((gm % 1440) // 60) in (20, 22, 0) \
+                    and nr_reroute_day != day \
+                    and sd.x is not None and sd.resting <= 0:
+                td = w.drivers.get("ten")
+                if td is not None and td.x is not None:
+                    goal = w.roads.nearest(td.x, td.z)
+                    p = w.roads.path(w.roads.nearest(sd.x, sd.z), goal)
+                    if p and len(p) > 1:
+                        sd.route = list(p)
+                        nr_reroute_day = day
         # погода: решение о дожде — раз в сутки (иначе бросок каждый тик держит дождь почти вечно)
         day = int(gm // 1440)
         if day not in rain_days:
             rain_days[day] = rng.random() < 0.3 and rng.uniform(180, 600) or 0.0
         rain_left = rain_days[day] - (gm % 1440)
         rain = rain_left > 0
-        # игрок едет; ночью — стоянка до 6:00
-        if not night or rng.random() < 0.1:
+        # игрок едет; ночью — стоянка до 6:00 (контрольный прогон — стоит)
+        if not args.stationary and (not night or rng.random() < 0.1):
             step = 22.0 * dt
             while step > 0 and len(ppath) > 1:
                 tx, tz = w.roads.xz(ppath[1])
@@ -166,13 +187,16 @@ def main():
 
     diary_path = OUT / f"diary_seed{args.seed}_{args.tag}.txt"
     summary_path = OUT / f"summary_seed{args.seed}_{args.tag}.txt"
+    debug_path = OUT / f"debug_seed{args.seed}_{args.tag}.txt"
     diary_path.write_text(rl.diary(), encoding="utf-8")
     summary_path.write_text(rl.summary(args.days, real_sec_per_game_min=TICK_S * 60.0 / 300.0),
                             encoding="utf-8")
+    debug_path.write_text("\n".join(f"{rl.fmt_gm(g)}, {p}. {k} — {kind}"
+                                    for g, p, kind, k in rl.debug_log) + "\n", encoding="utf-8")
     rl.save_state()
     print(f"seed={args.seed} days={args.days}: событий {len(rl.events)}, "
           f"в эфире {sum(1 for e in rl.events if e['audible'])}, "
-          f"холодков {len(rl.cold_log)}")
+          f"пересказ {len(rl.retold_events)}, холодков {len(rl.cold_log)}")
     print(diary_path)
     print(summary_path)
 

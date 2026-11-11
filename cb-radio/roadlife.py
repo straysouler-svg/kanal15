@@ -122,7 +122,8 @@ class Roadlife:
     MAX_SHIFT = 3               # не больше шагов от базы дня
     REAL_SEC_PER_GAME_MIN = 3.0 # трассовый масштаб времени ×20 (5 игр. мин = 15 наст. с)
 
-    def __init__(self, world, names, seed=7, state_path=None, meet_radius=None):
+    def __init__(self, world, names, seed=7, state_path=None, meet_radius=None,
+                 diminishing=False):
         self.w = world
         self.names = names
         self.rng = random.Random(seed)
@@ -130,6 +131,7 @@ class Roadlife:
         self.state_path = Path(state_path) if state_path else None
         if meet_radius:
             self.MEET_RADIUS = meet_radius
+        self.diminishing = diminishing            # убывающая отдача: греет первая встреча пары за сутки
         # слой 2
         self.pts = {k: 0.0 for k in names}                 # очки сдвига от базы дня
         self.reasons = {k: [] for k in names}              # [(game_min, причина)]
@@ -144,6 +146,13 @@ class Roadlife:
         self.cold_log = []                                 # (pair, начало, конец)
         # слой 1
         self.events = []
+        self.debug_log = []                              # отладка: расписание и прочий шум
+        self._meet_day = {p: -1 for p in self.pairs}     # убывающая отдача: день последней встречи
+        # пересказ: свидетель помнит событие 2 игровых суток и рассказывает игроку в радиусе
+        self._knowledge = {k: {} for k in names}         # key -> {id события: срок годности gm}
+        self._retold = set()                             # события, до которых дошёл пересказ
+        self.retold_events = []                          # сами события-пересказы
+        self.player_mode = ""                            # как едет условный игрок (для сводки)
         self._pair_gap = {p: -1e9 for p in self.pairs}
         self._prev_route = {}
         self._job = {}                                     # key -> (game_min, остаток км)
@@ -160,9 +169,23 @@ class Roadlife:
         t = self.w.roads.nearest(x, z)
         return self.w.cities[t][0]
 
+    NEAR_CITY_M = 20000.0       # ближе 20 км — называем город; дальше — перегон
+
+    def place_near(self, x, z, route=None):
+        """Честное место: город, если он рядом, иначе перегон A—B по текущему плечу маршрута."""
+        t = self.w.roads.nearest(x, z)
+        cx, cz = self.w.roads.xz(t)
+        if math.hypot(cx - x, cz - z) <= self.NEAR_CITY_M:
+            return self.w.cities[t][0]
+        if route and len(route) > 1:
+            try:
+                return f"перегон {self.w.cities[route[0]][0]}—{self.w.cities[route[1]][0]}"
+            except (KeyError, IndexError):
+                pass
+        return f"трасса у {self.w.cities[t][0]}"
+
     def between(self, d):
-        t = self.w.roads.nearest(d.x, d.z)
-        return f"перегон у {self.w.cities[t][0]}"
+        return self.place_near(d.x, d.z, getattr(d, "route", None))
 
     def witnesses(self, x, z, exclude=()):
         out = []
@@ -284,6 +307,17 @@ class Roadlife:
             x, z = (da.x + db.x) / 2, (da.z + db.z) / 2
             self._pair_gap[pair] = gm
             longing = lvl >= 3 and gm - self.last_meet[pair] > self.LONGING_DAYS * 1440
+            # убывающая отдача: повтор в тот же день — ноль; раз в сутки — треть;
+            # раз в двое — две трети; разлука трое суток и больше — полная.
+            # Долгая разлука греет сильнее частой встречи.
+            gap = gm - self.last_meet[pair]
+            mult = 1.0
+            if self.diminishing:
+                if self._meet_day[pair] == int(gm // 1440):
+                    mult = 0.0
+                else:
+                    mult = 1.0 if gap >= 4320 else 0.66 if gap >= 2880 else 0.33
+            self._meet_day[pair] = int(gm // 1440)
             self.last_meet[pair] = gm
             wit = self.witnesses(x, z, exclude=pair)
             audible = any(k in w.inside for k in pair) or any(k in w.inside for k in wit)
@@ -292,21 +326,21 @@ class Roadlife:
             if lvl < 2:
                 # «слышали в эфире»: встреча слабая — настроение чуть тянет вверх,
                 # в погоду не лезет, в дневник не пишем (иначе шумит)
-                self.shift(a, 1, f"слышал в эфире {self.name(b)}", gm)
-                self.shift(b, 1, f"слышал в эфире {self.name(a)}", gm)
+                self.shift(a, max(mult, 0.2), f"слышал в эфире {self.name(b)}", gm)
+                self.shift(b, max(mult, 0.2), f"слышал в эфире {self.name(a)}", gm)
                 continue
             if kind == "стоянка вместе":
-                self.shift(a, 7, f"стоянка с {self.name(b)}", gm)
-                self.shift(b, 7, f"стоянка с {self.name(a)}", gm)
-                self._weather_step(pair, +3, gm)
+                self.shift(a, 7 * mult, f"стоянка с {self.name(b)}", gm)
+                self.shift(b, 7 * mult, f"стоянка с {self.name(a)}", gm)
+                self._weather_step(pair, 3 * mult, gm)
             elif kind == "шли парой":
-                self.shift(a, 6, f"ехал в паре с {self.name(b)}", gm)
-                self.shift(b, 6, f"ехал в паре с {self.name(a)}", gm)
-                self._weather_step(pair, +2, gm)
+                self.shift(a, 6 * mult, f"ехал в паре с {self.name(b)}", gm)
+                self.shift(b, 6 * mult, f"ехал в паре с {self.name(a)}", gm)
+                self._weather_step(pair, 2 * mult, gm)
             else:
-                self.shift(a, 3, f"встретил на трассе {self.name(b)}", gm)
-                self.shift(b, 3, f"встретил на трассе {self.name(a)}", gm)
-                self._weather_step(pair, +1, gm)
+                self.shift(a, 3 * mult, f"встретил на трассе {self.name(b)}", gm)
+                self.shift(b, 3 * mult, f"встретил на трассе {self.name(a)}", gm)
+                self._weather_step(pair, 1 * mult, gm)
             if longing:
                 kind = "давно не виделись"
                 self.shift(a, 10, f"давно не видел {self.name(b)} — аж обрадовался", gm)
@@ -338,8 +372,8 @@ class Roadlife:
                 if cheerful and self.rng.random() < 0.3:
                     other = b if cheerful[0] == a else a
                     if self.mood_now(other, gm // 1440) in ("tired", "grumpy"):
-                        self.shift(other, +3, f"{self.name(cheerful[0])} взбодрил по дороге", gm)
-            self._log(gm, self.place(x, z), kind, list(pair), wit, audible,
+                        self.shift(other, 3 * mult, f"{self.name(cheerful[0])} взбодрил по дороге", gm)
+            self._log(gm, self.place_near(x, z, getattr(da, "route", None)), kind, list(pair), wit, audible,
                       note or self.weather[pair][2])
 
     @staticmethod
@@ -375,13 +409,15 @@ class Roadlife:
                     if actual > expected * 1.5 + 45:
                         self.shift(k, -10, "опоздал с рейсом", gm)
                         self.set_care(k, gm, "опаздывает с рейсом")
-                        self._log(gm, self.place(d.x, d.z), "опоздал с рейсом", [k],
+                        self._log(gm, self.place_near(d.x, d.z, getattr(d, "route", None)),
+                                  "опоздал с рейсом", [k],
                                   self.witnesses(d.x, d.z, (k,)),
                                   k in w.inside)
                     else:
                         self.shift(k, 1, "рейс сдал вовремя", gm)
                         if self.rng.random() < 0.2:      # в дневнике — каждый пятый, иначе шум
-                            self._log(gm, self.place(d.x, d.z), "рейс сдан", [k],
+                            self._log(gm, self.place_near(d.x, d.z, getattr(d, "route", None)),
+                                      "рейс сдан", [k],
                                       self.witnesses(d.x, d.z, (k,)), k in w.inside)
                 self._prev_route[k] = "rest"
                 continue
@@ -406,8 +442,9 @@ class Roadlife:
             was = self._prev_active.get(k)
             if was and not active and not rain:
                 self.shift(k, -1, "смена кончилась, вымотался", gm)
-                self._log(gm, self.place(d.x, d.z), "конец смены", [k],
-                          self.witnesses(d.x, d.z, (k,)), k in w.inside)
+                # расписание, не жизнь: в дневник и счёт событий не пишем, только отладка
+                self.debug_log.append((gm, self.place_near(d.x, d.z, getattr(d, "route", None)),
+                                       "конец смены", k))
             self._prev_active[k] = active
             if not active or d.resting > 0:
                 self._broken.pop(k, None)
@@ -463,17 +500,43 @@ class Roadlife:
                 x, z = (hv.x + hh.x) / 2, (hv.z + hh.z) / 2
                 wit = self.witnesses(x, z, (victim, helper))
                 aud = victim in w.inside or helper in w.inside or any(t in w.inside for t in wit)
-                self._log(gm, self.place(x, z), "крюк на помощь", [victim, helper],
+                self._log(gm, self.place_near(x, z, getattr(hv, "route", None)), "крюк на помощь",
+                          [victim, helper],
                           wit, aud, self.weather.get(pair, [0, 0, "ровно"])[2])
 
     # ------------------------------------------------------------------ шаг
     def step(self, gm, night, rain):
         """Один тик модели после world.update. gm — игровые минуты."""
         day = int(gm // 1440)
+        n_events = len(self.events)
         self._weather_tick(gm)
         self._pair_events(gm, night)
         self._job_events(gm)
         self._solo_events(gm, night, rain)
+        # пересказ: свидетели новых событий запоминают их на 2 игровых суток
+        for e in self.events[n_events:]:
+            expiry = e["gm"] + 2 * 1440.0
+            for k in e["wit"]:
+                if k in self._knowledge:
+                    self._knowledge[k][id(e)] = expiry
+        # кто в радиусе игрока — тот рассказывает: событие доезжает до игрока однажды
+        if self.w.inside:
+            for k in self.w.inside:
+                know = self._knowledge.get(k)
+                if not know:
+                    continue
+                for eid, expiry in list(know.items()):
+                    if expiry < gm:
+                        del know[eid]
+                        continue
+                    if eid in self._retold:
+                        continue
+                    e = next((x for x in self.events if id(x) == eid), None)
+                    if e is None or e["audible"]:
+                        self._retold.add(eid)
+                        continue
+                    self._retold.add(eid)
+                    self.retold_events.append(e)
         if int(gm) % 240 < 5:                              # замер настроения 4 раза в сутки
             for k in self.names:
                 self._day_samples[k].append(self.mood_now(k, day))
@@ -616,27 +679,50 @@ class Roadlife:
             out.append(f"   {self.name(p[0])} ↔ {self.name(p[1])}: "
                        f"{self.fmt_gm(s)} → {self.fmt_gm(e)} ({(e - s) / 60:.1f} ч)")
         aud = [e for e in self.events if e["audible"]]
-        aud_day = {}
+        start_day = int((self.events[0]["gm"] if self.events else 0) // 1440)
+        aud_day = {d: 0 for d in range(start_day, start_day + days)}   # все дни, включая нулевые
         for e in aud:
             aud_day[int(e["gm"] // 1440)] = aud_day.get(int(e["gm"] // 1440), 0) + 1
+        silent_days = sum(1 for v in aud_day.values() if v == 0)
         per_hour = len(aud) / (real_min_total / 60.0)
         trip_avg = per_hour * 1.5                       # 90 минут игры
         day_real_min = 1440.0 * real_sec_per_game_min / 60.0
-        trip_worst = (min(aud_day.values()) if aud_day else 0) * 90.0 / day_real_min
+        trip_worst = min(aud_day.values()) * 90.0 / day_real_min
+        ret_day = {d: 0 for d in range(start_day, start_day + days)}
+        for e in self.retold_events:
+            ret_day[int(e["gm"] // 1440)] = ret_day.get(int(e["gm"] // 1440), 0) + 1
+        ret_per_hour = len(self.retold_events) / (real_min_total / 60.0)
+        ret_trip = ret_per_hour * 1.5
+        ret_trip_worst = min(ret_day.values()) * 90.0 / day_real_min
         out.append("")
-        out.append("Главная метрика — на настоящие часы игры (1 игровая минута = "
-                   f"{real_sec_per_game_min:.0f} с):")
-        out.append(f"   Событий в эфире: {len(aud)} за {real_min_total / 60:.1f} ч игры "
-                   f"= {per_hour:.2f} в час (всего событий {len(self.events)})")
-        out.append(f"   Поездка 90 мин: в среднем {trip_avg:.1f} событий в эфире, "
-                   f"худший день {trip_worst:.1f}")
+        out.append(f"Как едет игрок: {self.player_mode or 'кольцо по 14 крупным городам, 22 м/с, ночью стоянка'}")
+        out.append("Масштаб времени: ×20 на трассе (1 игровая минута = "
+                   f"{real_sec_per_game_min:.0f} с; канал scale float @700 в design_telemetry_2026-11-11.md; "
+                   "число «5 игр. мин = 15 наст. с» — из брифа проверки, в документе не подтверждено)")
+        out.append("")
+        out.append("Главная метрика — на настоящие часы игры:")
+        out.append(f"   Вживую в эфире: {len(aud)} за {real_min_total / 60:.1f} ч игры "
+                   f"= {per_hour:.2f} в час (всего событий журнала {len(self.events)}; "
+                   f"концов смены в отладке: {len(self.debug_log)})")
+        out.append(f"   Поездка 90 мин вживую: в среднем {trip_avg:.1f}, худший день {trip_worst:.1f}; "
+                   f"дней без единого события в эфире: {silent_days} из {days}")
+        out.append(f"   Пересказ (свидетель в радиусе помнит событие 2 игр. суток): "
+                   f"{len(self.retold_events)} за месяц = {ret_per_hour:.2f} в час")
+        out.append(f"   Поездка 90 мин с пересказом: в среднем {ret_trip:.1f}, "
+                   f"худший день {ret_trip_worst:.1f}")
+        all_days = sorted(set(aud_day) | set(ret_day))
+        comb_day = {d: aud_day.get(d, 0) + ret_day.get(d, 0) for d in all_days}
+        comb_per_hour = (len(aud) + len(self.retold_events)) / (real_min_total / 60.0)
+        out.append(f"   Поездка 90 мин вживую+пересказ: в среднем {comb_per_hour * 1.5:.1f}, "
+                   f"худший день {min(comb_day.values()) * 90.0 / day_real_min:.1f}")
         ts = met.get(tuple(sorted(("student", "ten"))), 0)
         out.append(f"   Встреч Тень ↔ Студент за месяц: {ts}")
         soroka_in = [e for e in self.events
                      if "soroka" in e["who"] or "soroka" in e["wit"]]
         out.append(f"Сорока в событиях/свидетелях: {len(soroka_in)} (должно быть 0)")
         cold_states = [e["note"] for e in self.events if e["note"] == "холодок"]
-        out.append(f"Пометок «холодок» у событий: {len(cold_states)}")
+        out.append(f"Пометок «холодок» у событий: {len(cold_states)} — погода пары на момент события; "
+                   "в «холодков за месяц» идут только полноценные (≥3 ч), поэтому числа разные")
         return "\n".join(out) + "\n"
 
     def save_state(self):
