@@ -1,4 +1,6 @@
-"""Вертикальный ролик (Shorts / Reels / TikTok) из записи поездки по описанию в JSON.
+"""УСТАРЕВШИЙ конвейер (с 2026-11-11): основной — сборка по дизайн-пакету с монтажными листами в edits/ (см. final_2026-11-09/ и .kimi-code/skills/kanal15-shorts/SKILL.md). Этот файл не брать в работу.
+
+Вертикальный ролик (Shorts / Reels / TikTok) из записи поездки по описанию в JSON.
   python make_short.py shorts/01_kto_v_efire.json
 Описание: {"src": "...mp4", "start": сек, "end": сек, "out": "имя.mp4", "hook": "крючок",
            "subs": [{"t": сек_от_начала_записи, "d": длительность, "who": "petrovna"|"player"|..., "text": "..."}]}
