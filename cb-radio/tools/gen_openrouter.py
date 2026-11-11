@@ -37,12 +37,44 @@ SOUNDS = {"смеётся": "смеётся", "смеется": "смеётся"
           "зевает": "зевает", "покашливает": "покашливает", "откашливается": "покашливает",
           "охает": "вздыхает", "стонет": "вздыхает", "выдыхает": "вздыхает"}
 
+# ElevenLabs v3 tags in square brackets: gpt-audio READS them aloud ("[laughs]" -> "смеётся" вслух).
+# Translate the actable ones to round-bracket remarks, drop pure manner/SFX tags from the text.
+def _el_tag(tag):
+    tag = tag.strip().lower()
+    if "pause" in tag or "silence" in tag:
+        return "(пауза)"
+    if "laugh" in tag or "giggle" in tag:
+        return "(смеётся)"
+    if "chuckle" in tag or "scoff" in tag:
+        return "(усмехается)"
+    if "sigh" in tag or "deep breath" in tag:
+        return "(вздыхает)"
+    if "yawn" in tag:
+        return "(зевает)"
+    if "clears throat" in tag:
+        return "(покашливает)"
+    if "groan" in tag:
+        return "(стонет)"
+    return None
+
 
 def prep(text):
     """Split stage directions: (пауза) -> '...', manner words -> separate instruction, keep only sounds.
     Returns (text for the model, manner list, list of all remark words for QA)."""
     import re
     manner, words = [], []
+
+    def el_repl(m):
+        tag = m.group(1).strip().lower()
+        if re.search(r"[а-яё]", tag):      # русский тег в квадратных скобках -> обычная ремарка
+            return f"({tag})"
+        remark = _el_tag(tag)
+        if remark:
+            return remark
+        words.append(tag)
+        return ""
+
+    text = re.sub(r"\[([^\]]+)\]", el_repl, text)
 
     def repl(m):
         parts = m.group(1).lower().split()

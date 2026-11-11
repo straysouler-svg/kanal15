@@ -6,8 +6,9 @@
     --live = write straight into the live deck (audio/level3, scenes, reactions) instead of the
              alternative set audio/alt_<voice>/ (keep the ElevenLabs files as they are)
 
-ElevenLabs [audio tags] are removed: XTTS copies the manner of the reference recording, it cannot act
-tags. Coqui CPML licence (non-commercial) was accepted by the user on 2026-10-27 for coop-buddy.
+ElevenLabs [audio tags] and (stage directions) are removed: XTTS copies the manner of the reference
+recording, it cannot act tags — and it READS "(смеётся)" aloud (found 2026-11-11, QA scan).
+Coqui CPML licence (non-commercial) was accepted by the user on 2026-10-27 for coop-buddy.
 """
 import json
 import os
@@ -50,7 +51,7 @@ def load_model(voice_dir):
 
 def say(m, text, temperature=0.7):
     model, gpt, spk = m
-    clean = TAG.sub("", text).strip()
+    clean = re.sub(r"\([^)]*\)\s*", "", TAG.sub("", text)).strip()
     with torch.inference_mode():
         out = model.inference(clean, "ru", gpt, spk, temperature=temperature, speed=1.0,
                               enable_text_splitting=True)
