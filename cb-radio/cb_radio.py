@@ -1495,6 +1495,14 @@ class Operator:
         if intent and not intent.startswith("graf_") and intent not in ("handle", "name_call", "knows"):
             multi = intents.intent_all(text)
             if len(multi) > 1 and intent in multi and "rude" not in multi:
+                # 11.11 (разбор стрима 3.4): «пока» в СЕРЕДИНЕ фразы — это «покамест», не прощание:
+                # «а чё пока дай? Вер, как дела?» разобралось как bye, Лиса попрощалась (+4 дружбы).
+                # Вопрос + «пока» не в начале и не в конце -> bye из связки убираем.
+                # «Пока, Михалыч» / «Давай пока» — настоящие прощания, не трогаем.
+                if "bye" in multi and intents.is_question(text):
+                    words = text.lower().replace("?", " ").replace(",", " ").replace(".", " ").split()
+                    if "пока" in words and 0 < words.index("пока") < len(words) - 1:
+                        multi.remove("bye")
                 if multi[0] != intent:
                     intent = multi[0]
                 log(f"тангента: вопросов несколько ({', '.join(multi)}) — отвечаю на первый: {intent}")
