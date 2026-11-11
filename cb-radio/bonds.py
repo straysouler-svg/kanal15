@@ -129,7 +129,6 @@ class Bonds:
         self.day = None          # game day number (from world)
         self.night = False
         self.rain = False
-        self.seen = {}           # actor -> [game day, set(why)]: повтор темы за сутки не даёт очков (в памяти сессии)
         self.shift = {}          # actor -> (mood steps up/down from the day's mood, monotonic time of the last change)
 
     # ------------------------------------------------------------ texts
@@ -222,20 +221,28 @@ class Bonds:
         """Change friendship. Returns (old_level, new_level) when the level changed, else None."""
         if not actor or actor in ("buh",) or actor.startswith("driver."):
             return None
+        r = self._rec(actor)
         if n > 0 and why:
             # повтор той же темы с тем же водителем за игровые сутки — 0 очков (защита от гринда)
-            rec = self.seen.get(actor)
-            if rec is None or rec[0] != self.day:
-                rec = self.seen[actor] = [self.day, set()]
-            if why in rec[1]:
+            # 11.11: seen перенесён в запись актёра (bonds.json) — перезапуск рации больше не обнуляет
+            # анти-гринд (Ковбой получал «встречу на трассе» на каждом старте)
+            sn = r.get("seen")
+            if sn is None or sn.get("day") != self.day:
+                sn = r["seen"] = {"day": self.day, "topics": []}
+            if why in sn["topics"]:
                 return None
-            rec[1].add(why)
-        r = self._rec(actor)
+            sn["topics"].append(why)
         old = level_of(r["p"])
         if n > 0:
             if r.get("day") != self.day:
                 r["day"], r["today"] = self.day, 0
-                n += 3                                   # first talk of the (game) day
+            # 11.11: бонус первого разговора за день (+3) — первое СОДЕРЖАТЕЛЬНОЕ касание дня,
+            # не «не понял / повтори / мимо» и не «просто проехал мимо» (иначе встреча на въезде
+            # в зону съедала бонус до первого настоящего разговора)
+            if why.split(" ")[0] not in ("dunno", "not_heard", "already", "ack", "встреча") \
+                    and r.get("bonus_day") != self.day:
+                r["bonus_day"] = self.day
+                n += 3                           # first talk of the (game) day
             n = max(0, min(n, DAY_CAP - r["today"]))
             r["today"] += n
         r["p"] = max(0, min(255, r["p"] + n))
