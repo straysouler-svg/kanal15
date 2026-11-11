@@ -2874,11 +2874,51 @@ except Exception:
     VERSION, VERSION_DATE = "?", ""
 
 
+def _report_prev_crash():
+    """11.11 (разбор стрима 2.1а): если crash.log вырос с прошлого запуска — одна строка
+    «прошлый сеанс завершился падением» в cb_radio.log и cb_radio_errors.log (канал ОШИБКА).
+    Нативный краш (winmm и т.п.) молча убивал процесс — в журналах не было и следа."""
+    cf = ROOT / "crash.log"
+    if not cf.exists():
+        return
+    size = cf.stat().st_size
+    marker = ROOT / "crash_seen.json"
+    seen = 0
+    try:
+        seen = int(json.loads(marker.read_text(encoding="utf-8")).get("size", 0))
+    except (OSError, ValueError, AttributeError, TypeError):
+        pass
+    if size < seen:                            # crash.log куда-то обрезали — считаем заново
+        seen = 0
+    if size > seen:
+        tail = ""
+        try:
+            with open(cf, "rb") as f:
+                f.seek(seen)
+                tail = f.read().decode("utf-8", "replace")
+        except OSError:
+            pass
+        # faulthandler при краше всегда пишет заголовок «Windows fatal exception» —
+        # рост crash.log без него (обрезка, ротация) тревоги не заслуживает
+        m = re.findall(r"Windows fatal exception: code 0x[0-9a-fA-F]+", tail)
+        if m:
+            what = m[-1].replace("Windows fatal exception: ", "")
+            log(f"прошлый сеанс завершился падением ({what}) — подробности в crash.log", ch="ОШИБКА")
+    try:
+        marker.write_text(json.dumps({"size": size}), encoding="utf-8")
+    except OSError:
+        pass
+
+
 def main(argv):
     global TRAY_STATE, OVERLAY
     try:                                      # native crashes (audio / whisper / joystick DLLs) -> crash.log
         import faulthandler
         faulthandler.enable(open(ROOT / "crash.log", "a", encoding="utf-8"), all_threads=True)
+    except Exception:
+        pass
+    try:
+        _report_prev_crash()
     except Exception:
         pass
     cfg = load_cfg()
