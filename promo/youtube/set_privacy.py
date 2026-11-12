@@ -17,23 +17,26 @@ from googleapiclient.discovery import build
 HERE = Path(__file__).resolve().parent
 SECRET = HERE / "client_secret.json"
 TOKEN = HERE / "token.json"
-SCOPES = ["https://www.googleapis.com/auth/youtube"]
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.upload",
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/youtube",
+]
 
 
 def youtube():
     creds = None
     if TOKEN.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN), SCOPES)
-        if creds and not set(SCOPES) <= set(creds.scopes or []):
+        stored = json.loads(TOKEN.read_text(encoding="utf-8"))
+        if set(SCOPES) <= set(stored.get("scopes", [])):
+            creds = Credentials.from_authorized_user_file(str(TOKEN), SCOPES)
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+        except Exception:
             creds = None
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            try:
-                creds.refresh(Request())
-            except Exception:
-                creds = None
-        if not creds or not creds.valid:
-            creds = InstalledAppFlow.from_client_secrets_file(str(SECRET), SCOPES).run_local_server(port=0)
+        creds = InstalledAppFlow.from_client_secrets_file(str(SECRET), SCOPES).run_local_server(port=0)
         TOKEN.write_text(creds.to_json(), encoding="utf-8")
     return build("youtube", "v3", credentials=creds)
 
