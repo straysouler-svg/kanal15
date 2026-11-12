@@ -57,13 +57,15 @@ for g, ks in d["reactions"].items():
             for sub, subls in ls.items():
                 pool = c.reaction_pool(g, f"{kk}__{sub}")
                 lines += len(pool)
-                if len(pool) != len(subls):
-                    problems.append(f"reactions {g}/{kk}__{sub}: файлов {len(pool)}, строк {len(subls)}")
+                eff = [e for e in subls if not (isinstance(e, dict) and e.get("v_pending"))]
+                if len(pool) != len(eff):
+                    problems.append(f"reactions {g}/{kk}__{sub}: файлов {len(pool)}, строк {len(eff)}")
             continue
         pool = c.reaction_pool(g, kk)
         lines += len(pool)
-        if len(pool) != len(ls):
-            problems.append(f"reactions {g}/{kk}: файлов {len(pool)}, строк {len(ls)}")
+        eff = [e for e in ls if not (isinstance(e, dict) and e.get("v_pending"))]
+        if len(pool) != len(eff):
+            problems.append(f"reactions {g}/{kk}: файлов {len(pool)}, строк {len(eff)}")
         for _, f in pool:
             sane(f)
 mat = ["бля", "сука", "хрен", "херн", "ёп", "жоп", "нахрен"]
