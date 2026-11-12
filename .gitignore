@@ -84,6 +84,14 @@ probe_job.txt
 !/cb-radio/vendor/README.md
 STATUS.md
 vault/
+# рабочие бумаги медиа/промо — локально, в git не идут (решение 12.11)
+promo/higgsfield_*
+promo/joyreactor_*
+promo/shorts/preview_*/
+promo/shorts/candidates_*/work/
+promo/shorts/work_*/
+promo/**/make_covers.py
+promo/**/covers/
 promo/youtube/client_secret.json
 promo/youtube/token.json
 promo/vk/token.txt
