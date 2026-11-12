@@ -2079,8 +2079,10 @@ class Operator:
             return self.foreign_reply(kind)
         if group == "intent" and kind in SECRET_KINDS:
             return self.all_answer(who, kind)
-        if group == "intent" and kind == "dist" and horn_scene(self, who):
-            return                                       # «мигни — бибикну» (пилот под флагом horn_pilot)
+        if group == "intent" and kind in ("dist", "horn") and horn_scene(self, who, direct=(kind == "horn")):
+            return                                       # «мигни — бибикну»
+        if group == "intent" and kind == "horn":
+            kind = "dist"                                # некому гудеть в пороге — честный ответ про дистанцию
         if group == "intent" and kind in ("dist", "eta", "meet"):
             if self._live(kind, who, prefer):
                 return
@@ -2447,8 +2449,10 @@ def _horn_watch(mouth, seconds):
     return False
 
 
-def horn_scene(mouth, who):
-    """Сцена «мигни — бибикну» для интента dist. True — сцена сыграна (обычный ответ не нужен).
+def horn_scene(mouth, who, direct=False):
+    """Сцена «мигни — бибикну» для интентов dist (полная: просьба -> окно -> гудок) и horn
+    (direct=True: игрок сам просил «бибикни» — сразу «ща бибикну» и гудок, без окна ожидания).
+    True — сцена сыграна (обычный ответ не нужен).
     Не работает в «помолчим» (игрок сам сорвал тишину вопросом — сцена допустима; включённая тишина
     из трея молчит вместе с эфиром, уважаем её)."""
     cfg = PLAYER.cfg or {}
@@ -2478,22 +2482,26 @@ def horn_scene(mouth, who):
     night = w.is_night(w.game_min)
     rain = bool(game and game.wipers())
     kind = "ask_night" if (night or rain) else "ask_day"
-    p = line_of("horn", kind, actor)
-    if not p:
-        return False
-    log(f"мигни-бибикну: {actor} в {meters:.0f} м ({'ночь' if night else 'день'}{' + дождь' if rain else ''})")
-    if PLAYER.file(p[1], actor) != "ok":
-        return False
-    mouth.deck.on_air.add(actor)
-    mouth.on_air = True
-    bond_add(actor, 1, "сигналы")
-    HORN_DONE[actor] = time.monotonic()
-    if not _horn_watch(mouth, random.uniform(*HORN_WAIT_S)):
-        p2 = line_of("horn", "missed", actor)
-        if p2 and PLAYER.file(p2[1], actor) == "ok":
-            mouth.deck.on_air.add(actor)
-            log("мигни-бибикну: сигнала не было — «не разглядел», без упрёка")
-        return True
+    log(f"мигни-бибикну: {actor} в {meters:.0f} м ({'ночь' if night else 'день'}{' + дождь' if rain else ''}"
+        f"{', прямая просьба' if direct else ''})")
+    if direct:
+        pass                                               # «бибикни» от игрока — без просьбы и окна
+    else:
+        p = line_of("horn", kind, actor)
+        if not p:
+            return False
+        if PLAYER.file(p[1], actor) != "ok":
+            return False
+        mouth.deck.on_air.add(actor)
+        mouth.on_air = True
+        bond_add(actor, 1, "сигналы")
+        HORN_DONE[actor] = time.monotonic()
+        if not _horn_watch(mouth, random.uniform(*HORN_WAIT_S)):
+            p2 = line_of("horn", "missed", actor)
+            if p2 and PLAYER.file(p2[1], actor) == "ok":
+                mouth.deck.on_air.add(actor)
+                log("мигни-бибикну: сигнала не было — «не разглядел», без упрёка")
+            return True
     p2 = line_of("horn", "seen", actor)
     if p2 and PLAYER.file(p2[1], actor) == "ok":
         mouth.deck.on_air.add(actor)
