@@ -2481,9 +2481,12 @@ def horn_scene(mouth, who, direct=False):
     game = getattr(mouth, "game", None)
     night = w.is_night(w.game_min)
     rain = bool(game and game.wipers())
-    kind = "ask_night" if (night or rain) else "ask_day"
+    hd = w.heading(w.drivers[actor])
+    oncoming = hd[0] * w.hx + hd[1] * w.hz < -0.3
+    # «мигни» — только встречному: задний дальний не увидит ни ночью, ни в дождь (логика пользователя 12.11)
+    kind = "ask_night" if ((night or rain) and oncoming) else "ask_day"
     log(f"мигни-бибикну: {actor} в {meters:.0f} м ({'ночь' if night else 'день'}{' + дождь' if rain else ''}"
-        f"{', прямая просьба' if direct else ''})")
+        f", {'навстречу' if oncoming else 'за тобой'}{', прямая просьба' if direct else ''})")
     if direct:
         pass                                               # «бибикни» от игрока — без просьбы и окна
     else:
@@ -2508,8 +2511,6 @@ def horn_scene(mouth, who, direct=False):
     # двойной гудок (одобрено 11.11): водитель держит тангенту — сначала сжатый в рации,
     # через расстояние ÷ 340 м/с — настоящий, с дороги, без радиофильтра
     timbre, pat = horn_mod.HORN_RHYTHMS.get(actor, horn_mod.HORN_RHYTHMS["default"])
-    hd = w.heading(w.drivers[actor])
-    oncoming = hd[0] * w.hx + hd[1] * w.hz < -0.3
     buf = horn_mod.horn_buffer(timbre, meters, side="left" if oncoming else "center", pattern=pat)
     PLAYER.street(degrade(buf, horn_mod.SR_DEFAULT, w.distance(actor)), horn_mod.SR_DEFAULT)   # по рации
     if PLAYER.idle(min(meters / horn_mod.C_AIR, 5.0)):
