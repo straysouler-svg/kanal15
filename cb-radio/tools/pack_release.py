@@ -83,6 +83,9 @@ def main(variant):
         for k, ls in ks.items():
             if not k.startswith("_"):
                 handle_rel |= {f"reactions/{g}/{k}/{i:02d}" for i, ln in enumerate(ls, 1) if "v_neutral" in ln}
+    for name, a in d["actors"].items():                         # сольные реплики с вариантом (12.11: 40 строк звучали «Железякой» в общей сборке)
+        handle_rel |= {f"level3/{name}/{i:02d}" for i, ln in enumerate(a.get("phrases", []), 1)
+                       if isinstance(ln, dict) and "v_neutral" in ln}
     n = skipped = 0
     for sub in ("level3", "scenes", "reactions", "fx"):
         for f in sorted((A / sub).rglob("*.wav")):

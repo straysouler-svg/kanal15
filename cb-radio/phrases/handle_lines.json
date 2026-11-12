@@ -1,0 +1,2378 @@
+[
+ {
+  "rel": "level3/mihalych/29",
+  "actor": "mihalych",
+  "text": "[curt] Принял, Железяка. Дистанцию держи.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/mihalych/32",
+  "actor": "mihalych",
+  "text": "[chuckles] Железяка, стало быть. Уже не мимо проезжаешь, а здороваешься.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/mihalych/39",
+  "actor": "mihalych",
+  "text": "[warmly] Кто не поел — жму гудок. А тебе, Железяка, два гудка. Приём.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/stas/28",
+  "actor": "stas",
+  "text": "[recognizing] А, это ты. Железяка. Ну чё.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/stas/32",
+  "actor": "stas",
+  "text": "[excited] Железяка! Короче, у меня ролик сорок просмотров! Ты первый узнал!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/yanek/28",
+  "actor": "yanek",
+  "text": "[warming] Железяка. [pause] Угостил бы мёдом, да ты мимо всё время.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/lastochka/26",
+  "actor": "lastochka",
+  "text": "[recognizing] А, это ты. Железяка. Ну, здравствуй.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/lastochka/30",
+  "actor": "lastochka",
+  "text": "[warming] Железяка, милый. [pause] Не сегодня «мальчик», а «милый». Это повышение.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/boroda/10",
+  "actor": "boroda",
+  "text": "[challenging] Железяка, ты в эфире? Давай до границы, кто быстрее. Проигравший платит за кофе!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/boroda/25",
+  "actor": "boroda",
+  "text": "[loud] А, Железяка! [pause] Или не ты? Ну, привет.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/boroda/29",
+  "actor": "boroda",
+  "text": "[loud] Железяка! [laughs] Уже бродяга, считай. Половина гудка засчитана!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/soroka/41",
+  "actor": "soroka",
+  "text": "[recognizing] А, это вы! [smiles] Железяка. Имя уже в чек-листе. [giggles]",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/soroka/45",
+  "actor": "soroka",
+  "text": "[warm] Железяка! [giggles] Я вас в блокнот записала. В наблюдения! Это почти наука.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/soroka/49",
+  "actor": "soroka",
+  "text": "[warmly] Железяка! [pause] Я вас в «наблюдения за облаками» записала. Там только облака были. [laughs] Теперь и вы.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/student/21",
+  "actor": "student",
+  "text": "[recognizing] А, это вы. Железяка. [pause] Я вас уже... ну, не пугаюсь. Почти.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/student/25",
+  "actor": "student",
+  "text": "[warming] Железяка! [pause] Я вам в дневнике место выделил. В хорошем смысле!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/student/29",
+  "actor": "student",
+  "text": "[warm] Железяка! [pause] Вы теперь в дневнике не выделены. Вы просто везде.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/professor/22",
+  "actor": "professor",
+  "text": "[recognizing] А, Железяка. [pause] Имя у вас, коллега, как у паровоза. Паровозы я уважаю.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/professor/26",
+  "actor": "professor",
+  "text": "[warming] Железяка! [pause] Вас я вспоминаю без записей. Для историка это признание.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/professor/30",
+  "actor": "professor",
+  "text": "[warmly] Железяка. [pause] Знаете, коллега, я вас в список бывших учеников мысленно внёс. [pause] Не спорьте. Записано.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/petrovna/21",
+  "actor": "petrovna",
+  "text": "[recognizing] А, это вы. Железяка. [pause] Билет... то есть документы при вас? Хороший.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/petrovna/25",
+  "actor": "petrovna",
+  "text": "[warm] Железяка, сынок! [pause] Знаете, вы уже почти свой в купе. Плацкарт, но свой.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/ten/35",
+  "actor": "ten",
+  "text": "[quietly] Железяка. [pause] Я тебя уже узнаю по паузам.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/ten/39",
+  "actor": "ten",
+  "text": "[softly] Железяка. [pause] Когда-то я был счастлив. [pause] Больше не рассказываю. Но ты — знаешь, что это было.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vitek/21",
+  "actor": "vitek",
+  "text": "[recognizing] А, это вы! Железяка! [pause] Я вас уже по голосу узнаю! Между звонками!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vitek/25",
+  "actor": "vitek",
+  "text": "[warming] Железяка! [pause] Знаете, вы — единственный, кто не спрашивает про галстук!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vitek/29",
+  "actor": "vitek",
+  "text": "[warmly] Железяка! [pause] Если опоздаю — вы мне свидетель: я старался! Вы же видели, как я старался!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/ment/19",
+  "actor": "ment",
+  "text": "[formal] Принял. [pause] Представьтесь. А. Железяка. [pause] Принял, Железяка.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/ment/23",
+  "actor": "ment",
+  "text": "[recognizing] Железяка. [pause] Голос знакомый. [pause] Нарушений за вами не замечено. [pause] Это почти комплимент.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/ment/27",
+  "actor": "ment",
+  "text": "[warming] Железяка. [pause] Знаете, вы единственный, кто не сбрасывает, когда я предупреждаю. [pause] Запомнил.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/ment/31",
+  "actor": "ment",
+  "text": "[warmly] Железяка. [pause] Вы меня выслушали про взятку, про сто евро... [pause] Я больше никому не рассказывал. Записано.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/kardan/23",
+  "actor": "kardan",
+  "text": "[recognizing] А, Железяка! [pause] Слышу тебя, как бас! Глуховато, но слышу!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/kardan/27",
+  "actor": "kardan",
+  "text": "[warm loud] Железяка! [pause] Ты уже бэк-вокал! [laughs] Все остальные — шум в колонках!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/lisa/27",
+  "actor": "lisa",
+  "text": "[warming] Мальчик. [pause] Ой, то есть Железяка. [pause] Видишь, уже не «мальчик». Это продвижение.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/lisa/31",
+  "actor": "lisa",
+  "text": "[warmly] Железяка. [pause] Волчонок мой. [pause] В клубе бы ты у дверей не стоял. У меня за спиной — стоял.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/rustam/24",
+  "actor": "rustam",
+  "text": "[recognizing] А, Железяка. [pause] Голос знакомый. [pause] Чайку бы вам, да вы мимо всё время.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/rustam/28",
+  "actor": "rustam",
+  "text": "[warming] Железяка, дорогой! [pause] Уже не гость. [pause] Гость уходит. Вы возвращаетесь.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/bahti/24",
+  "actor": "bahti",
+  "text": "[recognizing] А, Железяка! [pause] Ты тот, кто нормально в полосе едет!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/bahti/28",
+  "actor": "bahti",
+  "text": "[warm] Железяка, бро! [pause] Ты уже как подписчик, только со вкусом!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vera/20",
+  "actor": "vera",
+  "text": "[dry] Приняла. [pause] Имя? А. Железяка. [pause] Записала. В память. [pause] Пока в память.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vera/24",
+  "actor": "vera",
+  "text": "[recognizing] А. Железяка. [pause] Граф на вас не лает. [pause] Уже наблюдение.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vera/28",
+  "actor": "vera",
+  "text": "[warming] Железяка. [pause] Граф на вас смотрит уважительно. [pause] Я такое редко вижу.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "level3/vera/32",
+  "actor": "vera",
+  "text": "[warmly] Железяка. [pause] Граф считает вас своим. [pause] Я с ним согласна. [pause] Первый случай за три года.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "scenes/zhelezyaka/01",
+  "actor": "mihalych",
+  "text": "[calling out] Железяка, Железяка, ты на канале? Приём.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/horn/ask_day/01",
+  "actor": "soroka",
+  "text": "Железяка, я навстречу, в двухстах метрах буду. Бибикни — сверюсь с расписанием, хи-хи.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/horn/ask_day/03",
+  "actor": "vitek",
+  "text": "Железяка! Бибикни, бибикни! Я навстречу лечу, как я на свадьбу опаздываю!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/horn/far/02",
+  "actor": "vitek",
+  "text": "Далеко я, Железяка, не докричишься. Но я лечу! Может, ещё догоню!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/intent/bye/02",
+  "actor": "ten",
+  "text": "(тихо) Давай, Железяка. До связи.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/bye/03",
+  "actor": "vitek",
+  "text": "Пока-пока, Железяка! Если что, я на свадьбу!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/bye/05",
+  "actor": "lisa",
+  "text": "Пока, Железяка. Не скучай.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/bye/06",
+  "actor": "sova",
+  "text": "Хорошей дороги, Железяка. Береги себя.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/bye/13",
+  "actor": "bahti",
+  "text": "[cheerful] Бай-бай, Железяка! Си ю он зэ роуд!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/bye/40",
+  "actor": "ment",
+  "text": "До связи, Железяка. Без происшествий.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/thanks/40",
+  "actor": "ment",
+  "text": "Пожалуйста, Железяка. Соблюдай.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/how_are_you/26",
+  "actor": "ment",
+  "text": "Нормально, Железяка. Без происшествий. Как у нас говорили: обстановка спокойная.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/how_are_you/40",
+  "actor": "lastochka",
+  "text": "[sassy] У меня всегда всё хорошо, Железяка, запомни. [laughs]",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/police/01",
+  "actor": "ten",
+  "text": "(тихо) Полосатые на заправке стояли. С радаром. Сбрось, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/police/06",
+  "actor": "lisa",
+  "text": "Камера на выезде, Железяка. Я тебе ничего не говорила.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/weather/05",
+  "actor": "sova",
+  "text": "Туман ложится, Железяка. Ближний включи, дальний только мешает.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/food/33",
+  "actor": "ten",
+  "text": "Поешь, Железяка. Я не ем. Ты поешь.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/radio_check/01",
+  "actor": "ten",
+  "text": "(тихо) Слышу тебя на пятёрку, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/radio_check/39",
+  "actor": "ment",
+  "text": "Слышу, Железяка. Докладывайте.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/help/02",
+  "actor": "ten",
+  "text": "Держись, Железяка. Аварийку включи, знак выставь. Кто ближе, подъедет.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/help/07",
+  "actor": "lastochka",
+  "text": "[stern] Так, спокойно. Где стоишь? Мальчики, кто рядом с Железякой, отзовитесь!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/help/19",
+  "actor": "boroda",
+  "text": "[loud] Держись! Кто рядом, бросайте всё, Железяке помочь надо!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/help/36",
+  "actor": "ment",
+  "text": "Спокойно, Железяка. Сначала безопасность, потом всё остальное.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/truck/41",
+  "actor": "ment",
+  "text": "Актрос, Железяка. Техосмотр пройден, огнетушитель на месте. Привычка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/intent/road_unknown/23",
+  "actor": "ment",
+  "text": "Впереди не был, Железяка. Движемся в одном направлении.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/01",
+  "actor": "mihalych",
+  "text": "[warmly] О, Железяка! Здорово, родной. Михалыч на приёме.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/02",
+  "actor": "stas",
+  "text": "[excited] Железяка, здорово! Стасян на связи, приём.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/03",
+  "actor": "yanek",
+  "text": "[calm] Добрый день, Железяка. Слышу тебя хорошо.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/04",
+  "actor": "lastochka",
+  "text": "[playful] Привет, Железяка! Ласточка тебя слышит.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/05",
+  "actor": "boroda",
+  "text": "[loud] Здорово, Железяка! Борода на канале, приём.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/07",
+  "actor": "student",
+  "text": "Ой, Железяка! Привет! (смущённо) А ты... давно ездишь? Я вот первый раз.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/08",
+  "actor": "professor",
+  "text": "Добрый вечер, Железяка. (тепло) Рад слышать, коллега.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/09",
+  "actor": "petrovna",
+  "text": "Железяка, сынок, здравствуй! (заботливо) Поел сегодня?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/10",
+  "actor": "ten",
+  "text": "(тихо) Железяка... Слышу тебя. Тоже не спишь, значит.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/11",
+  "actor": "vitek",
+  "text": "Железяка, привет! Слушай, сколько до границы, не знаешь? (нервно смеётся) Горю!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/12",
+  "actor": "sova",
+  "text": "Железяка, доброй ночи! Сова тебя слышит.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/13",
+  "actor": "ment",
+  "text": "Железяка, Палыч на приёме. Документы при себе? (смеётся)",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/14",
+  "actor": "kardan",
+  "text": "О, Железяка! Ночная смена пополнилась!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/15",
+  "actor": "lisa",
+  "text": "Железяка, привет! Ночью не спится, да?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/16",
+  "actor": "student",
+  "text": "Привет, Железяка! Ты на связи, ура! А то я один тут.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/17",
+  "actor": "student",
+  "text": "Железяка, здрасьте! Ой, то есть привет. Я Студент, помнишь?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/18",
+  "actor": "student",
+  "text": "О, Железяка в эфире! Э-э... как дела?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/19",
+  "actor": "professor",
+  "text": "Железяка, приветствую! Рад слышать знакомый позывной.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/20",
+  "actor": "professor",
+  "text": "Добрый день, коллега Железяка. Как ваш рейс?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/21",
+  "actor": "professor",
+  "text": "Железяка, моё почтение. Слышу вас прекрасно.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/22",
+  "actor": "petrovna",
+  "text": "Ой, Железяка! Сыночек, здравствуй!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/23",
+  "actor": "petrovna",
+  "text": "Железяка, привет-привет! Не замёрз там?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/24",
+  "actor": "petrovna",
+  "text": "Здравствуй, Железяка. Как доехал, всё хорошо?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/25",
+  "actor": "ten",
+  "text": "...Железяка. Здравствуй.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/26",
+  "actor": "ten",
+  "text": "Слышу тебя, Железяка. Ночь сегодня разговорчивая.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/27",
+  "actor": "ten",
+  "text": "Железяка. (пауза) Я так и думал, что ты появишься.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/28",
+  "actor": "vitek",
+  "text": "Железяка, здорово! Тороплюсь, но для тебя минутка есть!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/29",
+  "actor": "vitek",
+  "text": "Привет, Железяка! Как сам? Я лечу!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/30",
+  "actor": "vitek",
+  "text": "О, Железяка! Слышу тебя, брат!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/31",
+  "actor": "sova",
+  "text": "Здравствуй, Железяка. Тоже не спится?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/32",
+  "actor": "sova",
+  "text": "Железяка, милый, слышу тебя. Как ночь?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/33",
+  "actor": "sova",
+  "text": "Доброй ночи, Железяка. Рада слышать.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/34",
+  "actor": "ment",
+  "text": "Железяка, здравия желаю. Ой, то есть здорово. Привычка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/35",
+  "actor": "ment",
+  "text": "Палыч на связи, Железяка. Слышу тебя чётко.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/36",
+  "actor": "ment",
+  "text": "Железяка, приветствую. Как обстановка на маршруте?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/37",
+  "actor": "kardan",
+  "text": "Железяка, здорово, брат! Рок-н-ролл!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/38",
+  "actor": "kardan",
+  "text": "О, Железяка! Сделаю потише, чтобы тебя слышать.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/39",
+  "actor": "kardan",
+  "text": "Железяка в эфире! Ночь становится лучше!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/40",
+  "actor": "lisa",
+  "text": "Железяка, приветик. Скучал?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/41",
+  "actor": "lisa",
+  "text": "О, Железяка. Ну здравствуй, здравствуй.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/42",
+  "actor": "lisa",
+  "text": "Привет, Железяка! Ты сегодня разговорчивый.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/45",
+  "actor": "student",
+  "text": "Ой, Железяка! Я как раз думал, кто бы мне подсказал дорогу!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/46",
+  "actor": "professor",
+  "text": "А, Железяка! Как раз о вас вспоминал, коллега.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/47",
+  "actor": "petrovna",
+  "text": "Железяка, родной, а я уж думала, куда ты пропал!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/48",
+  "actor": "ten",
+  "text": "Ночь привела тебя, Железяка. (пауза) Говори.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/49",
+  "actor": "vitek",
+  "text": "Железяка! Скажи, что я успею, а? (нервно смеётся)",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/50",
+  "actor": "sova",
+  "text": "Железяка, а я как раз чай наливаю. Здравствуй.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/51",
+  "actor": "ment",
+  "text": "Железяка, приветствую. Нарушений нет? (смеётся) Шучу.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/52",
+  "actor": "kardan",
+  "text": "Железяка! Ты прямо под припев попал! Здорово!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/53",
+  "actor": "lisa",
+  "text": "О, Железяка. А я думаю, кто это так громко дышит в эфир. (смеётся)",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/55",
+  "actor": "mihalych",
+  "text": "[cheerful] О, кто прорезался! Здорово, Железяка. Михалыч слышит.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/58",
+  "actor": "stas",
+  "text": "[excited] О, Железяка в эфире! Респект, бро. Стасян на связи.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/60",
+  "actor": "stas",
+  "text": "[playful] Йо, Железяка! Ты прям вовремя, я тут уже сам с собой болтал.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/61",
+  "actor": "yanek",
+  "text": "[calm] Здорово, Железяка. Слышу.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/62",
+  "actor": "yanek",
+  "text": "[warmly] О, Железяка. Добро, что в эфире.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/64",
+  "actor": "lastochka",
+  "text": "[playful] О, Железяка! Привет, солнышко. Как раз про тебя вспоминала.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/66",
+  "actor": "lastochka",
+  "text": "[sassy] Явился, Железяка. [laughs] Я уж думала, ты меня избегаешь.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/67",
+  "actor": "boroda",
+  "text": "[loud] О, Железяка! Здорово, бродяга! Меня слышно? Меня всех слышно!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/68",
+  "actor": "boroda",
+  "text": "[loud] Железяка на канале! Ну всё, теперь веселее.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/70",
+  "actor": "rustam",
+  "text": "[warmly] О, дорогой Железяка! Ассалому алейкум. Самарканд слышит.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/74",
+  "actor": "bahti",
+  "text": "[excited] Хэй, Железяка! Ковбой на связи, хау ар ю!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/76",
+  "actor": "bahti",
+  "text": "[laughs] О, Железяка! Вой-бо, давно тебя не было!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/greet/79",
+  "actor": "vera",
+  "text": "[warmly] Здравствуй, Железяка. Граф тоже здоровается. [pause] [amused] Молча.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/01",
+  "actor": "mihalych",
+  "text": "[calm] Принял тебя, Железяка. Добро.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/02",
+  "actor": "stas",
+  "text": "[cheerful] Понял, Железяка, понял!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/04",
+  "actor": "lastochka",
+  "text": "[warmly] Поняла тебя, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/14",
+  "actor": "ment",
+  "text": "Принято, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/16",
+  "actor": "lisa",
+  "text": "Поняла, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/39",
+  "actor": "sova",
+  "text": "Слышу тебя, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/42",
+  "actor": "ment",
+  "text": "Понял, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/47",
+  "actor": "kardan",
+  "text": "Окей, Железяка!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/65",
+  "actor": "mihalych",
+  "text": "[calm] Понял, Железяка, понял.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/ack/67",
+  "actor": "yanek",
+  "text": "[calm] Добро, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/not_heard/01",
+  "actor": "mihalych",
+  "text": "[squinting] Железяка, не разобрал. Повтори, приём.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/not_heard/02",
+  "actor": "stas",
+  "text": "[confused] Чё? Железяка, тебя ни хрена не слышно. Повтори.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/not_heard/03",
+  "actor": "yanek",
+  "text": "[calm] Железяка, пропадаешь. Повтори.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/not_heard/05",
+  "actor": "student",
+  "text": "Э-э, Железяка, не расслышал, повтори?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/not_heard/11",
+  "actor": "ment",
+  "text": "Повторите, Железяка, не разобрал.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/not_heard/28",
+  "actor": "lastochka",
+  "text": "[annoyed] Железяка, ты мне шипишь, а не говоришь. Ещё раз.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/interrupt/01",
+  "actor": "mihalych",
+  "text": "[annoyed] Железяка, не перебивай, ёп твою мать. Дай договорить.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/interrupt/02",
+  "actor": "stas",
+  "text": "[laughing] Эй, Железяка, ты мне на тангенту наступил!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/dunno/20",
+  "actor": "ment",
+  "text": "Не знаю, Железяка. Не моя смена.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/player/already/24",
+  "actor": "ment",
+  "text": "Уже докладывал, Железяка.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/01",
+  "actor": "student",
+  "text": "Ой, Железяка! Опять ты! Я тебя помню! (смеётся)",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/03",
+  "actor": "petrovna",
+  "text": "Железяка, сынок, опять ты! Как доехал-то в прошлый раз?",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/04",
+  "actor": "ten",
+  "text": "...Снова ты, Железяка. (пауза) Значит, не случайно.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/05",
+  "actor": "vitek",
+  "text": "Железяка! Опять мы! Слушай, я до сих пор не успеваю!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/06",
+  "actor": "sova",
+  "text": "Железяка, милый, снова встретились. Рада тебя слышать.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/07",
+  "actor": "ment",
+  "text": "Железяка, опять ты на моём участке? (смеётся) Здорово!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/08",
+  "actor": "kardan",
+  "text": "Железяка, брат! Снова вместе в ночном эфире!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/09",
+  "actor": "lisa",
+  "text": "Опять Железяка? Ты что, за мной ездишь? (смеётся)",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/11",
+  "actor": "mihalych",
+  "text": "[cheerful] Опять ты, Железяка! [chuckles] Земля круглая, а трасса ещё круглее.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/12",
+  "actor": "stas",
+  "text": "[excited] Железяка, опять ты! Это судьба, бро, реально.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/14",
+  "actor": "lastochka",
+  "text": "[playful] Железяка, опять ты! Это уже в блокнот, для истории.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/15",
+  "actor": "boroda",
+  "text": "[loud] Опять ты, Железяка! Ты что, за мной гонишься? [laughs]",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/meet_again/17",
+  "actor": "bahti",
+  "text": "[excited] Железяка, опять ты! Вой-бо, мир тесный!",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/police_yes/01",
+  "actor": "ment",
+  "text": "Стоят, Железяка. Я мимо них проехал, за городом. С радаром.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/police_yes/03",
+  "actor": "lisa",
+  "text": "Есть, Железяка. У заправки засели. Я их видела.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/police_yes/29",
+  "actor": "ment",
+  "text": "Пост стоит, Железяка. Лично видел. Сбавь.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/world/police_no/01",
+  "actor": "ment",
+  "text": "Чисто, Железяка. Я только оттуда, никого нет.",
+  "variants": [
+   "v_neutral",
+   "v_kirill",
+   "v_alive"
+  ],
+  "voiced": [
+   "neutral",
+   "kirill",
+   "alive"
+  ]
+ },
+ {
+  "rel": "reactions/bond/up1/06",
+  "actor": "vitek",
+  "text": "[recognizing] Стоп, я вас знаю! [pause] Железяка! Вы хоть раз не торопитесь?! [pause] Нет? Ну я тоже!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up2/01",
+  "actor": "soroka",
+  "text": "[warm] Так! [pause] Вы уже не «вы». Вы — Железяка. Это по имени, между прочим.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up2/03",
+  "actor": "professor",
+  "text": "[pleased] Так! [pause] Вы уже не „слушатель зала\". Вы — „коллега Железяка\". Вижу разницу? Я вижу.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up2/14",
+  "actor": "kardan",
+  "text": "[loud, pleased] Железяка! [pause] Ты уже в плейлисте! Между первым и вторым треком! Это почти вечность!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up2/15",
+  "actor": "lisa",
+  "text": "[pleased] Так. [pause] Ты уже не «мальчик». Ты — Железяка. [pause] Учись дальше. Учись у меня.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up2/16",
+  "actor": "rustam",
+  "text": "[pleased] Так. [pause] Вы уже не гость, Железяка. [pause] Гость ест и уходит. Вы едите и остаётесь. [pause] Оставайтесь.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up2/17",
+  "actor": "bahti",
+  "text": "[pleased] Бро! [pause] Ты уже не «кто-то». Ты — Железяка! [pause] Это как позывной, только мой личный!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/02",
+  "actor": "student",
+  "text": "[warmly] Железяка. [pause] Я вам доверяю больше, чем навигатору. А у меня их два.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/04",
+  "actor": "petrovna",
+  "text": "[softly, firmly] Всё, Железяка. [pause] Вы в моём списке. Он не по возрасту. Он по сердцу.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/05",
+  "actor": "ten",
+  "text": "[very quiet] Железяка. [pause] Для тебя ночь короче. [pause] Это мой способ сказать „останься\".",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/06",
+  "actor": "vitek",
+  "text": "[warmly] Железяка. [pause] В списке свидетелей пока брат. Но запасной — вы. Вот и вся свадьба!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/08",
+  "actor": "stas",
+  "text": "[warmly] Короче. Ты теперь не „кто-то\". Ты Железяка, понял? Это моё личное звание.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/13",
+  "actor": "ment",
+  "text": "[quietly] Железяка. [pause] За вами я не слежу. [pause] Я за вами смотрю. [pause] Гаишники «смотрят» только за своими.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/up3/18",
+  "actor": "vera",
+  "text": "[softly, firmly] Железяка. [pause] В списке Графа вы после меня. [pause] Это первое место, между прочим. [pause] Список из двух. [pause] Оба мои.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/names_address__mihalych/02",
+  "actor": "mihalych",
+  "text": "[grumbling, touched] Николай Михайлович он меня зовёт... [sighs] Всё, Железяка. Теперь ты точно свой. Галя, слышишь?!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/bond/names_address__vitek/01",
+  "actor": "vitek",
+  "text": "(тараторит) Соболев Виктор Игоревич?! [пауза] Так мама, когда злится! Ты чего, Железяка?! Ладно-ладно! Свидетель твой!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/mihalych/01",
+  "actor": "mihalych",
+  "text": "Железяка? Ты ж впереди был! [pause] Старушка, мы стареем, или это он? Едрит.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/stas/01",
+  "actor": "stas",
+  "text": "Блин, Железяка, ты че, в обрезку смонтировался?! Я тебя только что видел!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/boroda/02",
+  "actor": "boroda",
+  "text": "Скорость такая, что рация не успела! [laughs] Так нечестно, Железяка, я б дисквалифицировал!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/soroka/02",
+  "actor": "soroka",
+  "text": "В блокнот записала: «Железяка — вне графика. И вне карты, похоже». [giggles]",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/student/02",
+  "actor": "student",
+  "text": "Я записал в дневник: «Железяка умеет телепорт». Мама скажет — выспись. Но я видел!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/vitek/01",
+  "actor": "vitek",
+  "text": "Железяка, ты че, быстрее меня на свадьбу?! [pause] Расскажи секрет, мама уже звонит!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/vera/01",
+  "actor": "vera",
+  "text": "Граф встрепенулся — я подумала, глюк. [dry] Граф не глючит. Ты исчез, Железяка.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/teleport/ment/01",
+  "actor": "ment",
+  "text": "Зафиксировал исчезновение. [pause] Не по инструкции, Железяка. Таких пунктов нет.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/quest/vityok_ferry.meet_is/01",
+  "actor": "vitek",
+  "text": "Железяка! ТЫ ТУТ! [excited] До свадьбы три дня! Кольца при мне! Я УСПЕВАЮ!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/quest/vityok_ferry.invite/01",
+  "actor": "vitek",
+  "text": "Железяка! Ты ж мне как брат! Поехали со мной до фьорда! [pause] На свадьбу зову! Ну, брата! Но ты тоже!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/truck_check/changed__soroka/01",
+  "actor": "soroka",
+  "text": "О! Новая фура! [laughs] Записала: „Железяка обновил парк\"! Красиво звучит, да?",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/truck_check/match__student/01",
+  "actor": "student",
+  "text": "О! Верно! Записал! „Железяка едет на такой-то\". Дата, всё! Я такое с полуслова помню!",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/errand/ask__yanek__mihalych/01",
+  "actor": "yanek",
+  "text": "[calm] Железяка. Михалыча услышишь — скажи: клюёт. Он поймёт.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/care/ask/01",
+  "actor": "ten",
+  "text": "Железяка… (тихо) ты как там? Давно едешь. Не спишь?",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/care/ask/03",
+  "actor": "ment",
+  "text": "Железяка, (сухо) режим соблюдаем? Давно без остановки идёшь.",
+  "variants": [],
+  "voiced": []
+ },
+ {
+  "rel": "reactions/care/ask/08",
+  "actor": "vera",
+  "text": "[calm] Железяка. Сколько часов за рулём? Граф беспокоится. Я тоже.",
+  "variants": [],
+  "voiced": []
+ }
+]
