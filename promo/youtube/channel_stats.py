@@ -43,6 +43,7 @@ def youtube():
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     p = argparse.ArgumentParser()
     p.add_argument("--no-save", action="store_true")
     a = p.parse_args()
