@@ -125,6 +125,9 @@ def variant_of(p):
     return alt if alt.exists() else None
 OFFLINE_S = 40 * 60     # after a sign-off the actor is silent this long
 
+GUEST_HOOK = None       # «онлайн-конвой» (convoy.py): хозяин/гость шлют ptt через транспорт
+GUEST_QUIET = [0]       # >0 — идёт ответ гостю (онлайн-конвой): дружба и настроение не меняются
+
 DEFAULT_CFG = {
     "gap_min_s": 300,          # pause between phrases: random in [min, max]
     "gap_max_s": 720,
@@ -138,6 +141,7 @@ DEFAULT_CFG = {
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
+    "guest": {"port": 47821, "enabled": False},   # «онлайн-конвой» (этап 1): хозяин слушает гостя на 127.0.0.1 (выкл по умолчанию)
     "update": {"url": "", "channel": "public", "auto": True},   # tools/pack_release.py fills url + channel per build
 }
 
@@ -615,6 +619,8 @@ class PTT:
         self.was_playing, self.cut = PLAYER.playing, PLAYER.speaker
         if PLAYER.playing:
             sd.stop()        # you can't hear the channel while you transmit
+        if GUEST_HOOK:                       # онлайн-конвой: вторая рация глушит свой эфир
+            GUEST_HOOK("down")
         self._sound("press")
         if self.ears:
             self.ears.start()
@@ -622,6 +628,8 @@ class PTT:
     def _release(self):
         self.down = False
         job = self.ears.stop() if self.ears else None
+        if GUEST_HOOK:                       # онлайн-конвой: эфир у обеих раций снова открыт
+            GUEST_HOOK("up")
         self.presses.append((time.monotonic() - self.t_down, self.was_playing, self.cut, job))
         self._sound("release")
 
@@ -1085,7 +1093,7 @@ def mood_name(actor):
 def mood_nudge(actor, d, why):
     """Cheer a driver up (+) or spoil his mood (-); a change shows on the stream overlay and,
     1.33, queues a spoken mood marker (reactions/mood_mark/<mood>) — the player HEARS the mood."""
-    if not BONDS:
+    if not BONDS or GUEST_QUIET[0]:
         return
     ch = BONDS.nudge(actor, d, why)
     if ch:
@@ -1106,7 +1114,9 @@ def mood_nudge(actor, d, why):
 
 def bond_add(actor, n, why):
     """Friendship points; a level change is announced in the log and on the stream overlay."""
-    if not BONDS:
+    if not BONDS or GUEST_QUIET[0]:
+        if GUEST_QUIET[0] and VERBOSE:
+            log(f"  дружба: ответ гостю — {actor} {why} не записывается (этап 1)")
         return
     ch = BONDS.add(actor, n, why)
     if not ch:
@@ -1173,6 +1183,7 @@ class Player:
     def __init__(self):
         self.cfg, self.game, self.ptt = None, None, None
         self.world = None        # living highway: distance of the speaker -> signal quality
+        self.guest_dist = None   # онлайн-конвой (гость): дистанция из события play — радиоэффект без своего мира
         self.spoke = set()       # actors who talked during their current encounter (for the "пропадаю" line)
         self.playing = False
         self.speaker = None      # actor currently on air (for "don't interrupt")
@@ -1202,10 +1213,15 @@ class Player:
         if vp is None:                       # calls the player by a name we don't have in this variant
             return "error"
         path = vp
+        dist = None
+        if self.world and actor:
+            dist = self.world.distance(actor)
         try:
             data, sr = sf.read(path, dtype="float32")
             if self.world and actor:
-                data = degrade(data, sr, self.world.distance(actor))
+                data = degrade(data, sr, dist)
+            elif self.guest_dist is not None and actor:
+                data = degrade(data, sr, self.guest_dist)      # гость: эффект по дистанции хозяина
             if not actor and Path(path).name.startswith(("kerchunk_", "enter_")):
                 if STATIC_NOW["k"] <= 0:                 # «Помехи: без помех» - no clicks / crackles at all
                     return "ok"
@@ -1214,6 +1230,10 @@ class Player:
             sd.play(data * vol, sr, device=self.cfg["device"])
             if OVERLAY:                       # stream overlay: subtitles of what is said (overlay.py)
                 OVERLAY.said(_rel(path), actor, len(data) / sr)
+            import convoy                        # онлайн-конвой: вторая рация слышит ту же реплику
+            rel = _rel(path)
+            if rel:
+                convoy.host_send_play(rel, actor, dist)
         except Exception as e:  # missing file, busy/unplugged device: skip, keep the radio alive
             log(f"не смог проиграть {Path(path).name}: {e}")
             return "error"
@@ -1228,10 +1248,12 @@ class Player:
                 if self.ptt:
                     self.ptt.poll()
                     if self.ptt.down:            # poll() already stopped the channel and beeped
+                        convoy.host_send_stop()      # онлайн-конвой: реплика оборвана — у гостя тоже
                         return "ptt"
                 time.sleep(0.02)
                 if self.game and self.game.state(self.cfg["require_engine_on"]) != "driving":
                     sd.stop()
+                    convoy.host_send_stop()
                     return "paused"
             if actor:
                 self.spoke.add(actor)
@@ -1455,6 +1477,7 @@ class Operator:
         self.repeats = {}            # line number (Player.said) -> times repeated; 2 max, then silence
         self.asked = {}              # (actor, intent) -> time: the same question twice -> «я ж уже говорил»
         self.last_topic = {}         # 1.33: actor -> intent последней темы (смена темы сбрасывает «уже говорил»)
+        self.guest_pending = False   # «онлайн-конвой»: отвечаем гостю — дружба и настроение не меняются
     REPEAT_MAX = 2
 
     def press(self, dur, interrupted, cut_speaker, job=None):
@@ -2943,7 +2966,7 @@ def _report_prev_crash():
 
 
 def main(argv):
-    global TRAY_STATE, OVERLAY
+    global TRAY_STATE, OVERLAY, GUEST_HOOK
     try:                                      # native crashes (audio / whisper / joystick DLLs) -> crash.log
         import faulthandler
         faulthandler.enable(open(ROOT / "crash.log", "a", encoding="utf-8"), all_threads=True)
@@ -2967,6 +2990,11 @@ def main(argv):
         return ptt_test()
     if "--selftest" in argv:
         return selftest()
+    if "--guest" in argv:                     # «онлайн-конвой», этап 1: эта рация — гость (тонкий клиент хозяина)
+        import convoy
+        i = argv.index("--guest")
+        ap = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("--") else f"127.0.0.1:{convoy.GUEST_PORT}"
+        return convoy.guest_main(sys.modules[__name__], ap)
     if not all_phrases():
         sys.exit(f"нет фраз в {AUDIO} — сначала tools\\gen_eleven.py level3")
     if "--listen" in argv:
@@ -3362,12 +3390,58 @@ def main(argv):
             log(f"помехи: {STATIC[level]['name']} (из меню значка)")
         tray.HOOKS.update(static_levels=lambda: [(k, v["name"]) for k, v in STATIC.items()],
                           static_now=lambda: cfg.get("static", "mid"), static_set=static_set)
+
+        # «онлайн-конвой» (этап 1): хозяин принимает гостя — пункт меню, по умолчанию ВЫКЛ
+        import convoy
+
+        def guest_toggle():
+            gport = int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT))
+            on = not convoy.host_on()
+            if on:
+                convoy.host_start(gport, log)
+            else:
+                convoy.host_stop(log)
+            try:
+                cur = json.loads(CFG_FILE.read_text(encoding="utf-8-sig")) if CFG_FILE.exists() else {}
+                cur["guest"] = {"port": gport, "enabled": convoy.host_on()}
+                CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=2), encoding="utf-8")
+            except (OSError, ValueError) as e:
+                log(f"настройки не сохранились: {e!r}")
+
+        def guest_hook(edge):
+            convoy.host_send_ptt(edge == "down")     # тангента хозяина глушит эфир у гостя
+
+        tray.HOOKS.update(guest_on=convoy.host_on, guest_toggle=guest_toggle)
+    else:
+        import convoy
+
+        def guest_hook(edge):
+            convoy.host_send_ptt(edge == "down")
+    if (cfg.get("guest") or {}).get("enabled"):
+        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log)
+    if "--guest-host" in argv:            # приёмка этапа 1: принимать гостя без правки config
+        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log)
+    GUEST_HOOK = guest_hook               # PTT зовёт это на нажатие/отпускание (только когда хозяин принимает гостя)
     w_acc, w_saved = 0.0, time.monotonic()
     job_t = 0.0
     hired_seen = set()          # your hired drivers already noticed near you (once per session each)
     hq, last_hired = [], -1e9   # hired drivers to put on air: (due, id, "loaded"|"empty", noticed)
     deliv_pending, last_deliv = [], -1e9     # their deliveries -> the accountant's report (not more than 1 per 25 min)
     op.world, op.game = world, game
+
+    def answer_op():
+        """op.answer() с учётом гостя: пока отвечаем на фразу гостя, дружба и настроение не меняются
+        (решение пользователя 12.11: дружба гостю на этапе 1 не пишется)."""
+        if getattr(op, "guest_pending", False):
+            op.guest_pending = False
+            GUEST_QUIET[0] += 1
+            try:
+                op.answer()
+            finally:
+                GUEST_QUIET[0] -= 1
+        else:
+            op.answer()
+
     fines = Fines()
     wq = []                                  # (group, kind, actor, created) lines of the living highway
     murmur_acc, next_murmur = 0.0, random.uniform(60, 150)
@@ -3392,6 +3466,25 @@ def main(argv):
             ptt.poll()
             now = time.monotonic()
             dt, last = now - last, now
+            for kind, val in convoy.host_poll(log):          # «онлайн-конвой»: события от гостя
+                if kind == "ptt":
+                    convoy.GUEST_PTT_DOWN[0] = val
+                    if val:
+                        if PLAYER.playing:
+                            sd.stop()
+                        op.pending = None
+                        op.waiting = None
+                        op.guest_pending = False
+                        log("тангента (гость): эфир занят")
+                    else:
+                        log("тангента (гость): отпустил, эфир свободен")
+                elif kind == "said":
+                    log(f"тангента (гость): «{val[:60]}»")   # тот же разбор, что фразы игрока; источник — guest
+                    op._decide(val, False, None, now, heard=True)
+                    if op.pending:
+                        op.guest_pending = True              # ответ гостю: дружба/настроение не пишутся
+                else:
+                    log(f"конвой: битое сообщение от гостя: {val[:80]!r}")
             st = game.state(cfg["require_engine_on"])
             if st != "driving":
                 CARE_REST[0] = None                  # стоянка/пауза — отдых: ночной счётчик «не спишь?» сбрасывается
@@ -3697,9 +3790,10 @@ def main(argv):
                                     "рация подскажет причину (она же в меню значка).")
                 else:
                     log("тангента на паузе — не отвечаю")
-            if ptt.down:
+            if ptt.down or convoy.GUEST_PTT_DOWN[0]:     # тангента любой стороны обрывает эфир
                 op.pending = None            # nobody talks over you
                 op.waiting = None
+                op.guest_pending = False
                 continue
             if op.waiting:
                 op.poll_ears()               # your words are being recognised
@@ -3707,13 +3801,14 @@ def main(argv):
             hush = time.monotonic() < HUSH_UNTIL[0]   # 11.11: в тишине звучат только ответы игроку и бухгалтерия
             if op.due():
                 if st == "driving":
-                    op.answer()
+                    answer_op()
                 elif st == "engine_off":
                     PLAYER.game = None       # parked with engine off: still answer you
-                    op.answer()
+                    answer_op()
                     PLAYER.game = game
                 else:
                     op.pending = None        # paused / no game: the answer is lost
+                    op.guest_pending = False
                 next_at = max(next_at, driving_s + 40)   # no chatter right on top of the answer
                 continue
             # 1.2 «помолчим»: тишина истекла сама (игрок её не срывал) — кто-то из приятелей возвращается первым
