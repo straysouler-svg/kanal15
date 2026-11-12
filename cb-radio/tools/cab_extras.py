@@ -123,6 +123,7 @@ POOLS = {
     "hiphop": ["rock_light_", "rock_modernrockboy", "rock_take_the_lead"],
     "rock": ["rock_rockenergy", "rock_grunge", "rock_hard", "rock_rust", "rock_cool", "rock_lyria_"],  # Борода
     "rock_kardan": ["rock_lyria_kardan", "rock_grunge", "rock_hard", "rock_lyria_"],     # Кардан: его группа чаще
+    "drums": ["drums_"],                                          # закреплённые барабанные нарезки (12.11: «Это барабанное соло!»)
     "chanson_mih": ["chanson_lyria_kilometry", "chanson_lyria_starushka", "chanson_leshchenko", "chanson_vavich"],
     "chanson_palych": ["chanson_lyria_shlagbaum", "chanson_leshchenko", "chanson_plevitskaya"],
     "estrada": ["folk_lyria_", "folk_"],                           # Петровна
@@ -149,19 +150,37 @@ def _load(f):
     return _REC[f]
 
 
+DRUMMY = ("rock", "dance", "hiphop", "drums")         # стили, где ломоть обязан быть с барабанами (12.11: случайный ломоть попадал в лирическое окно — у Кардана играло «пианино»)
+
+
+def _attacks(seg):
+    d = np.abs(np.diff(seg, axis=0))
+    return float(np.mean(d > 4 * np.median(d)))
+
+
 def recorded(n, rng, style):
-    """A random stretch of a real recording (not a quiet bit), as heard from the cab speakers."""
+    """A random stretch of a real recording (not a quiet bit), as heard from the cab speakers.
+    Для DRUMMY-стилей из громких кандидатов выбирается самый «ударный» — без барабанов рок не рок."""
     files = _recordings(style)
     if not files:
         return None
     x = _load(files[int(rng.integers(0, len(files)))])
     if len(x) <= n:
         x = np.tile(x, n // len(x) + 2)
+    best = None
     for _ in range(12):                              # skip silences between pieces / fades
         s = int(rng.integers(0, len(x) - n))
         seg = x[s:s + n].astype(np.float64)
-        if C._rms(seg) > 0.04:
+        if C._rms(seg) <= 0.04:
+            continue
+        if not style.startswith(DRUMMY):
+            best = seg
             break
+        if best is None or _attacks(seg) > _attacks(best):
+            best = seg
+    if best is None:                                 # вся запись тихая — берём как есть
+        best = x[int(rng.integers(0, len(x) - n)):][:n].astype(np.float64)
+    seg = best
     f = min(n // 4, int(0.3 * SR))
     seg = seg.copy()
     seg[:f] *= np.linspace(0, 1, f)

@@ -65,7 +65,7 @@ def forced_cab(c, force):
     for k in force:
         if k not in have:
             ex.append({"kind": "music", "style": k, "db": -14} if k in ("retro", "rock", "pop", "dance", "hiphop",
-                      "classic", "romance", "folk", "dutar", "uzpop", "course") else {"kind": k, "db": -14})
+                      "classic", "romance", "folk", "dutar", "uzpop", "course", "drums") else {"kind": k, "db": -14})
     c["extras"] = ex
     return c
 
