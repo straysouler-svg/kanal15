@@ -86,3 +86,9 @@ STATUS.md
 vault/
 promo/youtube/client_secret.json
 promo/youtube/token.json
+promo/vk/token.txt
+promo/vk/group_id.txt
+promo/tiktok/token.txt
+promo/tiktok/refresh_token.txt
+promo/instagram/token.txt
+promo/instagram/ig_user_id.txt
