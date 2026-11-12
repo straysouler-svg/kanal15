@@ -20,6 +20,10 @@ F = ROOT / "phrases" / "level3_eleven.json"
 
 def lines(d, variant):
     key = f"v_{variant}"
+    for ac, a in d.get("actors", {}).items():        # сольные реплики актёра (level3/<actor>/NN)
+        for i, ln in enumerate(a.get("phrases", []), 1):
+            if isinstance(ln, dict) and key in ln:
+                yield f"level3/{ac}/{i:02d}", {**ln, "actor": ac}
     for sid, ls in d.get("scenes", {}).items():
         for i, ln in enumerate(ls, 1):
             if key in ln:

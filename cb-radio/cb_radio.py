@@ -1478,6 +1478,7 @@ class Operator:
         self.asked = {}              # (actor, intent) -> time: the same question twice -> «я ж уже говорил»
         self.last_topic = {}         # 1.33: actor -> intent последней темы (смена темы сбрасывает «уже говорил»)
         self.guest_pending = False   # «онлайн-конвой»: отвечаем гостю — дружба и настроение не меняются
+        self.multi = False           # в реплике несколько вопросов — после ответа играем отбивку «по одному»
     REPEAT_MAX = 2
 
     def press(self, dur, interrupted, cut_speaker, job=None):
@@ -1529,6 +1530,7 @@ class Operator:
                         multi.remove("bye")
                 if multi[0] != intent:
                     intent = multi[0]
+                self.multi = True     # ответили на первый — после ответа отбивка «по одному» (пул player/one_at_a_time)
                 log(f"тангента: вопросов несколько ({', '.join(multi)}) — отвечаю на первый: {intent}")
         self.knows_target = intents.knows_target(text) if intent == "knows" else None
         if intent == "knows" and self.knows_target == who:
@@ -1545,12 +1547,14 @@ class Operator:
                 if OVERLAY:
                     OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
                 log(f"тангента: «{text}» -> проезжему иностранцу ({fl})")
+                self.multi = False             # отвечает иностранец — отбивку «по одному» не играем
                 self.pending = (max(now, t_rel + random.uniform(1.0, 2.2)), "foreign_reply", fl, None, None)
                 return
             if fw:
                 if OVERLAY:
                     OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
                 log(f"тангента: «{text}» -> иностранное слово, иностранца рядом нет — наши молчат")
+                self.multi = False
                 self.pending = None
                 return
         self.support = intent == "support"
@@ -2106,6 +2110,7 @@ class Operator:
     def answer(self):
         _, group, kind, prefer, who = self.pending
         self.pending = None
+        multi, self.multi = self.multi, False     # отбивку играем один раз и только вместе с реальным ответом
         if group == "foreign_reply":
             return self.foreign_reply(kind)
         if group == "intent" and kind in SECRET_KINDS:
@@ -2299,6 +2304,13 @@ class Operator:
             self.deck.on_air.add(actor)
             if kind != "bye":
                 self.on_air = True           # the channel knows you're here now
+            if multi and kind not in ("rude", "mock"):
+                # 12.11 «по одному, рация не телеграф»: ответили на первый вопрос — тот же водитель добродушно
+                # отбивает остальные (пул player/one_at_a_time, выбор по текущему настроению через mood_pick)
+                p = line_of("player", "one_at_a_time", actor)
+                if p and PLAYER.file(p[1], actor) == "ok":
+                    self.deck.on_air.add(actor)
+                    log(f"  отбивка «по одному» ({actor}, {mood_name(actor)})")
             if kind == "not_heard":
                 self.repeat_until = time.monotonic() + 45
             if kind in ("rude", "mock"):
@@ -2402,12 +2414,13 @@ def weather_kind(game, world):
     return "dry_night" if world and world.is_night(world.game_min) else "dry_day"
 
 
-# ---------------------------------------------------------------- «мигни — бибикну» (пилот 11.11)
+# ---------------------------------------------------------------- «мигни — бибикну» (v2, все водители 12.11)
 # Сцена сигнала: «ты далеко?» -> просьба (день «бибикни» / ночь и дождь «мигни») -> окно ожидания ->
 # «вижу/слышу» -> двойной гудок (сжатый в рации + настоящий с задержкой звука м ÷ 340). Под флагом
-# cfg["horn_pilot"] (по умолчанию выключен — в общий релиз не попадает). Честность: порог 150-1500 м —
-# ближе «рядом где-то» обычным ответом, дальше «не услышишь»; никаких «в правом ряду».
-HORN_PILOT_ACTORS = ("soroka", "vitek", "ten")
+# cfg["horn_pilot"] (общий вкл/выкл механики, ключ не переименовываем — обратная совместимость).
+# Работает для всех водителей колоды (решение 11.11 «гудок всем 18»); ритм без индивидуальной записи —
+# HORN_RHYTHMS["default"]. Честность: порог 150-1500 м — ближе «рядом где-то» обычным ответом,
+# дальше «не услышишь»; никаких «в правом ряду».
 HORN_NEAR_M, HORN_FAR_M = 150.0, 1500.0
 HORN_WAIT_S = (15.0, 20.0)
 HORN_DONE = {}            # actor -> monotonic: сцена уже сыграна за эту встречу (снимаем, когда ушёл из зоны)
@@ -2436,7 +2449,7 @@ def _horn_button_down(c):
 
 
 def _horn_pick(mouth, who):
-    """Актёр пилота в пороге 150-1500 м, сцена с которым за эту встречу ещё не шла. -> (actor, meters) | None."""
+    """Актёр в пороге 150-1500 м, сцена с которым за эту встречу ещё не шла. -> (actor, meters) | None."""
     w = getattr(mouth, "world", None)
     if not w or mouth.deck.allowed is None:
         return None
@@ -2444,7 +2457,7 @@ def _horn_pick(mouth, who):
     for a in list(HORN_DONE):                        # ушёл из зоны — «встреча» кончилась
         if a not in here:
             HORN_DONE.pop(a, None)
-    order = ([who] if who in HORN_PILOT_ACTORS else []) + [a for a in here if a in HORN_PILOT_ACTORS]
+    order = ([who] if who in here else []) + here    # прямой адресат первым, дальше вся колода в зоне
     best = None
     for a in dict.fromkeys(order):
         if a not in here or mouth.deck.offline(a) or a in HORN_DONE:
@@ -2492,8 +2505,8 @@ def horn_scene(mouth, who, direct=False):
     w = getattr(mouth, "world", None)
     pick = _horn_pick(mouth, who)
     if pick is None:
-        # пилотный по имени и на связи, но дальше порога — честное «не услышишь» вместо обычного dist_far
-        if (who in HORN_PILOT_ACTORS and w and mouth.deck.allowed is not None
+        # адресат по имени и на связи, но дальше порога — честное «не услышишь» вместо обычного dist_far
+        if (who and w and mouth.deck.allowed is not None
                 and who in mouth.deck.allowed and not mouth.deck.offline(who)):
             dd = w.distance(who)
             m = None if dd is None else dd * w.range

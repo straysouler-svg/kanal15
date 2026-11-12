@@ -102,7 +102,8 @@ def main():
             for case, form in spec["cases"].items():
                 t = t.replace(case, form)
             ln[f"v_{who}"] = t.replace("Железяка", pick_form(ln["actor"], path, who))
-        ln["v_neutral"] = NEUTRAL.get(path) or neutral(ln["text"])
+        # 12.11: ручной вариант из gaps_neutral (уже в json) важнее авто-генерации — не затираем
+        ln["v_neutral"] = ln.get("v_neutral") or NEUTRAL.get(path) or neutral(ln["text"])
         rows.append((path, ln["actor"], ln["v_alive"], ln["v_neutral"]))
 
     for sid, ls in d["scenes"].items():
