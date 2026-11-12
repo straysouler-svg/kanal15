@@ -1581,7 +1581,11 @@ class Operator:
         elif about:
             # 2026-11-11: «Профессор, как дела?» когда его нет в зоне — это вопрос ПРО него:
             # ближние отвечают «не знаю / не видел его», а не за него (баг: Ласточка отвечала за Профессора)
-            group, kind = "player", "dunno"
+            # 2026-11-12: пул absent — «его нет в эфире, далеко ушёл» (основной ответ), dunno — для разнообразия
+            if random.random() < 0.75 and reaction_pool("player", "absent"):
+                group, kind = "player", "absent"
+            else:
+                group, kind = "player", "dunno"
         elif interrupted and not intent and random.random() < 0.7:     # a clear question is answered anyway
             kind = "interrupt"
         elif heard and not text:
@@ -1594,6 +1598,10 @@ class Operator:
             group, kind = "intent", "knows"               # «ты знаешь <X>?» — по графу canon_relations (1.33)
         elif intent == "name_call":
             group, kind = "intent", "name_call"           # обращение по имени-отчеству/фамилии (1.34)
+        elif intent == "news" and reaction_pool("player", "news"):
+            group, kind = "player", "news"                # «какие новости» (2026-11-12): событие, не самочувствие
+        elif intent == "its_me" and reaction_pool("player", "its_me"):
+            group, kind = "player", "its_me"              # «это ты?» (2026-11-12): подтверждает сам адресат
         elif intent == "calm_down":
             group, kind = "intent", "calm_down"           # «успокойся» — да/нет по настроению, с последствием
         elif intent == "hush":
