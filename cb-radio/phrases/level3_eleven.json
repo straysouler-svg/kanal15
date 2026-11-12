@@ -10054,7 +10054,8 @@
     },
     {
      "actor": "vera",
-     "text": "[calm] Нет данных."
+     "text": "[dry] Не знаю. Мне про это не докладывали.",
+     "v_pending": true
     },
     {
      "actor": "vera",
