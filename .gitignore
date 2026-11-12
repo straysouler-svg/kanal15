@@ -84,3 +84,5 @@ probe_job.txt
 !/cb-radio/vendor/README.md
 STATUS.md
 vault/
+promo/youtube/client_secret.json
+promo/youtube/token.json
