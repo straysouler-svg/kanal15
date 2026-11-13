@@ -18,6 +18,7 @@
 !/cb-radio/
 !/build/
 !/promo/
+!/docs/
 
 # ---------------------------------------------------------------- рация
 /cb-radio/*
@@ -98,5 +99,7 @@ promo/vk/token.txt
 promo/vk/group_id.txt
 promo/tiktok/token.txt
 promo/tiktok/refresh_token.txt
+promo/tiktok/client_key.txt
+promo/tiktok/client_secret.txt
 promo/instagram/token.txt
 promo/instagram/ig_user_id.txt
