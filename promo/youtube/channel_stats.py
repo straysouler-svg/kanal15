@@ -37,7 +37,9 @@ def youtube():
         creds.refresh(Request())
         TOKEN.write_text(creds.to_json(), encoding="utf-8")
     if not creds or not creds.valid:
-        creds = InstalledAppFlow.from_client_secrets_file(str(SECRET), SCOPES).run_local_server(port=0)
+        flow = InstalledAppFlow.from_client_secrets_file(str(SECRET), SCOPES)
+        print("нужна авторизация Google: сейчас откроется окно браузера", flush=True)
+        creds = flow.run_local_server(port=0, open_browser=True)
         TOKEN.write_text(creds.to_json(), encoding="utf-8")
     return build("youtube", "v3", credentials=creds)
 

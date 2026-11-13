@@ -1,0 +1,4 @@
+{
+ "_comment": "Очередь шортсов на YouTube. Время московское. Бот autopost_yt.py публикует пост, когда его время наступило (не больше одного за запуск). enabled=false — не уйдёт. Опубликованное пишется в state.json, этот файл можно править. file — путь от папки youtube или полный. privacy: public|unlisted|private.",
+ "posts": []
+}

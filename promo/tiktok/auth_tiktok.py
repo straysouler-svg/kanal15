@@ -41,7 +41,10 @@ def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     if sys.argv[1] == "exchange":
-        code = parse_qs(urlparse(sys.argv[2]).query).get("code", [None])[0]
+        url = sys.argv[2] if len(sys.argv) > 2 else ""
+        if url in ("", "@file"):
+            url = (HERE / "code_url.txt").read_text().strip()
+        code = parse_qs(urlparse(url).query).get("code", [None])[0]
         if not code:
             sys.exit("в URL нет ?code=")
         post({"client_key": cred("client_key.txt"),
