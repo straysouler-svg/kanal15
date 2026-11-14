@@ -109,3 +109,6 @@ promo/instagram/token.txt
 promo/instagram/ig_user_id.txt
 promo/tiktok/code_url.txt
 promo/vk/vkid_refresh.json
+promo/donations/*.txt
+promo/donations/*.json
+promo/donations/*.log
