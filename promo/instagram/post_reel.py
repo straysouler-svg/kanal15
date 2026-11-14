@@ -1,5 +1,5 @@
-"""Публикация Reels в Instagram через официальный Meta Graph API.
-Секреты: promo/instagram/token.txt (page access token) и promo/instagram/ig_user_id.txt — НЕ в git.
+"""Публикация Reels в Instagram через Instagram Graph API (единый вход, SUAT).
+Секреты: promo/instagram/token.txt (системный токен, бессрочный) и ig_user_id.txt — НЕ в git.
 
   python post_reel.py short.mp4 --caption "Описание #ets2"
 
@@ -17,6 +17,7 @@ HERE = Path(__file__).resolve().parent
 TOKEN_F = HERE / "token.txt"
 USER_F = HERE / "ig_user_id.txt"
 GRAPH = "https://graph.facebook.com/v21.0"
+UPLOAD = "https://rupload.facebook.com/ig-api-upload/v21.0"
 
 
 def main():
@@ -40,7 +41,7 @@ def main():
         sys.exit(f"IG media: {json.dumps(d, ensure_ascii=False)[:300]}")
     container = d["id"]
 
-    up = requests.post(f"https://rupload.facebook.com/ig-api-upload/v21.0/{container}",
+    up = requests.post(f"{UPLOAD}/{container}",
                        headers={"Authorization": f"OAuth {token}", "offset": "0",
                                 "file_size": str(size), "Content-Type": "application/octet-stream"},
                        data=open(f, "rb"), timeout=3600)

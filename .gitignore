@@ -112,3 +112,5 @@ promo/vk/vkid_refresh.json
 promo/donations/*.txt
 promo/donations/*.json
 promo/donations/*.log
+promo/instagram/app_secret.txt
+promo/instagram/app_id.txt
