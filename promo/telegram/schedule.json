@@ -269,6 +269,22 @@
    "file": "../shorts/published/shorts_buh_ne_spit.mp4",
    "caption": "📻 <b>Бухгалтерия не спит</b>\n\nВ «Канале 15» даже штрафы приходят с характером: бухгалтерия следит за вашими финансами круглые сутки.\n\n▶️ YouTube: https://youtube.com/shorts/kDFDzpPbmmg\n⬇️ <a href=\"https://storage.yandexcloud.net/kanal15-updates/channels/public/Kanal15-Setup-v1.13.exe\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
    "enabled": true
+  },
+  {
+   "id": "33_short_francuz",
+   "when": "2026-11-14 13:30",
+   "kind": "video",
+   "file": "../shorts/final_2026-11-09/shorts_francuz.mp4",
+   "caption": "🥖 <b>Ни слова не понял, но хорошей дороги</b>\n\nСкажешь в рацию по-французски — эфир всё равно ответит. По-своему.\n\n⬇️ <a href=\"https://straysouler-svg.github.io/kanal15/\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
+   "enabled": true
+  },
+  {
+   "id": "34_short_vityok_zone",
+   "when": "2026-11-14 19:30",
+   "kind": "video",
+   "file": "../shorts/final_2026-11-09/shorts_vityok.mp4",
+   "caption": "📡 <b>Витёка нет в зоне рации</b>\n\nВ «Канале 15» слышно только тех, кто рядом: уехал из зоны — и эфир честно об этом скажет.\n\n⬇️ <a href=\"https://straysouler-svg.github.io/kanal15/\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
+   "enabled": true
   }
  ]
 }

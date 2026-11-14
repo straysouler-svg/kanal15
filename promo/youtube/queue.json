@@ -1,4 +1,13 @@
 {
  "_comment": "Очередь шортсов на YouTube. Время московское. Бот autopost_yt.py публикует пост, когда его время наступило (не больше одного за запуск). enabled=false — не уйдёт. Опубликованное пишется в state.json, этот файл можно править. file — путь от папки youtube или полный. privacy: public|unlisted|private.",
- "posts": []
+ "posts": [
+  {"id": "francuz", "when": "2026-11-14 13:00", "file": "../shorts/final_2026-11-09/shorts_francuz.mp4",
+   "title": "Ни слова не понял, но хорошей дороги #shorts",
+   "description": "Говоришь в рацию по-французски — эфир всё равно отвечает. По-своему. В «Канале 15» восемнадцать выдуманных дальнобойщиков со своими голосами и характерами. Бесплатная программа-компаньон для ETS2: https://straysouler-svg.github.io/kanal15/",
+   "tags": "ets2,канал 15,euro truck simulator 2,рация,дальнобойщики", "privacy": "public", "enabled": true},
+  {"id": "vityok_zone", "when": "2026-11-14 19:00", "file": "../shorts/final_2026-11-09/shorts_vityok.mp4",
+   "title": "Витёка нет в зоне рации #shorts",
+   "description": "Слышно только тех, кто рядом: Витёк уехал из зоны рации — и эфир честно об этом говорит. «Канал 15» — бесплатная программа-компаньон для ETS2: https://straysouler-svg.github.io/kanal15/",
+   "tags": "ets2,канал 15,euro truck simulator 2,рация,дальнобойщики", "privacy": "public", "enabled": true}
+ ]
 }
