@@ -1,0 +1,98 @@
+{
+ "input": "clips/minuta_yumora.mp4",
+ "output": "shorts_minuta_yumora.mp4",
+ "hook": [
+  "МИНУТА ЮМОРА.",
+  "КТО НАЧНЁТ?"
+ ],
+ "speakers": {
+  "player": {
+   "name": "ТЫ",
+   "color": "cream"
+  },
+  "stas": {
+   "name": "СТАС",
+   "color": "amber"
+  },
+  "professor": {
+   "name": "ПРОФЕССОР",
+   "color": "sage"
+  }
+ },
+ "cues": [
+  {
+   "start": 0.9,
+   "end": 4.3,
+   "speaker": "professor",
+   "lines": [
+    "Коллеги, предлагаю",
+    "минуту юмора."
+   ]
+  },
+  {
+   "start": 4.3,
+   "end": 5.9,
+   "speaker": "professor",
+   "lines": [
+    "Кто начнёт?"
+   ]
+  },
+  {
+   "start": 7.2,
+   "end": 9.8,
+   "speaker": "stas",
+   "lines": [
+    "Бро, играли с корешем"
+   ]
+  },
+  {
+   "start": 9.8,
+   "end": 12.4,
+   "speaker": "stas",
+   "lines": [
+    "в симулятор",
+    "дальнобойщика."
+   ]
+  },
+  {
+   "start": 12.4,
+   "end": 15.0,
+   "speaker": "stas",
+   "lines": [
+    "Я вёз руду в Гамбург,",
+    "а он отсыпался"
+   ],
+   "highlight": "отсыпался"
+  },
+  {
+   "start": 15.0,
+   "end": 15.9,
+   "speaker": "stas",
+   "lines": [
+    "на диване, …"
+   ]
+  },
+  {
+   "start": 15.9,
+   "end": 17.7,
+   "speaker": "player",
+   "lines": [
+    "Отсыпался!",
+    "Отсыпался!"
+   ]
+  },
+  {
+   "start": 18.4,
+   "end": 22.5,
+   "speaker": "player",
+   "lines": [
+    "(бип) …отсыпался",
+    "на диване, отсыпался!"
+   ]
+  }
+ ],
+ "shades": {
+  "top": 0.45,
+  "bottom": 0.65
+ }
+}

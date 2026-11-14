@@ -36,7 +36,7 @@ TAG = re.compile(r"\[[^\]]*\]\s*")
 MODEL_DIR = Path(__file__).resolve().parents[2] / "build" / "models" / "f5"
 
 
-def load_model(voice_dir, model_name="F5TTS_Base"):
+def load_model(voice_dir, model_name="F5TTS_Base", ckpt_file=None):
     from f5_tts.api import F5TTS
 
     # torchaudio в связке venv-f5 -> coop-globals грузит референс через torchcodec, а его DLL не
@@ -54,7 +54,7 @@ def load_model(voice_dir, model_name="F5TTS_Base"):
 
     model = F5TTS(
         model=model_name,
-        ckpt_file=str(MODEL_DIR / "model_last.safetensors"),
+        ckpt_file=ckpt_file or str(MODEL_DIR / "model_last.safetensors"),
         vocab_file=str(MODEL_DIR / "vocab.txt"),
         device="cuda",
     )

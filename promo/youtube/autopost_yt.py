@@ -31,7 +31,10 @@ LOG = HERE / "autopost_yt.log"
 
 def log(msg):
     line = f"{datetime.now():%Y-%m-%d %H:%M:%S} {msg}"
-    print(line)
+    try:
+        print(line)
+    except Exception:
+        pass                      # pythonw: консоли нет, sys.stdout is None
     with open(LOG, "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
@@ -41,7 +44,10 @@ def load(path, default):
 
 
 def main():
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass                      # pythonw: консоли нет, sys.stdout is None
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--dry-run", action="store_true")

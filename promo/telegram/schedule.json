@@ -275,7 +275,7 @@
    "when": "2026-11-14 13:30",
    "kind": "video",
    "file": "../shorts/final_2026-11-09/shorts_francuz.mp4",
-   "caption": "🥖 <b>Ни слова не понял, но хорошей дороги</b>\n\nСкажешь в рацию по-французски — эфир всё равно ответит. По-своему.\n\n⬇️ <a href=\"https://straysouler-svg.github.io/kanal15/\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
+   "caption": "🥖 <b>Ни слова не понял, но хорошей дороги</b>\n\nСкажешь в рацию по-французски — эфир всё равно ответит. По-своему.\n\n▶️ YouTube: https://youtube.com/shorts/86FkvGs7e5Y\n⬇️ <a href=\"https://straysouler-svg.github.io/kanal15/\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
    "enabled": true
   },
   {
@@ -284,6 +284,14 @@
    "kind": "video",
    "file": "../shorts/final_2026-11-09/shorts_vityok.mp4",
    "caption": "📡 <b>Витёка нет в зоне рации</b>\n\nВ «Канале 15» слышно только тех, кто рядом: уехал из зоны — и эфир честно об этом скажет.\n\n⬇️ <a href=\"https://straysouler-svg.github.io/kanal15/\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
+   "enabled": true
+  },
+  {
+   "id": "35_short_minuta_yumora",
+   "when": "2026-11-15 13:30",
+   "kind": "video",
+   "file": "../shorts/candidates_2026-11-14/shorts_minuta_yumora.mp4",
+   "caption": "😄 <b>Минута юмора в эфире</b>\n\nВодители «Канала 15» сами предложили: коллеги, минута юмора, кто начнёт? Стас начал.\n\n⬇️ <a href=\"https://straysouler-svg.github.io/kanal15/\">Скачать «Канал 15»</a> — бесплатно, для одиночной ETS2",
    "enabled": true
   }
  ]
