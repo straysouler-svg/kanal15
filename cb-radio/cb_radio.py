@@ -1530,7 +1530,10 @@ class Operator:
                         multi.remove("bye")
                 if multi[0] != intent:
                     intent = multi[0]
-                self.multi = True     # ответили на первый — после ответа отбивка «по одному» (пул player/one_at_a_time)
+                # отбивка «по одному» — только при 2+ ВОПРОСАХ в реплике, а не при 2 интентах:
+                # «Сорок, привет, как дела» — один вопрос (стрим 14.11: отбивка на каждое приветствие с вопросом)
+                q_count = text.count("?") or (1 if intents.is_question(text) else 0)
+                self.multi = q_count >= 2
                 log(f"тангента: вопросов несколько ({', '.join(multi)}) — отвечаю на первый: {intent}")
         self.knows_target = intents.knows_target(text) if intent == "knows" else None
         if intent == "knows" and self.knows_target == who:
@@ -1596,7 +1599,9 @@ class Operator:
             kind = "not_heard" if random.random() < 0.7 else None      # pressed, but said nothing clear
         elif intent == "who":
             group, kind = "special", "who"                # roll call: everybody in range answers once
-        elif intent in ("dist", "eta", "meet") or intent in SECRET_KINDS:
+        elif intent in ("dist", "eta", "meet", "horn") or intent in SECRET_KINDS:
+            # horn сюда же: иначе «бибикни» падало в player/ack и сцена «мигни — бибикну» никогда не вызывалась
+            # (стрим 14.11: 5 просьб «бибикни» -> player/ack, гудок не звучал ни разу)
             group, kind = "intent", intent                # «живые ответы»: picked by distance / route / friendship
         elif intent == "knows":
             group, kind = "intent", "knows"               # «ты знаешь <X>?» — по графу canon_relations (1.33)
@@ -1617,7 +1622,9 @@ class Operator:
         elif intent and intent != "greet" and reaction_pool("intent", intent):
             group, kind = "intent", intent                # a clear question gets a real answer, even first
         elif intent == "greet" or not self.on_air or getattr(self, "stale", False):
-            kind = "greet"
+            # 14.11: мусорная ASR-реплика С именем («Сорока, Расскажений, Гдот.») — не приветствие,
+            # а неудавшийся вызов: честное «не понял», а не «привет» из тишины
+            kind = "greet" if (intent == "greet" or question or not who) else "not_heard"
         elif now < self.repeat_until:
             kind = "ack"
         elif heard and not intent:
@@ -1761,6 +1768,7 @@ class Operator:
         """"Кто в эфире?" - everybody in range answers with his handle, one after another; whoever answered
         stays quiet on the same question for 2-3 minutes."""
         now = time.monotonic()
+        t0 = now                                       # льготное окно: PTT в первые секунды не рвёт перекличку
         here = list(self.deck.allowed) if self.deck.allowed is not None else list(self.deck.on_air)
         random.shuffle(here)
         done, cut = 0, None
@@ -1773,6 +1781,16 @@ class Operator:
             if done and not PLAYER.idle(random.uniform(0.6, 1.5)):
                 break
             r = PLAYER.file(pick[1], a)
+            if r == "ptt" and time.monotonic() - t0 < ROLLCALL_GRACE_S:
+                # льготные секунды после «кто в эфире?» (решение 14.11): нажатие НЕ рвёт перекличку —
+                # ждём отпускания, реплика игрока стоит в ptt.presses и будет обработана main loop'ом
+                # сразу после окончания переклички. Отвечающий оборван на полуслове — повторим его реплику.
+                log(f"перекличка: тангента в льготные {ROLLCALL_GRACE_S:.0f} с — не прерываю, "
+                    f"твою реплику обработаю после")
+                if not self._ptt_grace_wait():         # игра ушла в паузу — как обычный обрыв
+                    cut = "paused"
+                    break
+                continue
             if r != "ok":
                 cut = r
                 break
@@ -1805,6 +1823,16 @@ class Operator:
             hint("nobody", "Рядом сейчас никого нет, поэтому никто не ответил. Водители-персонажи появятся по дороге.")
         if done:
             self.on_air = True
+
+    def _ptt_grace_wait(self):
+        """Ожидание отпускания тангенты внутри льготного окна переклички. False — игра встала (пауза):
+        дальше rollcall обрывается как раньше."""
+        while PLAYER.ptt and PLAYER.ptt.down:
+            PLAYER.ptt.poll()
+            time.sleep(0.02)
+            if PLAYER.game and PLAYER.game.state(PLAYER.cfg["require_engine_on"]) != "driving":
+                return False
+        return True
 
     def repeat(self, who):
         """"Повтори": the one you named (else whoever spoke last) says his last line again, word for word.
@@ -2423,6 +2451,7 @@ def weather_kind(game, world):
 # дальше «не услышишь»; никаких «в правом ряду».
 HORN_NEAR_M, HORN_FAR_M = 150.0, 1500.0
 HORN_WAIT_S = (15.0, 20.0)
+ROLLCALL_GRACE_S = 4.0        # настоящие секунды: PTT в первые 4 с после «кто в эфире?» не рвёт перекличку
 HORN_DONE = {}            # actor -> monotonic: сцена уже сыграна за эту встречу (снимаем, когда ушёл из зоны)
 _MM_HORN = [None]
 
@@ -3804,6 +3833,10 @@ def main(argv):
             # your own transmissions: answered while driving or parked with the game running
             while ptt.presses:
                 dur, interrupted, cut, job = ptt.presses.pop(0)
+                if ptt.presses:
+                    # накопилось несколько нажатий разом (перекличка держала main loop) — рация не телеграф:
+                    # обрабатываем только последнюю реплику (решение 14.11)
+                    continue
                 if st in ("driving", "engine_off"):
                     op.press(dur, interrupted, cut, job)
                 elif st == "no_game":
