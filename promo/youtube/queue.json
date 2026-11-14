@@ -30,6 +30,16 @@
    "tags": "ets2,канал 15,euro truck simulator 2,рация,дальнобойщики",
    "privacy": "public",
    "enabled": true
+  },
+  {
+   "id": "student_upgrade",
+   "when": "2026-11-15 19:00",
+   "file": "../shorts/final_2026-11-09/shorts_student_upgrade.mp4",
+   "title": "Студент соврал маме — рация услышала #shorts",
+   "description": "Сказал маме, что «в соседнем городе», а сам уехал через три области. Эфир «Канала 15» всё записал — и вежливо это прокомментировал. Восемнадцать выдуманных дальнобойщиков со своими голосами и характерами. Бесплатная программа-компаньон для одиночной ETS2: https://straysouler-svg.github.io/kanal15/",
+   "tags": "ets2,канал 15,euro truck simulator 2,рация,дальнобойщики",
+   "privacy": "public",
+   "enabled": true
   }
  ]
 }
