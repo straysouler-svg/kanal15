@@ -28,3 +28,12 @@
 - Лимиты VK мягкие: десятки постов в день не проблема.
 - Видео до ~4 ГБ и 4 часов — наши минутные шортсы проходят без вопросов.
 - Если ключ протухнет (VK иногда рвёт ключи сообщества при смене пароля) — повторить шаг 2.
+- ВАЖНО (14.11): ключ сообщества НЕ работает с методами `video.*` («error 5, invalid token type») — заливка видео/клипов через API требует пользовательский токен VK ID.
+
+## Пользовательский токен VK ID (для video.*) — рабочий рецепт 14.11
+
+1. Приложение VK ID 54897346 «Kanal15» (Web): базовый домен `straysouler-svg.github.io`, Redirect URL `https://straysouler-svg.github.io/kanal15/`. Настройки сохраняются только после подтверждения бизнес-профиля (Сбер ID / самозанятость).
+2. `python promo/vk/auth_vkid.py url` → открыть ссылку, разрешить → из адресной строки скопировать URL с `?code=vk2.a...` → СРАЗУ (код живёт 600 с): `python promo/vk/auth_vkid.py exchange "<url>"`.
+3. ГРАБЛЯ: `id.vk.com/oauth2/auth` требует Сервисный ключ доступа параметром `service_token`. Передача его как `client_secret` или заголовком `Authorization: Bearer` даёт `invalid_request: missing service token`. Implicit flow (`response_type=token` на blank.html) и старая консоль dev.vk.com — мертвы.
+4. Токен живёт 1 ч. Обновление: `python promo/vk/auth_vkid.py refresh` (нужен `vkid_refresh.json`; если его нет — полный цикл url/exchange заново). Заливка: `python promo/vk/upload_vk_video.py file.mp4 "Название" ["Описание"]` — читает `user_token.txt`, пишет в «Видео» группы без поста на стену.
+5. 14.11 залито: video-243244739_456239018..21 (Француз, Нет данных, Профессор, Бухгалтерия).

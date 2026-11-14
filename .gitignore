@@ -97,6 +97,10 @@ promo/youtube/client_secret.json
 promo/youtube/token.json
 promo/vk/token.txt
 promo/vk/group_id.txt
+promo/vk/user_token.txt
+promo/vk/vkid_service_key.txt
+promo/vk/vkid_client_id.txt
+promo/vk/vkid_pkce.json
 promo/tiktok/token.txt
 promo/tiktok/refresh_token.txt
 promo/tiktok/client_key.txt
@@ -104,3 +108,4 @@ promo/tiktok/client_secret.txt
 promo/instagram/token.txt
 promo/instagram/ig_user_id.txt
 promo/tiktok/code_url.txt
+promo/vk/vkid_refresh.json
