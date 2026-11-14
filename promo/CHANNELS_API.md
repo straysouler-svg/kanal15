@@ -21,7 +21,7 @@
 ## VK (работает: стена/фото/видео)
 
 - **Группа:** vk.ru/club243244739 (id в `promo/vk/group_id.txt`).
-- **Скрипты:** `promo/vk/post_vk.py` (текст, фото, видео-пост на стену), `upload_vk_video.py` (видео в раздел без поста, user_token), `auth_vkid.py` (url/exchange/refresh — пользовательский токен VK ID), `setup_group.py`, `make_vk_art.py` (аватар/обложка).
+- **Скрипты:** `promo/vk/post_vk.py` (текст, фото), `upload_vk_video.py` (видео в раздел без поста, user_token), `autopost_vk.py` (зеркало очереди YouTube: video.save user_token → wall.post ключом сообщества; задача `Kanal15-Autopost-VK`), `auth_vkid.py` (url/exchange/refresh — пользовательский токен VK ID), `setup_group.py`, `make_vk_art.py` (аватар/обложка).
 - **Креды:** `promo/vk/token.txt` — ключ СООБЩЕСТВА. Хватает на `wall.*`, `photos.*`, `groups.*`. Для `video.*` — `promo/vk/user_token.txt` (пользовательский VK ID, живёт 1 ч, refresh через `auth_vkid.py refresh`).
 - **Грабли (14.11):** `video.*` ключом сообщества — «error 5». Implicit flow мёртв; рабочий путь — VK ID PKCE (приложение 54897346), и `oauth2/auth` требует сервисный ключ параметром `service_token` (не client_secret, не Bearer — иначе «missing service token»). Подробный рецепт: `promo/vk/Настройка VK.md`.
 
