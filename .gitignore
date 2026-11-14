@@ -6,18 +6,10 @@
 /*
 !/.gitignore
 !/.gitattributes
-!/AGENTS.md
-!/CLAUDE.md
 !/README.md
 !/MODLOG.md
-!/.claude/
-/.claude/*
-!/.claude/agents/
-/.claude/agents/*
-!/.claude/agents/*.md
 !/cb-radio/
 !/build/
-!/promo/
 !/docs/
 
 # ---------------------------------------------------------------- рация
@@ -114,3 +106,26 @@ promo/donations/*.json
 promo/donations/*.log
 promo/instagram/app_secret.txt
 promo/instagram/app_id.txt
+
+# донаты: налоги и выплаты — личное, только локально
+promo/donations/*.md
+
+# автопостеры и механика внешних каналов — локально, в git не идут (решение 14.11)
+/promo/youtube/
+/promo/instagram/
+/promo/vk/
+/promo/tiktok/
+/promo/donations/
+/promo/CHANNELS_API.md
+/promo/telegram/autopost.py
+/promo/telegram/install_autopost.ps1
+/promo/telegram/notify_me.py
+/promo/telegram/setup_group.py
+/promo/telegram/schedule.json
+/promo/telegram/post1_fix.json
+/promo/telegram/discussion_group_setup.md
+/promo/telegram/Расписание.md
+
+# promo и backup — рабочие бумаги, локально (решение 14.11: на GitHub только рация)
+/promo/
+/backup/
