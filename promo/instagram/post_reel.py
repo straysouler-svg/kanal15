@@ -40,8 +40,9 @@ def main():
     if "id" not in d:
         sys.exit(f"IG media: {json.dumps(d, ensure_ascii=False)[:300]}")
     container = d["id"]
+    upload_url = d.get("uri") or f"{UPLOAD}/{container}"
 
-    up = requests.post(f"{UPLOAD}/{container}",
+    up = requests.post(upload_url,
                        headers={"Authorization": f"OAuth {token}", "offset": "0",
                                 "file_size": str(size), "Content-Type": "application/octet-stream"},
                        data=open(f, "rb"), timeout=3600)
