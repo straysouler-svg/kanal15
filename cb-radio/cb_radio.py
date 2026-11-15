@@ -1638,6 +1638,11 @@ class Operator:
             group, kind = "intent", "hush"                # «помолчим» — один отвечает, эфир стихает
         elif intent == "sorry":
             group, kind = "intent", "sorry"               # извинение — обидевшемуся, не случайному адресату
+        elif intent == "swear":
+            # 15.11 (ревью Клода, стенд seed 7/21): мат в эфире БЕЗ адресата (анекдот «медведь на мине»)
+            # — не обида. Добродушная отбивка (своего пула пока нет — player/ack), дружбу не трогает.
+            # 2-й круг: на ВОПРОС («Иди ты! Серьёзно?») «принял» не годится — честное «не знаю».
+            group, kind = "player", ("dunno" if question else "swear")
         elif intent and intent.startswith("graf_") and reaction_pool("graf", intent[5:]):
             group, kind = "graf", intent[5:]              # the dog: only Vera answers (who = vera)
         elif intent and intent != "greet" and reaction_pool("intent", intent):
@@ -1649,7 +1654,8 @@ class Operator:
             # а неудавшийся вызов: честное «не понял», а не «привет» из тишины
             kind = "greet" if (intent == "greet" or question or not who) else "not_heard"
         elif now < self.repeat_until:
-            kind = "ack"
+            # 15.11 (пакет стенда): в окне «не расслышал, повтори» на явный ВОПРОС нельзя «принял»
+            kind = ("dunno" if random.random() < 0.5 else "not_heard") if question else "ack"
         elif heard and not intent:
             # words heard but nothing we know. A question (or about someone not here) -> "не знаю / не видел"
             # or "не понял"; a statement / warning from you -> "принял"
@@ -2108,7 +2114,14 @@ class Operator:
             order = ([who] if who else []) + ([prefer] if prefer else [])
         for a in order:
             pool = reaction_pool("intent", "sorry") or reaction_pool("player", "ack")
-            pick = self.deck.choose([x for x in pool if x[0] == a] or pool, prefer=a)
+            # 15.11 (стенд, сценарий «обида->извинение»): обиженный в off_until -> offline -> choose его
+            # отфильтровывал, извинение НИКОГДА не доходило. Он молчит в эфире, но извинение слышит.
+            if a in LAST_OFFENDED:
+                self.deck.grace = a
+            try:
+                pick = self.deck.choose([x for x in pool if x[0] == a] or pool, prefer=a)
+            finally:
+                self.deck.grace = None
             if not pick:
                 continue
             actor, wav = pick
@@ -2244,6 +2257,9 @@ class Operator:
             prefer = None                # not always the same person answering
         evaded = False               # ответ ушёл в уклончивую (bond/evade) — зацепку следом не запускать (ревью 15.11)
         pool = reaction_pool(group, kind)
+        if kind == "swear" and not pool:
+            # своих реплик на мат без адресата пока нет — добродушное «принял» (ревью Клода 15.11)
+            pool = reaction_pool("player", "ack")
         question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support") and kind not in SECRET_KINDS
         if group == "intent" and kind in PERSONAL_KINDS and BONDS and who:
             # личная тема по имени: у адресата есть реплика, но дружбы не хватает (lv) -> он отвечает
@@ -2270,8 +2286,12 @@ class Operator:
                     return
         # 1.33 слышимое настроение: «как дела» иногда честно отражает реальное настроение
         if group == "intent" and kind == "how_are_you" and BONDS and random.random() < 0.35:
-            acts = [a for a, _ in pool]
-            if acts:
+            # 15.11 (пакет стенда): пул без фильтра зоны — маркер настроения мог ответить водитель
+            # за сотни км (mihalych из far на «Вер, как дела?») и обиженный (off_until). Теперь только
+            # ближние и не обиженные; при адресате — только он сам.
+            acts = [a for a, _ in pool if not self.deck.offline(a)
+                    and (self.deck.allowed is None or a in self.deck.allowed)]
+            if acts and (not who or who in acts):
                 a = who if who in acts else (prefer if prefer in acts else random.choice(acts))
                 mk = line_of("mood_mark", BONDS.mood(a), a)
                 if mk:
@@ -2318,8 +2338,10 @@ class Operator:
             self.deck.grace = None
         if not pick and (question or kind == "dunno"):
             # nobody near has a recorded answer: somebody says he doesn't know / didn't get it
-            if group == "intent" and kind in PERSONAL_KINDS and BONDS:
-                # личная тема без адресата: пока никто не приятель, ближний отвечает уклончиво (свои lv0–1)
+            if group == "intent" and kind in PERSONAL_KINDS and BONDS and not who:
+                # личная тема БЕЗ АДРЕСАТА: пока никто не приятель, ближний отвечает уклончиво (свои lv0–1).
+                # 15.11 (ревью Клода): спросили ПО ИМЕНИ только что уехавшего (<120 с) — отвечает ОН САМ
+                # через помехи (блок «дальний» ниже) или молчит, а не посторонний с уклончивой.
                 here = {a for a in (self.deck.allowed or ()) if not self.deck.offline(a)}
                 pick = self.deck.choose([x for x in reaction_pool("bond", "evade") if x[0] in here],
                                         prefer=prefer)
@@ -2363,9 +2385,20 @@ class Operator:
         if own:
             actor, wav = own
             log(f"  личная реплика ({BUILD_NAME})")
-        if (question or kind == "dunno") and wav == self.last_file:
-            log(f"{actor}: тот же ответ второй раз подряд — молчит")
-            return
+        if (question or kind in ("dunno", "absent")) and wav == self.last_file:
+            # 15.11 (ревью Клода): player/absent тоже не звучит дважды подряд — сначала передаём другому ближнему
+            if kind == "absent":
+                alt = self.deck.choose([x for x in reaction_pool("player", "absent")
+                                        if x[1] != wav and x[0] != actor])
+                if alt:
+                    log(f"  absent повтор — передаю другому ближнему: {alt[0]}")
+                    actor, wav = alt
+                else:
+                    log(f"{actor}: тот же absent второй раз подряд, передать некому — молчит")
+                    return
+            else:
+                log(f"{actor}: тот же ответ второй раз подряд — молчит")
+                return
         self.last_file = wav
         log(f"ответ: {group}/{kind} ({actor})")
         if PLAYER.file(wav, actor) == "ok":
@@ -2395,7 +2428,7 @@ class Operator:
                                                "мудак", "чмо", "лох", "придур", "задолбал", "хрен тебе"))
                 fresh_up = any(q[2] == actor for q in BOND_UP)   # 1.33 (Игорь): апгрейд и обида не в одну секунду
                 if (kind == "rude" and not hard) or fresh_up:
-                    log(f"  грубость без твёрдых маркеров в распознанном тексте — мягкий режим"
+                    log("  грубость без твёрдых маркеров в распознанном тексте — мягкий режим"
                         if kind == "rude" and not hard else
                         f"  {actor} только что стал ближе — обида смягчена")
                     bond_add(actor, -5, "грубость (мягкая)")
@@ -2412,7 +2445,7 @@ class Operator:
                 bond_add(actor, -25 if kind == "rude" else -15, "грубость" if kind == "rude" else "унижение")
                 mood_nudge(actor, -2 if kind == "rude" else -1, "грубость" if kind == "rude" else "унижение")
                 return
-            if group in ("intent", "player", "graf") and kind not in ("not_heard", "interrupt", "click", "already"):
+            if group in ("intent", "player", "graf") and kind not in ("not_heard", "interrupt", "click", "already", "swear"):
                 bond_add(actor, 3 if kind in ("thanks", "praise") else 2 if who == actor else 1, kind)
             if group == "intent" and kind in ("thanks", "praise", "joke", "song", "support"):
                 sup = getattr(self, "support", False)
@@ -2488,13 +2521,6 @@ def line_of(group, kind, actor):
     pick = mood_pick(fresh_first(pool))
     heard(pick[1])
     return pick
-
-
-def weather_kind(game, world):
-    """rain = your wipers are on (the drivers in range are in your area); else dry day / dry night."""
-    if game and game.wipers():
-        return "rain"
-    return "dry_night" if world and world.is_night(world.game_min) else "dry_day"
 
 
 def weather_kind(game, world):
