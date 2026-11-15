@@ -48,5 +48,6 @@
     "port": 47823
   },
   "static": "low",
-  "horn_pilot": true
+  "horn_pilot": true,
+  "hooks_pilot": true
 }

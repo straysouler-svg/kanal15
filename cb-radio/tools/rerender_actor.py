@@ -52,8 +52,13 @@ def main():
         if grp.startswith("_"):
             continue
         for kind, ls in kinds.items():
-            if not kind.startswith("_"):
-                lines(ROOT / "audio" / "reactions" / grp / kind, ls)
+            if kind.startswith("_"):
+                continue
+            if isinstance(ls, dict):     # вложенные пулы (knows/<actor> -> <target>) -> плоские <actor>__<target>
+                for target, sub in ls.items():
+                    lines(ROOT / "audio" / "reactions" / grp / f"{kind}__{target}", sub)
+                continue
+            lines(ROOT / "audio" / "reactions" / grp / kind, ls)
     print(f"пересобрано {n} реплик: {', '.join(sorted(who))}")
 
 

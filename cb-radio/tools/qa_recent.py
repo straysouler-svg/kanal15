@@ -35,6 +35,11 @@ def items(d):
         for k, ls in ks.items():
             if k.startswith("_"):
                 continue
+            if isinstance(ls, dict):  # вложенные пулы (knows, bond/names_*__<actor>): папка <k>__<target>
+                for tgt, sub in ls.items():
+                    for i, ln in enumerate(sub, 1):
+                        yield ROOT / "audio" / "reactions" / g / f"{k}__{tgt}" / f"{i:02d}.mp3", ln["actor"], ln["text"]
+                continue
             for i, ln in enumerate(ls, 1):
                 yield ROOT / "audio" / "reactions" / g / k / f"{i:02d}.mp3", ln["actor"], ln["text"]
 

@@ -138,6 +138,7 @@ DEFAULT_CFG = {
     "kerchunk_gap_s": [100, 320],  # empty push-to-talk clicks between phrases; [] = off
     "greet_reply_chance": 0.85,    # someone answers an actor's hello
     "horn_pilot": False,           # «мигни — бибикну», пилот 11.11: сцена сигнала у soroka/vitek/ten (только тест)
+    "hooks_pilot": False,          # зацепки из библии (reactions/hooks/<actor>) после личного вопроса, пилот 15.11
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
@@ -1479,6 +1480,7 @@ class Operator:
         self.last_topic = {}         # 1.33: actor -> intent последней темы (смена темы сбрасывает «уже говорил»)
         self.guest_pending = False   # «онлайн-конвой»: отвечаем гостю — дружба и настроение не меняются
         self.multi = False           # в реплике несколько вопросов — после ответа играем отбивку «по одному»
+        self._hooked = set()         # hooks_pilot: зацепка — не чаще одной на актёра за сессию (ревью 15.11)
     REPEAT_MAX = 2
 
     def press(self, dur, interrupted, cut_speaker, job=None):
@@ -1513,6 +1515,21 @@ class Operator:
         import intents
         now = time.monotonic()
         self.heard_text = text
+        # 15.11 (user): «Заметка: …» — служебная диктовка себе: пишется в notes.log, в эфир НЕ идёт,
+        # дружбу не трогает (случай 15.11: надиктованные задачи ушли Сове и дали +2 дружбы)
+        if text and intents.norm(text).strip().startswith("заметка"):
+            note = re.sub(r"^\s*заметка[,:.\s]*", "", text, flags=re.IGNORECASE).strip() or text
+            try:
+                with open(ROOT / "notes.log", "a", encoding="utf-8") as f:
+                    f.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} {note}\n")
+            except OSError:
+                pass
+            log(f"заметка записана (не в эфир): «{note}»")
+            if OVERLAY:
+                OVERLAY.you(text, time.time() - (now - t_rel))
+            self.multi = False
+            self.support = False
+            return
         intent, who = intents.understand(text) if text else (None, None)
         # 2026-11-11: несколько вопросов одной репликой («как дела, куда едешь, как погода?») — отвечаем
         # на ПЕРВЫЙ сказанный, остальные отбиваем (раньше срабатывал приоритетный интент, не первый).
@@ -1530,6 +1547,10 @@ class Operator:
                         multi.remove("bye")
                 if multi[0] != intent:
                     intent = multi[0]
+                if intent == "greet" and len(multi) > 1:
+                    # 15.11 (стрим): «привет + вопрос» — отвечаем на вопрос, приветствие уже в самом ответе
+                    # («Привет, Тень. Как дела?» -> greet, вопрос съеден; «Привет, кто в эфире?» -> greet, переклички нет)
+                    intent = multi[1]
                 # отбивка «по одному» — только при 2+ ВОПРОСАХ в реплике, а не при 2 интентах:
                 # «Сорок, привет, как дела» — один вопрос (стрим 14.11: отбивка на каждое приветствие с вопросом)
                 q_count = text.count("?") or (1 if intents.is_question(text) else 0)
@@ -1621,6 +1642,8 @@ class Operator:
             group, kind = "graf", intent[5:]              # the dog: only Vera answers (who = vera)
         elif intent and intent != "greet" and reaction_pool("intent", intent):
             group, kind = "intent", intent                # a clear question gets a real answer, even first
+        elif intent == "football":
+            group, kind = "player", "dunno"               # пула intent/football пока нет: честное «не знаю», не «принял» на вопрос (ревью 15.11)
         elif intent == "greet" or not self.on_air or getattr(self, "stale", False):
             # 14.11: мусорная ASR-реплика С именем («Сорока, Расскажений, Гдот.») — не приветствие,
             # а неудавшийся вызов: честное «не понял», а не «привет» из тишины
@@ -1638,10 +1661,15 @@ class Operator:
             else:
                 kind = "ack" if r < 0.8 else "not_heard"
         elif who:
-            kind = "ack"
+            # 15.11 (стрим, 4 случая): «принял» на ВОПРОС запрещён (правило 04.11) — честное «не знаю/не расслышал»
+            r = random.random()
+            kind = ("dunno" if r < 0.65 else "not_heard") if question else "ack"
         else:
             r = random.random()
-            kind = "ack" if r < 0.7 else "not_heard" if r < 0.9 else None
+            if question:                         # 15.11: и без адресата на вопрос не «принял»
+                kind = "dunno" if r < 0.65 else "not_heard"
+            else:
+                kind = "ack" if r < 0.7 else "not_heard" if r < 0.9 else None
         if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude",
                                                        "mock", "bot", "support"):
             # step 2 of «вариативность» (2026-11-05): asked him the same within 10 min -> he notices
@@ -1727,7 +1755,10 @@ class Operator:
         if kind == "police":
             # only somebody who comes from where you're going can tell; the one you called first
             knowers = [a for a in here if w.knowledge(a) is not None]
-            order = ([who] if who in knowers else []) + random.sample(knowers, len(knowers))
+            if who:
+                order = [who] if who in knowers else []   # 15.11: спросили по имени — отвечает только он
+            else:                                          #    (не знает — дальше честный police_unknown/dunno)
+                order = random.sample(knowers, len(knowers))
             for a in order:
                 k = w.knowledge(a)
                 pick = line_of("world", "police_yes" if k in ("camera", "police") else "police_no", a)
@@ -1738,7 +1769,10 @@ class Operator:
         if kind == "road":
             # like police: only somebody coming from your way ahead knows the road there
             knowers = [a for a in here if w.knowledge(a) is not None]
-            order = ([who] if who in knowers else []) + random.sample(knowers, len(knowers))
+            if who:
+                order = [who] if who in knowers else []   # 15.11: спросили по имени — отвечает только он
+            else:
+                order = random.sample(knowers, len(knowers))
             for a in order:
                 k = w.knowledge(a)
                 pick = line_of("world", "police_yes" if k in ("camera", "police") else "clear", a)
@@ -1759,6 +1793,9 @@ class Operator:
                     log("  про погоду отвечает дальний")
             if not pool:
                 return None
+            mine = [x for x in pool if x[0] == who]     # 15.11: пересчёт после подмешивания дальнего
+            if who and not mine:
+                return None                     # 15.11: спросили по имени, а у него про погоду слова нет — честный dunno ниже
             pick = random.choice(fresh_first(mine or pool))
             heard(pick[1])
             return pick
@@ -2205,6 +2242,7 @@ class Operator:
             kind += "_unknown"       # nobody near could have seen it: an honest «не видел, я в ту же сторону»
         if not who and kind != "interrupt" and random.random() > 0.6:
             prefer = None                # not always the same person answering
+        evaded = False               # ответ ушёл в уклончивую (bond/evade) — зацепку следом не запускать (ревью 15.11)
         pool = reaction_pool(group, kind)
         question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support") and kind not in SECRET_KINDS
         if group == "intent" and kind in PERSONAL_KINDS and BONDS and who:
@@ -2216,6 +2254,7 @@ class Operator:
                 if ev:
                     log(f"  {who}: дружбы мало для личного — отвечает уклончиво")
                     pool = ev
+                    evaded = True
         # 1.33 холодный старт: незнакомец (lv0) на первой встрече отвечает на вопрос встречным
         # вопросом «а ты кто?» — вместо готового ответа
         if question and BONDS and who and random.random() < 0.5:
@@ -2286,6 +2325,7 @@ class Operator:
                                         prefer=prefer)
                 if pick:
                     log(f"  на {kind} отвечают уклончиво ({pick[0]})")
+                    evaded = True
             for alt_kind in ("dunno", "not_heard"):
                 if pick:
                     break
@@ -2379,6 +2419,28 @@ class Operator:
                 low = BONDS and BONDS.mood(actor) in ("tired", "grumpy")
                 mood_nudge(actor, 2 if sup and low else 1, "поддержка" if sup else kind)
             self._maybe_cross(actor, group)
+            self._maybe_hook(actor, group, kind, who, evaded)
+
+    HOOK_P = 0.5
+    HOOK_P_HOW = 0.25        # «как дела» — самый частый вопрос эфира, шанс ниже (ревью 15.11)
+
+    def _maybe_hook(self, actor, group, kind, who, evaded=False):
+        """Зацепка из библии (reactions/hooks/<actor>): спросили по имени про личное (или «как дела»)
+        — водитель иногда сам приоткрывает свою тему сразу после ответа. Пилот 15.11,
+        за флагом cfg["hooks_pilot"]; lv-гейтинг — через line_of -> bond_filter.
+        Не запускается после уклончивого ответа (evade) и звучит не чаще одной на актёра за сессию."""
+        if not (PLAYER.cfg or {}).get("hooks_pilot") or group != "intent" or who != actor or evaded:
+            return
+        if kind not in PERSONAL_KINDS + ("how_are_you",):
+            return
+        if random.random() > (self.HOOK_P_HOW if kind == "how_are_you" else self.HOOK_P):
+            return
+        if not BONDS or BONDS.level(actor) < 1 or actor in self._hooked:
+            return
+        p = line_of("hooks", actor, actor)
+        if p and PLAYER.file(p[1], actor) == "ok":
+            self._hooked.add(actor)
+            log(f"  зацепка ({actor})")
 
     CROSS_P = 0.15
 
@@ -2724,7 +2786,7 @@ def single_instance(port, quit_only=False, takeover=False):
         if windowless:                        # no console (pythonw / windowed exe): ask in a box
             if ctypes.windll.user32.MessageBoxW(
                     None, "«Канал 15» уже работает (значок рации возле часов).\n\nВыключить его?", "Канал 15",
-                    0x04 | 0x20 | 0x40000) == 6:          # Yes/No, question, topmost; 6 = Yes
+                    0x04 | 0x20) == 6:                    # Yes/No, question; 6 = Yes (15.11: no MB_TOPMOST — it stole the game's focus)
                 _send_quit(port)
         else:
             time.sleep(3)
@@ -2833,7 +2895,7 @@ REPORT_WARN = NL.join([
 
 def _msgbox(text, title, flags):
     try:
-        return ctypes.windll.user32.MessageBoxW(None, text, title, flags | 0x40000)    # MB_TOPMOST
+        return ctypes.windll.user32.MessageBoxW(None, text, title, flags)    # 15.11: no MB_TOPMOST — it stole the game's focus
     except Exception:
         return 0
 
@@ -3116,7 +3178,7 @@ def main(argv):
         if not tray and sys.stdout is None:   # windowless and no icon: at least tell how to switch it off
             ctypes.windll.user32.MessageBoxW(
                 None, "Значок рации возле часов не появился, но эфир работает.\n\nВыключить «Канал 15»: ярлык "
-                      "«Выключить Канал 15» в меню «Пуск» или ещё раз ярлык «Канал 15».", "Канал 15", 0x40 | 0x40000)
+                      "«Выключить Канал 15» в меню «Пуск» или ещё раз ярлык «Канал 15».", "Канал 15", 0x40)
     game = Game()
     PLAYER.game = game
     import gamecheck
@@ -4146,6 +4208,6 @@ if __name__ == "__main__":
             pass
         if sys.stdout is None:
             ctypes.windll.user32.MessageBoxW(None, "«Канал 15» не запустился:\n\n" + tb.strip().splitlines()[-1] +
-                                             f"\n\nПодробности: {ROOT / 'crash.log'}", "Канал 15", 0x10 | 0x40000)
+                                             f"\n\nПодробности: {ROOT / 'crash.log'}", "Канал 15", 0x10)
         else:
             raise
