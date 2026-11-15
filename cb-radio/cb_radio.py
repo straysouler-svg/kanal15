@@ -2260,7 +2260,9 @@ class Operator:
         if kind == "swear" and not pool:
             # своих реплик на мат без адресата пока нет — добродушное «принял» (ревью Клода 15.11)
             pool = reaction_pool("player", "ack")
-        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support") and kind not in SECRET_KINDS
+        question = group == "intent" and kind not in ("thanks", "bye", "praise", "rude", "mock", "bot", "support",
+                                                      "ten_name") and kind not in SECRET_KINDS
+        # ten_name (15.11): тёплый отказ на паспортное имя Тени важнее холодного старта «а ты кто?»
         if group == "intent" and kind in PERSONAL_KINDS and BONDS and who:
             # личная тема по имени: у адресата есть реплика, но дружбы не хватает (lv) -> он отвечает
             # своей уклончивой (reactions/bond/evade, размечены lv0–1), а не общим «не знаю»
@@ -2633,7 +2635,8 @@ def horn_scene(mouth, who, direct=False):
                     mouth.deck.on_air.add(who)
                     mouth.on_air = True
                     bond_add(who, 2 if who else 1, "далеко — не услышишь")
-                    HORN_DONE[who] = time.monotonic()
+                    # 15.11 (стрим): «не услышишь» НЕ закрывает сцену (HORN_DONE не ставим): гудка же не было,
+                    # и когда он подъедет в порог 150-1500 м, «бибикни» должен сыграть сцену, а не dist/already
                     log(f"мигни-бибикну: {who} в {m:.0f} м — дальше порога, «не услышишь»")
                     return True
         return False
@@ -3048,11 +3051,17 @@ def make_report(show=True, hide_speech=False):
         _show_report(z)
     return z
 _HINTED = set()
+_HINT_NOBODY = [-1e9]      # последний показ подсказки «рядом никого» (троттлинг 3 мин, 15.11)
 
 
 def hint(kind, text):
     """A Windows notification from the tray icon, once per session per kind (it does not take focus from the
-    game). For «I press the key and nobody answers» (2026-11-05, Kirill): the reason is said, not guessed."""
+    game). For «I press the key and nobody answers» (2026-11-05, Kirill): the reason is said, not guessed.
+    15.11 (стрим): «рядом никого нет» уходило в оверлей трижды за 70 с — не чаще раза в 3 минуты."""
+    if kind == "nobody" and time.monotonic() - _HINT_NOBODY[0] < 180:
+        return
+    if kind == "nobody":
+        _HINT_NOBODY[0] = time.monotonic()
     log(f"подсказка: {text}")
     if kind in _HINTED or not TRAY_MOD:
         return
