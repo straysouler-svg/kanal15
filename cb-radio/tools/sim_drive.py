@@ -580,14 +580,6 @@ def main():
             if "set_min" in st:                       # скачок игровых часов (смены, ночь)
                 game.game_min = st["set_min"]
                 log(f"[сим] игровое время -> {st['set_min'] / 60:.1f} ч")
-            if "text" not in st:                      # служебный шаг (только set_min)
-                step_i += 1
-                continue
-            need = st.get("when_inside") or st.get("summon")
-            if st.get("summon") and st["summon"] not in deck.allowed and not st.get("_summoned"):
-                st["_summoned"] = True                # один вызов на шаг, не спамить каждый тик
-                got = world.summon(st["summon"])
-                log(f"[сим] summon {st['summon']}: {got or 'не вышел (не смена?)'}")
             if "bond" in st:                          # выставить очки дружбы (уровни 0/1/2, ревью 15.11)
                 for a_, p_ in st["bond"].items():
                     bonds._rec(a_)["p"] = p_
@@ -603,6 +595,16 @@ def main():
                     for k in world.left:
                         deck.left_at[k] = _vnow()
                     log(f"[сим] banish {st['banish']}: увезён за 60 км")
+                    if st.get("gone"):                  # 15.11 (разбор 2): «давно уехал» — стираем льготные 120 с
+                        deck.left_at.pop(st["banish"], None)
+            if "text" not in st:                      # служебный шаг (эффекты выше уже применены)
+                step_i += 1
+                continue
+            need = st.get("when_inside") or st.get("summon")
+            if st.get("summon") and st["summon"] not in deck.allowed and not st.get("_summoned"):
+                st["_summoned"] = True                # один вызов на шаг, не спамить каждый тик
+                got = world.summon(st["summon"])
+                log(f"[сим] summon {st['summon']}: {got or 'не вышел (не смена?)'}")
             if need is None or need in deck.allowed:
                 run_bot_phrase(st["text"], st.get("who"), st.get("q"), st.get("greetq", False),
                                st.get("expect_silence", False), st.get("id", ""),

@@ -1594,7 +1594,12 @@ class Operator:
             else:
                 # a name of somebody NOT in range: a question ABOUT him ("Сороку никто не видел?"), not to him -
                 # those in range answer; with no recorded line on that, "не знаю / не видел"
-                about, who = who, None
+                if intent == "ten_name":
+                    # 15.11 (разбор 2 Клода): Тень не в зоне — «Серёга» просто неизвестное имя.
+                    # absent («его нет в эфире») подтвердил бы, что Серёга — это Тень: тайна раскрыта. Молчим/«не знаю».
+                    intent, who = None, None
+                else:
+                    about, who = who, None
         reply = False
         if (not who and not about and heard and PLAYER.last_speaker and t_rel - PLAYER.last_t < 25
                 and intent not in ("who", "repeat") and not (intent or "").startswith("graf_")):
