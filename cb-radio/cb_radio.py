@@ -918,10 +918,17 @@ class Deck:
                 if CARE_STAY.get(a, 0) > time.monotonic():
                     w -= 0.5        # 3.1: после честного «устал» спросивший десять минут рядом — говорит раньше
                 return -0.4 if w > 1 else 0.4 if w < 1 else 0.0
+            def bond_k(p):
+                # 16.11 (просьба в эфире): при равной зоне недокачанные звучат раньше; сдвиг мал
+                # (0..0.75 «реплики») — spoken и mood важнее, сценки не трогаем
+                if not BONDS or p.startswith("scene/"):
+                    return 0.0
+                return BONDS.level(actors_of(p)[0]) * 0.25
+
             pick = min(cands, key=lambda p: ((self.spoken.get(actors_of(p)[0], 0)
                                               + (8 if time.monotonic() < QUIET_UNTIL.get(actors_of(p)[0], 0) else 0))
                                              / self.weights.get(actors_of(p)[0], 1.0)
-                                             + mood_k(p), pos[p]))
+                                             + mood_k(p) + bond_k(p), pos[p]))
         else:
             pick = next((p for p in left if self._ok(p, left_set, last_voice, False)), None)
         hist = [h for h in self.st.get("history", []) if h in have]

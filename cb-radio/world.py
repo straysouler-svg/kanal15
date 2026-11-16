@@ -353,6 +353,17 @@ class World:
                 c.append(t)
         return random.choice(c) if c else None
 
+    def _bond_meet_k(self, key):
+        # 16.11 (просьба в эфире): недокачанные должны встречаться заметно чаще, но это множитель
+        # к случайному выбору, а не очередь: незнакомый ~x2, знакомый ~x1.4, приятель ~x1.1, друг x1.
+        try:
+            from cb_radio import BONDS
+        except ImportError:
+            BONDS = None
+        if not BONDS:
+            return 1.0
+        return (2.0, 1.4, 1.1, 1.0)[min(3, BONDS.level(key))]
+
     def schedule_meeting(self, night):
         ahead = self._city_ahead()
         free = [d for d in self.drivers.values() if self.active(d, night) and d.key not in self.inside
@@ -364,7 +375,8 @@ class World:
         eta = dist_r / max(self.pspeed, 15.0)
         # drivers you have never met come first (x3): new characters must actually reach the air
         d = random.choices(free, weights=[getattr(x, "meet_weight", 1.0) *
-                                          (3.0 if not self.met.get(x.key, {}).get("count") else 1.0) for x in free])[0]
+                                          (3.0 if not self.met.get(x.key, {}).get("count") else 1.0) *
+                                          self._bond_meet_k(x.key) for x in free])[0]
         companion_busy = any(o.companion for o in self.drivers.values())
         if not companion_busy and random.random() < self.companion_chance:
             # same direction: starts at a city near you, goes far ahead along your way
