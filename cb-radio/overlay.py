@@ -1,6 +1,10 @@
 """Оверлей рации для стрима (2026-11-06): рация отдаёт на этом компьютере страничку для OBS (источник «Браузер»).
     http://127.0.0.1:47823/            — оверлей 1920x1080: сверху «КАНАЛ 15» и кто в зоне, снизу субтитры
+    http://127.0.0.1:47823/setup       — настройка оверлея: что и где показывать, готовый URL для OBS
 Кадр стрима 16:9: игра 21:9 по центру (1920x804), полосы 138 px сверху и снизу — это и есть оверлей.
+URL-параметры оверлея (решение 16.11, для чужих стримеров): brand/zone/subs/phone/top/bottom/bg = 0
+прячут блоки, layout=classic|bottom|minimal, scale=0.5..2, accent=rrggbb — цвет акцента. Без параметров —
+прежний вид. Всё настраивается на /setup без правки файлов.
 Слушает только 127.0.0.1 (из сети недоступен). Ничего не открывает и не трогает фокус игры.
 Текст реплики берётся по звуковому файлу из phrases/level3_eleven.json; в личных и общей сборках —
 вариант с нужным обращением (v_kirill / v_alive / v_neutral), никогда не «Железяка» чужому игроку."""
@@ -128,17 +132,21 @@ def snapshot():
 
 PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Канал 15 — оверлей</title>
 <style>
-:root{--gold:#f2c14e;--bar:rgba(10,12,18,.93);--text:#f2f2f2;--muted:#9aa3b2;--you:#8fd3ff}
+:root{--gold:#f2c14e;--bar:rgba(10,12,18,.93);--text:#f2f2f2;--muted:#9aa3b2;--you:#8fd3ff;
+ --line:color-mix(in srgb,var(--gold) 35%,transparent);--chipbg:color-mix(in srgb,var(--gold) 14%,transparent);
+ --chipbrd:color-mix(in srgb,var(--gold) 55%,transparent)}
 html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent;
  font-family:"Segoe UI","Montserrat",Arial,sans-serif;color:var(--text)}
 .bar{position:absolute;left:0;width:1920px;height:138px;background:var(--bar);display:flex;align-items:center;box-sizing:border-box}
-#top{top:0;padding:0 56px;justify-content:space-between;border-bottom:2px solid rgba(242,193,78,.35)}
-#bottom{bottom:0;padding:14px 56px;flex-direction:column;justify-content:center;align-items:flex-start;border-top:2px solid rgba(242,193,78,.35)}
+#top{top:0;padding:0 56px;justify-content:space-between;border-bottom:2px solid var(--line)}
+#bottom{bottom:0;padding:14px 56px;flex-direction:column;justify-content:center;align-items:flex-start;border-top:2px solid var(--line)}
 .logo{display:flex;align-items:baseline;gap:22px}
 .logo b{font-family:"Segoe UI Black","Segoe UI",Arial;font-size:58px;color:var(--gold);letter-spacing:1px}
 .logo span{font-size:26px;color:var(--muted)}
 .zone{display:flex;align-items:center;gap:14px;font-size:26px;color:var(--muted)}
-.chip{background:rgba(242,193,78,.14);border:1px solid rgba(242,193,78,.55);color:var(--text);
+#bottom .zone{font-size:22px;margin-bottom:2px}
+#bottom .chip{font-size:22px;padding:4px 14px}
+.chip{background:var(--chipbg);border:1px solid var(--chipbrd);color:var(--text);
  padding:6px 16px;border-radius:22px;font-size:26px;white-space:nowrap}
 .chip.talk{background:var(--gold);color:#111;font-weight:700}
 .line{font-size:30px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:1808px;
@@ -161,6 +169,32 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transpa
 <div id="phone">📱 <span>Бухгалтерия — голосовое сообщение</span></div>
 <div id="bottom" class="bar"><div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div></div>
 <script>
+const OVCFG=/*OVCFG*/{};
+let NOSUBS=false;
+(function(){ /* настройки оверлея из URL (см. /setup): бренд, зона, субтитры, плашка, полосы, layout, масштаб, акцент, фон */
+ const C=OVCFG,$=id=>document.getElementById(id);
+ const top=$('top'),bottom=$('bottom'),zone=$('zone'),phone=$('phone'),logo=top.querySelector('.logo');
+ const v=(el,on)=>{el.style.display=on?'':'none'};
+ if(C.accent)document.documentElement.style.setProperty('--gold','#'+C.accent);
+ if(C.bg===false)document.documentElement.style.setProperty('--bar','transparent');
+ if(C.scale&&C.scale!==1)document.body.style.zoom=C.scale;
+ const layout=C.layout||'classic';
+ if(layout==='minimal'){           /* только субтитры, без полос и фона */
+  v(top,false);bottom.style.background='transparent';bottom.style.border='none';
+  v(logo,false);v(zone,false);v(phone,false);
+ }else if(layout==='bottom'){      /* всё внизу: логотип, зона и субтитры в нижней полосе */
+  v(top,false);
+  bottom.insertAdjacentElement('afterbegin',zone);
+  if(C.brand!==false){bottom.insertAdjacentElement('afterbegin',logo);logo.style.marginBottom='4px'}
+  v(zone,C.zone!==false);v(phone,C.phone!==false);
+  if(C.subs===false){NOSUBS=true;if(C.brand===false&&C.zone===false)v(bottom,false)}
+ }else{                            /* classic — как раньше */
+  v(top,C.top!==false);v(bottom,C.bottom!==false);
+  v(logo,C.brand!==false);v(zone,C.zone!==false);v(phone,C.phone!==false);
+  if(C.subs===false){NOSUBS=true;v(bottom,false)}
+  if(C.brand===false&&C.zone===false)v(top,false);
+ }
+})();
 let last=-1, talker=null;
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
 async function tick(){
@@ -176,10 +210,10 @@ async function tick(){
   if(id!==last){
    last=id;
    const b=document.getElementById('bottom');
-   b.innerHTML=lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
-                           :'<div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div>';
+   b.innerHTML=NOSUBS?'':(lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
+                           :'<div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div>');
   }
-  document.getElementById('phone').classList.toggle('on',s.now-s.phone<9);
+  document.getElementById('phone').classList.toggle('on',s.now-s.phone<9&&!NOSUBS);
  }catch(e){}
  setTimeout(tick,300);
 }
@@ -246,14 +280,117 @@ tick();
 </script></body></html>"""
 
 
+# Страница настройки /setup: чекбоксы, слайдер, цвет, живой предпросмотр и готовый URL для OBS.
+# Предназначена для чужих стримеров: что показывать и как оформлять — решает стример, наша эмблема отключается.
+PAGE_SETUP = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Канал 15 — настройка оверлея</title>
+<style>
+body{font-family:"Segoe UI",Arial,sans-serif;background:#14181f;color:#eee;max-width:1060px;margin:0 auto;padding:24px}
+h1{font-size:1.4rem} h2{font-size:1.05rem;margin:22px 0 8px;color:#f2c14e}
+label{display:inline-flex;align-items:center;gap:7px;margin:4px 18px 4px 0;font-size:.95rem;cursor:pointer}
+input[type=range]{vertical-align:middle;width:180px}
+fieldset{border:1px solid #2c3442;border-radius:10px;margin:0 0 6px}
+#view{width:960px;height:540px;border:1px solid #2c3442;border-radius:8px;background:#222;
+ transform-origin:0 0}
+#url{width:100%;box-sizing:border-box;background:#0d1015;color:#9fd48b;border:1px solid #2c3442;
+ border-radius:8px;padding:10px;font-size:.9rem;margin:8px 0}
+button{background:#f2c14e;border:0;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer}
+.note{color:#8b93a1;font-size:.85rem}
+</style></head><body>
+<h1>Настройка оверлея «Канал 15»</h1>
+<p class="note">Отметьте, что показывать, — предпросмотр и адрес для OBS обновятся сами.
+В OBS добавьте источник «Браузер» на 1920×1080 и вставьте готовый адрес.</p>
+<h2>Что показывать</h2>
+<fieldset id="blocks">
+ <label><input type="checkbox" id="brand" checked> Логотип «КАНАЛ 15» и слоган</label>
+ <label><input type="checkbox" id="zone" checked> Кто в зоне рации</label>
+ <label><input type="checkbox" id="subs" checked> Субтитры эфира</label>
+ <label><input type="checkbox" id="phone" checked> Плашка «Бухгалтерия»</label><br>
+ <label><input type="checkbox" id="top" checked> Верхняя полоса (фон)</label>
+ <label><input type="checkbox" id="bottom" checked> Нижняя полоса (фон)</label>
+ <label><input type="checkbox" id="bg" checked> Тёмный фон полос</label>
+</fieldset>
+<h2>Расположение</h2>
+<label><input type="radio" name="layout" value="classic" checked> Классика — сверху эмблема и зона, снизу субтитры</label>
+<label><input type="radio" name="layout" value="bottom"> Всё внизу</label>
+<label><input type="radio" name="layout" value="minimal"> Только субтитры без полос</label>
+<h2>Оформление</h2>
+<label>Масштаб <input type="range" id="scale" min="0.5" max="2" step="0.05" value="1"> <span id="scalev">1.00</span></label>
+<label>Цвет акцента <input type="color" id="accent" value="#f2c14e"></label>
+<h2>Предпросмотр</h2>
+<iframe id="view" src="/"></iframe>
+<h2>Адрес для OBS</h2>
+<input id="url" readonly>
+<button id="copy">Скопировать</button> <span id="copied" class="note"></span>
+<script>
+const $=id=>document.getElementById(id);
+function params(){
+ const p=new URLSearchParams();
+ const layout=document.querySelector('input[name=layout]:checked').value;
+ p.set('layout',layout);
+ const off=['brand','zone','subs','phone','top','bottom','bg'];
+ for(const k of off){
+  const el=$(k),on=el.checked;
+  el.parentElement.style.opacity=(layout!=='classic'&&(k==='top'||k==='bottom'))?.4:1;
+  if((k==='top'||k==='bottom')&&layout!=='classic')continue;   /* полосы переключаются layout'ом */
+  if(!on)p.set(k,'0');
+ }
+ const sc=parseFloat($('scale').value);
+ $('scalev').textContent=sc.toFixed(2);
+ if(sc!==1)p.set('scale',sc);
+ const ac=$('accent').value.slice(1);
+ if(ac!=='f2c14e')p.set('accent',ac);
+ return p;
+}
+function refresh(){
+ const q=params().toString(),url='http://127.0.0.1:47823/'+(q?'?'+q:'');
+ $('view').src='/'+(q?'?'+q:'');
+ $('url').value=url;
+}
+document.getElementById('blocks').addEventListener('change',refresh);
+document.querySelectorAll('input[name=layout]').forEach(el=>el.addEventListener('change',refresh));
+$('scale').addEventListener('input',refresh);
+$('accent').addEventListener('input',refresh);
+$('copy').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText($('url').value);$('copied').textContent='скопировано';}
+ catch(e){$('url').select();document.execCommand('copy');$('copied').textContent='скопировано (старый способ)';}
+ setTimeout(()=>$('copied').textContent='',2000);
+});
+refresh();
+</script></body></html>"""
+
+
+def _overlay_cfg(query):
+    """URL-параметры оверлея -> JS-конфиг (см. /setup). Дефолт = прежний вид без параметров."""
+    def flag(name, default=True):
+        return query.get(name, [str(int(default))])[0] != "0"
+    layout = query.get("layout", ["classic"])[0]
+    if layout not in ("classic", "bottom", "minimal"):
+        layout = "classic"
+    try:
+        scale = min(2.0, max(0.5, float(query.get("scale", ["1"])[0])))
+    except ValueError:
+        scale = 1.0
+    accent = query.get("accent", [""])[0].lower()
+    if not re.fullmatch(r"[0-9a-f]{6}", accent):
+        accent = ""
+    return {"brand": flag("brand"), "zone": flag("zone"), "subs": flag("subs"),
+            "phone": flag("phone"), "top": flag("top"), "bottom": flag("bottom"),
+            "layout": layout, "scale": scale, "accent": accent, "bg": flag("bg")}
+
+
 class _H(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path.startswith("/state"):
+        from urllib.parse import parse_qs, urlsplit
+        u = urlsplit(self.path)
+        if u.path == "/state":
             body, ctype = json.dumps(snapshot(), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8"
-        elif self.path.rstrip("/").split("?")[0] == "/v":
+        elif u.path.rstrip("/") == "/v":
             body, ctype = PAGE_V.encode("utf-8"), "text/html; charset=utf-8"
+        elif u.path == "/setup":
+            body, ctype = PAGE_SETUP.encode("utf-8"), "text/html; charset=utf-8"
         else:
-            body, ctype = PAGE.encode("utf-8"), "text/html; charset=utf-8"
+            cfg = json.dumps(_overlay_cfg(parse_qs(u.query)), separators=(",", ":"))
+            body, ctype = PAGE.replace("/*OVCFG*/", cfg).encode("utf-8"), "text/html; charset=utf-8"
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Cache-Control", "no-store")
