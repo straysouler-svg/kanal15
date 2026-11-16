@@ -137,7 +137,7 @@ DEFAULT_CFG = {
     "require_engine_on": True,
     "kerchunk_gap_s": [100, 320],  # empty push-to-talk clicks between phrases; [] = off
     "greet_reply_chance": 0.85,    # someone answers an actor's hello
-    "horn_pilot": False,           # «мигни — бибикну», пилот 11.11: сцена сигнала у soroka/vitek/ten (только тест)
+    "horn_pilot": False,           # «бибикни — гудок», пилот 11.11: триггер ТОЛЬКО голосовой просьба (16.11)
     "hooks_pilot": False,          # зацепки из библии (reactions/hooks/<actor>) после личного вопроса, пилот 15.11
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
@@ -2544,43 +2544,22 @@ def weather_kind(game, world):
     return "dry_night" if world and world.is_night(world.game_min) else "dry_day"
 
 
-# ---------------------------------------------------------------- «мигни — бибикну» (v2, все водители 12.11)
-# Сцена сигнала: «ты далеко?» -> просьба (день «бибикни» / ночь и дождь «мигни») -> окно ожидания ->
-# «вижу/слышу» -> двойной гудок (сжатый в рации + настоящий с задержкой звука м ÷ 340). Под флагом
-# cfg["horn_pilot"] (общий вкл/выкл механики, ключ не переименовываем — обратная совместимость).
+# ---------------------------------------------------------------- «бибикни — гудок» (v3, голосовой триггер 16.11)
+# Сцена сигнала: просьба игрока голосом (интент horn) -> «ща/еще раз» -> двойной гудок (сжатый в рации +
+# настоящий с задержкой звука м ÷ 340). Пассивное приглашение есть в ответах на dist («гудни, когда будешь
+# рядом») — без ожидания сигнала. Мигание дальним и кнопка гудка упразднены: триггер ТОЛЬКО голосовой
+# (решение пользователя 16.11). Под флагом cfg["horn_pilot"] (ключ не переименовываем — обратная совместимость).
 # Работает для всех водителей колоды (решение 11.11 «гудок всем 18»); ритм без индивидуальной записи —
 # HORN_RHYTHMS["default"]. Честность: порог 150-1500 м — ближе «рядом где-то» обычным ответом,
 # дальше «не услышишь»; никаких «в правом ряду».
 HORN_NEAR_M, HORN_FAR_M = 150.0, 1500.0
-HORN_WAIT_S = (15.0, 20.0)
 ROLLCALL_GRACE_S = 4.0        # настоящие секунды: PTT в первые 4 с после «кто в эфире?» не рвёт перекличку
-HORN_DONE = {}            # actor -> monotonic: сцена уже сыграна за эту встречу (снимаем, когда ушёл из зоны)
-_MM_HORN = [None]
+HORN_DONE = {}            # actor -> monotonic: гудок уже был за эту встречу (для строки-повтора и invite-гейтинга;
+                          # прямую голосовую просьбу НЕ блокирует — решение 16.11)
 
 
-def _horn_mm():
-    if _MM_HORN[0] is None:
-        _MM_HORN[0] = ctypes.WinDLL("winmm")
-    return _MM_HORN[0]
-
-
-def _horn_button_down(c):
-    """«Кнопка гудка» из config horn_button — как тангента: имя устройства (часть) + 0-based кнопка, winmm."""
-    dev, btn = str((c or {}).get("device", "")).lower(), (c or {}).get("button")
-    if not dev or not isinstance(btn, int) or not 0 <= btn < 32:
-        return False
-    try:
-        with _WINMM_LOCK:
-            for _, (name, mask) in _winmm_buttons(_horn_mm()).items():
-                if dev in name.lower() and (mask >> btn) & 1:
-                    return True
-    except Exception:
-        return False
-    return False
-
-
-def _horn_pick(mouth, who):
-    """Актёр в пороге 150-1500 м, сцена с которым за эту встречу ещё не шла. -> (actor, meters) | None."""
+def _horn_pick(mouth, who, ignore_done=False):
+    """Актёр в пороге 150-1500 м. ignore_done=True (прямая просьба): повтор разрешён (16.11)."""
     w = getattr(mouth, "world", None)
     if not w or mouth.deck.allowed is None:
         return None
@@ -2591,7 +2570,7 @@ def _horn_pick(mouth, who):
     order = ([who] if who in here else []) + here    # прямой адресат первым, дальше вся колода в зоне
     best = None
     for a in dict.fromkeys(order):
-        if a not in here or mouth.deck.offline(a) or a in HORN_DONE:
+        if a not in here or mouth.deck.offline(a) or (a in HORN_DONE and not ignore_done):
             continue
         dd = w.distance(a)
         m = None if dd is None else dd * w.range
@@ -2600,33 +2579,12 @@ def _horn_pick(mouth, who):
     return best
 
 
-def _horn_watch(mouth, seconds):
-    """Окно ожидания сигнала игрока: нарастающий фронт дальнего (Funbit 592) или «кнопка гудка».
-    ПТТ и пауза прерывают окно. -> True, если сигнал был."""
-    t0 = time.monotonic()
-    game = getattr(mouth, "game", None)
-    cfg = PLAYER.cfg or {}
-    was_high = game.lights_high() if game else False
-    while time.monotonic() - t0 < seconds:
-        if PLAYER.ptt:
-            PLAYER.ptt.poll()
-            if PLAYER.ptt.down:
-                return False
-        if game and game.state(cfg.get("require_engine_on", True)) != "driving":
-            return False
-        high = game.lights_high() if game else False
-        if high and not was_high:
-            return True
-        was_high = high
-        if _horn_button_down(cfg.get("horn_button")):
-            return True
-        time.sleep(0.05)
-    return False
-
-
 def horn_scene(mouth, who, direct=False):
-    """Сцена «мигни — бибикну» для интентов dist (полная: просьба -> окно -> гудок) и horn
-    (direct=True: игрок сам просил «бибикни» — сразу «ща бибикну» и гудок, без окна ожидания).
+    """Сцена гудка (16.11: триггер ТОЛЬКО голосовая просьба). direct=True (интент horn): строка
+    «ща/еще раз» + гудок сразу; повтор разрешён всегда — HORN_DONE прямую просьбу не блокирует,
+    повторному гудку играет пул horn/again («не расслышал, вот ещё раз»), пока Летописец его не наполнит —
+    фолбэк на horn/seen. direct=False (ответ на dist): пассивное приглашение ask_day/ask_night
+    («гудни, когда будешь рядом»), без ожидания сигнала; HORN_DONE не ставим.
     True — сцена сыграна (обычный ответ не нужен).
     Не работает в «помолчим» (игрок сам сорвал тишину вопросом — сцена допустима; включённая тишина
     из трея молчит вместе с эфиром, уважаем её)."""
@@ -2634,7 +2592,7 @@ def horn_scene(mouth, who, direct=False):
     if not cfg.get("horn_pilot") or time.monotonic() < HUSH_UNTIL[0]:
         return False
     w = getattr(mouth, "world", None)
-    pick = _horn_pick(mouth, who)
+    pick = _horn_pick(mouth, who, ignore_done=direct)
     if pick is None:
         # адресат по имени и на связи, но дальше порога — честное «не услышишь» вместо обычного dist_far
         if (who and w and mouth.deck.allowed is not None
@@ -2649,7 +2607,7 @@ def horn_scene(mouth, who, direct=False):
                     bond_add(who, 2 if who else 1, "далеко — не услышишь")
                     # 15.11 (стрим): «не услышишь» НЕ закрывает сцену (HORN_DONE не ставим): гудка же не было,
                     # и когда он подъедет в порог 150-1500 м, «бибикни» должен сыграть сцену, а не dist/already
-                    log(f"мигни-бибикну: {who} в {m:.0f} м — дальше порога, «не услышишь»")
+                    log(f"бибикни-гудок: {who} в {m:.0f} м — дальше порога, «не услышишь»")
                     return True
         return False
     import horn as horn_mod
@@ -2659,31 +2617,26 @@ def horn_scene(mouth, who, direct=False):
     rain = bool(game and game.wipers())
     hd = w.heading(w.drivers[actor])
     oncoming = hd[0] * w.hx + hd[1] * w.hz < -0.3
-    # «мигни» — только встречному: задний дальний не увидит ни ночью, ни в дождь (логика пользователя 12.11)
     kind = "ask_night" if ((night or rain) and oncoming) else "ask_day"
-    log(f"мигни-бибикну: {actor} в {meters:.0f} м ({'ночь' if night else 'день'}{' + дождь' if rain else ''}"
+    log(f"бибикни-гудок: {actor} в {meters:.0f} м ({'ночь' if night else 'день'}{' + дождь' if rain else ''}"
         f", {'навстречу' if oncoming else 'за тобой'}{', прямая просьба' if direct else ''})")
-    if direct:
-        pass                                               # «бибикни» от игрока — без просьбы и окна
-    else:
+    if not direct:
+        # приглашение из ответа про дальность: строка-приглашение и всё, окна ожидания нет (16.11)
         p = line_of("horn", kind, actor)
-        if not p:
-            return False
-        if PLAYER.file(p[1], actor) != "ok":
+        if not p or PLAYER.file(p[1], actor) != "ok":
             return False
         mouth.deck.on_air.add(actor)
         mouth.on_air = True
         bond_add(actor, 1, "сигналы")
-        HORN_DONE[actor] = time.monotonic()
-        if not _horn_watch(mouth, random.uniform(*HORN_WAIT_S)):
-            p2 = line_of("horn", "missed", actor)
-            if p2 and PLAYER.file(p2[1], actor) == "ok":
-                mouth.deck.on_air.add(actor)
-                log("мигни-бибикну: сигнала не было — «не разглядел», без упрёка")
-            return True
-    p2 = line_of("horn", "seen", actor)
+        return True
+    # прямая просьба: «ща бибикну» / повтору — «не расслышал, вот ещё раз» (пул again, фолбэк seen)
+    again = actor in HORN_DONE
+    p2 = line_of("horn", "again", actor) if again else line_of("horn", "seen", actor)
+    if p2 is None and again:
+        p2 = line_of("horn", "seen", actor)
     if p2 and PLAYER.file(p2[1], actor) == "ok":
         mouth.deck.on_air.add(actor)
+    HORN_DONE[actor] = time.monotonic()
     # двойной гудок (одобрено 11.11): водитель держит тангенту — сначала сжатый в рации,
     # через расстояние ÷ 340 м/с — настоящий, с дороги, без радиофильтра
     timbre, pat = horn_mod.HORN_RHYTHMS.get(actor, horn_mod.HORN_RHYTHMS["default"])
@@ -2691,7 +2644,7 @@ def horn_scene(mouth, who, direct=False):
     PLAYER.street(degrade(buf, horn_mod.SR_DEFAULT, w.distance(actor)), horn_mod.SR_DEFAULT)   # по рации
     if PLAYER.idle(min(meters / horn_mod.C_AIR, 5.0)):
         PLAYER.street(buf, horn_mod.SR_DEFAULT)                                               # с дороги
-        log(f"мигни-бибикну: гудок {actor} с задержкой {meters / horn_mod.C_AIR:.1f} с")
+        log(f"бибикни-гудок: гудок {actor}{' (повтор)' if again else ''} с задержкой {meters / horn_mod.C_AIR:.1f} с")
     return True
 
 

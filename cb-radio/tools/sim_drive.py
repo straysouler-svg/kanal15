@@ -417,6 +417,27 @@ def main():
     last_rel = None        # правило 7
     lvl_seen = {}          # actor -> последний уровень (правило 8)
     zone_stat = {}         # корпусные фразы: «для» (в зоне) / «про» (вне зоны) / «без имени» (2-й круг 15.11)
+    pool_lines = {}        # (group, kind) -> {actor: n} для правила 7 (16.11)
+
+    def _actor_pool_lines(rel, actor):
+        """Сколько строк пула у актёра (по index.json); rel вида reactions/<group>/<kind>/<NN>."""
+        try:
+            _, g, k = rel.split("/")[:3]
+        except ValueError:
+            return None
+        if (g, k) not in pool_lines:
+            idx = ROOT / "audio" / "reactions" / g / k / "index.json"
+            try:
+                actors = json.loads(idx.read_text(encoding="utf-8"))["actors"]
+            except (OSError, ValueError, KeyError):
+                pool_lines[(g, k)] = None
+            else:
+                cnt = {}
+                for a in actors:
+                    cnt[a] = cnt.get(a, 0) + 1
+                pool_lines[(g, k)] = cnt
+        cnt = pool_lines.get((g, k))
+        return cnt.get(actor) if cnt else None
 
     def check_played(step_desc, who, is_q, greetq, expect_silence, window):
         """Правила 1-10 к записям эфира в окне после фразы бота."""
@@ -426,9 +447,12 @@ def main():
             if rel is None:
                 continue               # street/шумовые события вне AUDIO_ROOT — контентные правила не для них
             # 7: один и тот же файл не звучит дважды подряд (кроме «повтори» — replay по запросу;
-            # /lane/ — честный ответ по маршруту: не переехал — та же реплика, ревью 15.11)
+            # /lane/ — честный ответ по маршруту: не переехал — та же реплика, ревью 15.11;
+            # у актёра ровно одна строка в пуле — повтор неизбежен по дизайну, 16.11)
             if rel == last_rel and not rel.startswith("_") and not r["replay"] and "/lane/" not in rel:
-                fail(7, f"файл дважды подряд: {rel} ({step_desc})")
+                n_lines = _actor_pool_lines(rel, actor)
+                if n_lines is None or n_lines > 1:
+                    fail(7, f"файл дважды подряд: {rel} ({step_desc})")
             last_rel = rel
             # 6: отвечает только тот, кто в зоне; «дальний по имени» (3.2) и сцена гудка (свои
             # честные дистанции 150–1500 м) — по замыслу (ревью 15.11)

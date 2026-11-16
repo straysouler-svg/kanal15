@@ -102,6 +102,22 @@ def tts(vid, text, model="eleven_v3", stability=0.5):
 _xtts = {}
 _whisper = []
 _or_spent = [0.0]          # OpenRouter $ spent in this run (OR_BUDGET env = stop limit, default 1.0)
+STRESS_OK = False          # --stress-ok: не блокировать синтез при неподтверждённых флагах ударений
+
+
+def _stress_gate(text):
+    """Стоп перед тратой символов, если stress_check нашёл неподтверждённые флаги ударений."""
+    try:
+        import stress_check as sc
+    except ImportError:
+        print("   ! stress_check недоступен — проверка ударений пропущена")
+        return
+    bad = [(w, p, r) for w, p, r, ok in sc.check_line(text) if not ok]
+    if bad:
+        for w, p, r in bad:
+            print(f"   УДАРЕНИЕ? {w} → {p or '???'} ({r}) | {text[:70]}")
+        raise SystemExit("stress_check: неподтверждённые флаги — правьте stress_dict.json "
+                         "или запустите с --stress-ok (фиксируется в выводе)")
 
 import re as _re_mod  # noqa: E402
 
@@ -116,20 +132,23 @@ def xtts_fix_stress(text):
     return XTTS_STRESS_RX.sub(lambda m: XTTS_STRESS[m.group(0).lower()], text)
 
 
-XTTS_STRESS = {          # коварные слова для клона (ударение удвоением гласной), только синтез
-    "километр": "киломеетр", "километра": "киломеетра", "километров": "киломеетров",
-    "красивые": "красиивые", "красивый": "красиивый", "красивее": "красиивее",
-    "договор": "договоор", "торты": "тоорты", "категор": "категоор",
-    # 12.11: прогон строк Сороки через локальную модель + ручная сверка ударений
-    "лентикулярные": "лентикуляарные", "азимут": "азимуут",
-    "фиксирую": "фиксиирую", "зафиксировала": "зафиксиировала",
-    "нло": "энлэо", "двенадцать": "двеенадцать",
-    "тремястами": "тремястаами", "двухстах": "двухстаах",
-    "радиус": "раадиус", "засекла": "засеклаа", "посчитала": "посчиталаа",
-    "отмечу": "отмечуу", "сверимся": "свееримся", "вспышке": "вспыышке",
-    "чек-лист": "чеек-лист",
-    "железяка": "железяяка", "железяку": "железяяку",   # кличка игрока: ударение на Я (железЯка)
-}
+def _load_stress():
+    """Проектный stress_dict.json -> подмены ударной гласной для синтеза (удвоение: 'гудни' -> 'гуднии').
+    xtts_override — эмпирические формы клона, поведение Сороки не меняем."""
+    m = {}
+    for e in json.loads((ROOT / "phrases" / "stress_dict.json").read_text(encoding="utf-8")):
+        if e.get("xtts_override"):
+            m[e["word"]] = e["xtts_override"]
+            continue
+        s = e["stressed"]
+        for i, ch in enumerate(s):
+            if ch in "АЕЁИОУЫЭЮЯ":
+                m[e["word"]] = (s[:i] + ch.lower() * 2 + s[i + 1:]).lower()
+                break
+    return m
+
+
+XTTS_STRESS = _load_stress()
 
 
 def _heard_ratio(x, text):
@@ -203,7 +222,9 @@ def voice(a, text, rec=None):
             print("   ! так и не вышло чисто — послушать")
         return None, best[2], 0
     if a.get("engine") != "xtts":
-        mp3, x = tts(a["voice_id"], text, a.get("model", "eleven_v3"), a.get("stability", 0.5))
+        # подмена ударений для синтеза (тот же приём, что у клона; словари ElevenLabs
+        # на нашем тарифе закрыты — permission pronunciation_dictionaries_write, тест 16.11)
+        mp3, x = tts(a["voice_id"], xtts_fix_stress(text), a.get("model", "eleven_v3"), a.get("stability", 0.5))
         return mp3, x, len(text)
     import clone_xtts as cx
     v = a["voice"]
@@ -335,6 +356,8 @@ def voice_lines(d, lines, data, force=False, label=""):
         sig = _sig(a, ln["text"]) + f"|far={bool(ln.get('far'))}" + (f"|rec={ln['rec']}" if ln.get("rec") else "")
         if not force and man.get(n) == sig and (d / f"{n}.wav").exists():
             continue
+        if not STRESS_OK:
+            _stress_gate(ln["text"])
         rng = np.random.default_rng(abs(hash((str(d), i))) % 2**32)
         mp3, x, spent = voice(a, ln["text"], ln.get("rec"))
         save_dry(d / n, mp3, x)
@@ -402,4 +425,8 @@ if __name__ == "__main__":
         audition(CANDIDATES3, AUDITION3, "eleven3")
     elif cmd in ("level3", "force", "seed"):
         args = [x for x in sys.argv[2:]]
+        if "--stress-ok" in args:
+            STRESS_OK = True
+            print("   stress_check: --stress-ok, неподтверждённые флаги НЕ блокируют синтез")
+            args.remove("--stress-ok")
         level3(args[0] if args else None, force=cmd == "force", seed=cmd == "seed")
