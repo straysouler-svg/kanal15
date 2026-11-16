@@ -139,6 +139,7 @@ DEFAULT_CFG = {
     "greet_reply_chance": 0.85,    # someone answers an actor's hello
     "horn_pilot": False,           # «бибикни — гудок», пилот 11.11: триггер ТОЛЬКО голосовой просьба (16.11)
     "hooks_pilot": False,          # зацепки из библии (reactions/hooks/<actor>) после личного вопроса, пилот 15.11
+    "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
@@ -1657,6 +1658,8 @@ class Operator:
             group, kind = "player", ("dunno" if question else "swear")
         elif intent and intent.startswith("graf_") and reaction_pool("graf", intent[5:]):
             group, kind = "graf", intent[5:]              # the dog: only Vera answers (who = vera)
+        elif intent in ("stream_on", "stream_off"):
+            group, kind = "intent", intent                # пасхалка «мы на стриме» (16.11) — обработка в answer()
         elif intent and intent != "greet" and reaction_pool("intent", intent):
             group, kind = "intent", intent                # a clear question gets a real answer, even first
         elif intent == "football":
@@ -2207,6 +2210,10 @@ class Operator:
             return self.all_answer(who, kind)
         if group == "intent" and kind in ("dist", "horn") and horn_scene(self, who, direct=(kind == "horn")):
             return                                       # «мигни — бибикну»
+        if group == "intent" and kind in ("stream_on", "stream_off"):
+            if (PLAYER.cfg or {}).get("stream_mode_pilot"):
+                return self._stream_toggle(kind == "stream_on", who)
+            group, kind = "player", "dunno"   # пилот выключен — честное «не понял», как чужая тема
         if group == "intent" and kind == "horn":
             kind = "dist"                                # некому гудеть в пороге — честный ответ про дистанцию
         if group == "intent" and kind in ("dist", "eta", "meet"):
@@ -2489,6 +2496,42 @@ class Operator:
             self._hooked.add(actor)
             log(f"  зацепка ({actor})")
 
+    def _stream_line(self, group, who):
+        """(actor, wav) из reactions/<group>/<actor>: адресат первым, иначе случайный в зоне.
+        Пул пуст/нет звука -> None (режим стрима молчит, не падает)."""
+        w = self.world
+        if not w or self.deck.allowed is None:
+            return None
+        here = [a for a in self.deck.allowed if not self.deck.offline(a)]
+        order = ([who] if who in here else []) + [a for a in here if a != who]
+        for a in order:
+            p = line_of(group, a, a)
+            if p:
+                if PLAYER.file(p[1], a) == "ok":
+                    self.deck.on_air.add(a)
+                    self.on_air = True
+                    return p
+                return None
+        return None
+
+    def _stream_toggle(self, on, who=None):
+        """Вкл/выкл режима стрима (пасхалка 16.11). Флаг сессионный (STREAM_ON), не сохраняется.
+        Первое включение: приветствие зрителей из stream_greet/<actor>; повторное «мы на стриме»
+        при включённом режиме — короткая отбивка stream_ack/<actor>, если есть реплика, иначе молчим.
+        Выключение — просто лог (прощальных строк нет, пул не требуется)."""
+        if on == STREAM_ON[0]:
+            if on:
+                p = self._stream_line("stream_ack", who)
+                if p:
+                    log(f"режим стрима: уже вкл — отбивка ({p[0]})")
+            return
+        STREAM_ON[0] = on
+        log(f"режим стрима: {'вкл' if on else 'выкл'}")
+        if on:
+            p = self._stream_line("stream_greet", who)
+            if p:
+                log(f"режим стрима: приветствие зрителей ({p[0]})")
+
     CROSS_P = 0.15
 
     def _maybe_cross(self, actor, group):
@@ -2557,6 +2600,13 @@ ROLLCALL_GRACE_S = 4.0        # настоящие секунды: PTT в пер
 HORN_DONE = {}            # actor -> monotonic: гудок уже был за эту встречу (для строки-повтора и invite-гейтинга;
                           # прямую голосовую просьбу НЕ блокирует — решение 16.11)
 
+# Режим стрима (пасхалка «мы на стриме», 16.11, пилот stream_mode_pilot): СЕССИОННЫЙ — при запуске
+# рации всегда выключен (решение пользователя), в state.json/bonds.json не сохраняется, сбрасывается
+# перезапуском. Включается/выключается только фразами интентов stream_on/stream_off.
+STREAM_ON = [False]
+STREAM_BANTER_COOL = {}   # actor -> monotonic: следующее обращение к стримеру не раньше этой метки (10-15 мин)
+STREAM_GAP_K = 0.55       # «эфир живее»: паузы болтовни короче (×0.55), пресет не меняем
+
 
 def _horn_pick(mouth, who, ignore_done=False):
     """Актёр в пороге 150-1500 м. ignore_done=True (прямая просьба): повтор разрешён (16.11)."""
@@ -2577,6 +2627,31 @@ def _horn_pick(mouth, who, ignore_done=False):
         if m is not None and HORN_NEAR_M <= m <= HORN_FAR_M and (best is None or m < best[1]):
             best = (a, m)
     return best
+
+
+def _stream_gap(cfg):
+    """Пауза до следующей болтовни: в режиме стрима короче (×STREAM_GAP_K), пресет эфира не меняем."""
+    g = random.uniform(cfg["gap_min_s"], cfg["gap_max_s"])
+    return g * STREAM_GAP_K if STREAM_ON[0] else g
+
+
+def _stream_banter(world, deck):
+    """Режим стрима: водитель в зоне обращается к стримеру (вопрос/подкол, пул stream_banter/<actor>).
+    Кулдаун на актёра 10-15 мин; пустые пулы = молчание. Реже обычной болтовни — зовётся из редкого тика."""
+    if not world or deck.allowed is None:
+        return
+    now = time.monotonic()
+    fresh = [a for a in deck.allowed
+             if not deck.offline(a) and now >= STREAM_BANTER_COOL.get(a, 0.0)]
+    random.shuffle(fresh)
+    for a in fresh:
+        p = line_of("stream_banter", a, a)
+        if p:
+            STREAM_BANTER_COOL[a] = now + random.uniform(600, 900)
+            if PLAYER.file(p[1], a) == "ok":
+                deck.on_air.add(a)
+                log(f"режим стрима: обращение к стримеру ({a})")
+            return
 
 
 def horn_scene(mouth, who, direct=False):
@@ -3553,6 +3628,7 @@ def main(argv):
     foreign_acc, next_foreign = 0.0, random.uniform(180, 420)
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
     meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
+    next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — обращения к стримеру реже обычной болтовни
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
     driving_s = 0.0
     next_at = random.uniform(*cfg["first_after_s"])
@@ -4025,6 +4101,11 @@ def main(argv):
             # next_at и сдвигает её; один актёр не говорит два мема подряд
             if st == "driving":
                 meme_acc += dt
+            # 16.11: режим стрима (пилот) — редкие обращения к стримеру (пул stream_banter, кулдаун 10-15 мин)
+            if (STREAM_ON[0] and (PLAYER.cfg or {}).get("stream_mode_pilot") and st == "driving" and not hush
+                    and not op.pending and driving_s >= next_stream_banter):
+                next_stream_banter = driving_s + random.uniform(480, 900)
+                _stream_banter(world, deck)
             if (meme_acc >= next_meme and st == "driving" and not hush
                     and not op.pending and world and world.inside and driving_s >= next_at):
                 mk = None
@@ -4158,7 +4239,7 @@ def main(argv):
                 # 2026-11-06: two or more near you — now and then one asks the channel, another answers
                 if random.random() < ASK_P and air_ask(deck):
                     driving_s = 0.0
-                    next_at = random.uniform(cfg["gap_min_s"], cfg["gap_max_s"])
+                    next_at = _stream_gap(cfg)
                     if next_k is not None:
                         next_k = random.uniform(*kgap)
                     continue
@@ -4173,7 +4254,7 @@ def main(argv):
                 elif r == "ok" and deck.is_greeting(p):
                     greet_reply(deck, cfg, p.split("/")[0])
                 driving_s = 0.0
-                next_at = random.uniform(cfg["gap_min_s"], cfg["gap_max_s"])
+                next_at = _stream_gap(cfg)
                 if next_k is not None:  # timers count driving seconds since the last phrase
                     next_k = random.uniform(*kgap)
             elif next_k is not None and driving_s >= next_k and next_at - driving_s > 20:

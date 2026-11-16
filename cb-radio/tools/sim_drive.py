@@ -508,8 +508,8 @@ def main():
         if expect_silence and window:
             fail(2, f"ожидалась тишина (служебная реплика), прозвучало: "
                     f"{[r['rel'] for r in window]} ({step_desc})")
-        # 10: позвали по имени того, кто в зоне, — а в ответ тишина (не провал)
-        if who and not window:
+        # 10: позвали по имени того, кто в зоне, — а в ответ тишина (не провал; ожидаемая тишина — не заметка)
+        if who and not window and not expect_silence:
             note(10, f"тишина на обращение к {who} ({step_desc})")
 
     def run_bot_phrase(text, who=None, is_q=None, greetq=False, expect_silence=False, desc="",
@@ -621,6 +621,9 @@ def main():
                     log(f"[сим] banish {st['banish']}: увезён за 60 км")
                     if st.get("gone"):                  # 15.11 (разбор 2): «давно уехал» — стираем льготные 120 с
                         deck.left_at.pop(st["banish"], None)
+            if "cfg" in st:                           # пилотные флаги для сценария (напр. stream_mode_pilot)
+                cb.PLAYER.cfg.update(st["cfg"])
+                log(f"[сим] cfg: {st['cfg']}")
             if "text" not in st:                      # служебный шаг (эффекты выше уже применены)
                 step_i += 1
                 continue
