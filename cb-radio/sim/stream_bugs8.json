@@ -1,0 +1,32 @@
+{
+ "_comment": "Стенд Испытателя 17.11, разбор стрима #8. Шаги без who: адресат берётся из текста («Ребята...» -> None), приветствие/отбивка — у любого в зоне (реальное поведение). Пункты: стемы тайника «мы стримим»/«у меня стрим» при пилоте = stream_on (greet/ack), «завершаем/заканчиваем стрим» = off, без пилота = dunno, «Смарканд»->rustam, «Стасиан»->stas.",
+ "steps": [
+  {"id": "cfg_pilot", "cfg": {"stream_mode_pilot": true}},
+  {"id": "u_menya_stream", "summon": "lastochka",
+   "text": "У меня стрим, ребята, всем привет!",
+   "expect_rel": "stream_greet"},
+  {"id": "my_streamim", "who": null,
+   "text": "Ребята, мы стримим, смотрите все!",
+   "expect_rel": "stream_ack"},
+  {"id": "my_na_strime", "who": null,
+   "text": "Мы на стриме, слышите меня?",
+   "expect_rel": "stream_ack"},
+  {"id": "zavershaem", "who": null,
+   "text": "Всё, завершаем стрим, спасибо всем.",
+   "expect_silence": true},
+  {"id": "zakanchivaem", "who": null,
+   "text": "Заканчиваем стрим, я сказал.",
+   "expect_silence": true},
+  {"id": "cfg_pilot_off", "cfg": {"stream_mode_pilot": false}},
+  {"id": "secret_bez_pilota", "who": null,
+   "text": "Ребята, мы стримим!",
+   "expect_rel": "player/dunno"},
+  {"id": "cfg_pilot_back", "cfg": {"stream_mode_pilot": true}},
+  {"id": "smarkand", "summon": "rustam", "who": "rustam",
+   "text": "Смарканд, ты как, на связи?",
+   "expect_answer": true},
+  {"id": "stasian", "summon": "stas", "who": "stas",
+   "text": "Стасиан, привет, брат!",
+   "expect_answer": true}
+ ]
+}

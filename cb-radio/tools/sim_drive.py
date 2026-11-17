@@ -23,6 +23,7 @@ Operator._decide(). Часы виртуальные: time.monotonic/time.time/ti
 import argparse
 import builtins
 import json
+import os
 import random
 import re
 import shutil
@@ -30,6 +31,13 @@ import sys
 import time
 import traceback
 from pathlib import Path
+
+# 17.11 (Испытатель): врата должны быть детерминированными — итерация по set в cb_radio
+# (deck.allowed и т.п.) зависит от PYTHONHASHSEED, seed 17 флакал по правилу 3. Стенд —
+# отдельный процесс: перезапускаем себя с фиксированным хэшем (orig_argv сохраняет -X utf8).
+if os.environ.get("PYTHONHASHSEED") != "0":
+    os.environ["PYTHONHASHSEED"] = "0"
+    os.execv(sys.executable, [sys.executable, *(getattr(sys, "orig_argv", sys.argv)[1:])])
 
 ROOT = Path(__file__).resolve().parent.parent          # cb-radio/
 sys.path.insert(0, str(ROOT))

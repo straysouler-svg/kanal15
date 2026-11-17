@@ -1586,6 +1586,14 @@ class Operator:
                 q_count = text.count("?") or (1 if intents.is_question(text) else 0)
                 self.multi = q_count >= 2
                 log(f"тангента: вопросов несколько ({', '.join(multi)}) — отвечаю на первый: {intent}")
+            # 17.11 (стрим #8): ОДНА пасхалка. Старый секретный интент «stream» из тайника при включённом
+            # пилоте = включение режима стрима: отдельного ответа нет, в мульти-разборе не дублируется.
+            # (без пилота — ниже, в answer(): честное «не понял», как чужая тема)
+            if (PLAYER.cfg or {}).get("stream_mode_pilot"):
+                if intent == "stream":
+                    intent = "stream_on"
+                if "stream" in multi:
+                    multi = ["stream_on" if m == "stream" else m for m in multi]
         self.knows_target = intents.knows_target(text) if intent == "knows" else None
         if intent == "knows" and self.knows_target == who:
             who = None            # «ты знаешь Бороду?» — вопрос ПРО него, отвечают другие
@@ -1714,8 +1722,10 @@ class Operator:
             else:
                 kind = "ack" if r < 0.7 else "not_heard" if r < 0.9 else None
         if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude",
-                                                       "mock", "bot", "support"):
+                                                       "mock", "bot", "support", "stream_on", "stream_off"):
             # step 2 of «вариативность» (2026-11-05): asked him the same within 10 min -> he notices
+            # 17.11 (стрим #8): stream_on/stream_off — НЕ повтор: повторная фраза сама по себе значима
+            # (stream_ack «уже вкл» / тихое выключение), ремап «stream»->«stream_on» сюда попадать не должен
             # 2026-11-08: «как дела» и «как настроение» — один интент how_are_you, но разные вопросы:
             # ключ повтора считаем по формулировке, иначе «как настроение» после «как дела» = ложный повтор
             ask_kind = "how_are_you:mood" if kind == "how_are_you" and "настро" in text else kind
@@ -2229,7 +2239,14 @@ class Operator:
         if group == "foreign_reply":
             return self.foreign_reply(kind)
         if group == "intent" and kind in SECRET_KINDS:
-            return self.all_answer(who, kind)
+            if kind == "stream":
+                # 17.11: старая пасхалка «stream» слита с режимом стрима. Пилот вкл (сюда обычно не
+                # доходит — интент ремапится раньше) — включение режима; выкл — «не понял», как чужая тема.
+                if (PLAYER.cfg or {}).get("stream_mode_pilot"):
+                    return self._stream_toggle(True, who)
+                group, kind = "player", "dunno"
+            else:
+                return self.all_answer(who, kind)
         if group == "intent" and kind in ("dist", "horn") and horn_scene(self, who, direct=(kind == "horn")):
             return                                       # «мигни — бибикну»
         if group == "intent" and kind in ("stream_on", "stream_off"):
@@ -3651,6 +3668,8 @@ def main(argv):
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
     meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
     next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — обращения к стримеру реже обычной болтовни
+    stream_acc = 0.0   # 17.11 (стрим #8): отдельный аккумулятор времени в пути — driving_s после каждой
+                       # реплики сбрасывается в 0, по нему бантер до 480-900 с никогда не доживал
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
     driving_s = 0.0
     next_at = random.uniform(*cfg["first_after_s"])
@@ -4123,10 +4142,13 @@ def main(argv):
             # next_at и сдвигает её; один актёр не говорит два мема подряд
             if st == "driving":
                 meme_acc += dt
-            # 16.11: режим стрима (пилот) — редкие обращения к стримеру (пул stream_banter, кулдаун 10-15 мин)
+                stream_acc += dt
+            # 16.11: режим стрима (пилот) — редкие обращения к стримеру (пул stream_banter, кулдаун 10-15 мин).
+            # 17.11: интервал по stream_acc (не сбрасывается болтовнёй), цель 4-6 обращений в час
             if (STREAM_ON[0] and (PLAYER.cfg or {}).get("stream_mode_pilot") and st == "driving" and not hush
-                    and not op.pending and driving_s >= next_stream_banter):
-                next_stream_banter = driving_s + random.uniform(480, 900)
+                    and not op.pending and stream_acc >= next_stream_banter):
+                stream_acc = 0.0
+                next_stream_banter = random.uniform(600, 900)
                 _stream_banter(world, deck)
             if (meme_acc >= next_meme and st == "driving" and not hush
                     and not op.pending and world and world.inside and driving_s >= next_at):
