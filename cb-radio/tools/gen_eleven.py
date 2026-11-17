@@ -188,6 +188,18 @@ def cut_rec(spec):
     return y if sr == g.SR else resample_poly(y, g.SR, sr).astype(np.float32)
 
 
+def _or_tts(text, a):
+    """gor.tts, но HTTP 402 (нет баланса) — не роняем прогон, а пропускаем реплику."""
+    import gen_openrouter as gor
+    try:
+        return gor.tts(text, a["voice"], a.get("style", ""), a.get("model", "openai/gpt-audio"),
+                       a.get("lang", "ru"))
+    except SystemExit as se:
+        if str(se).startswith("OpenRouter 402"):
+            raise SkipLine(str(se))
+        raise
+
+
 def voice(a, text, rec=None):
     """(mp3 bytes or None, dry 48 kHz audio, ElevenLabs chars spent). engine "xtts" = local clone,
     rec = cut from a real recording."""
@@ -205,7 +217,7 @@ def voice(a, text, rec=None):
             if _or_spent[0] >= budget:
                 print(f"   бюджет {budget}$ исчерпан, беру лучший вариант")
                 break
-            x, cost = gor.tts(text, a["voice"], a.get("style", ""), a.get("model", "openai/gpt-audio"), lang)
+            x, cost = _or_tts(text, a)
             _or_spent[0] += cost
             if lang != "ru":                 # our Whisper check is Russian-only: one take, no retries
                 print(f"   ({lang}) ${cost:.4f} (всего ${_or_spent[0]:.3f})")
@@ -291,10 +303,34 @@ def _sig(a, text):
     return f"{a['voice_id']}|{a.get('model', 'eleven_v3')}|{a.get('stability', 0.5)}|{text}"
 
 
+class SkipLine(Exception):
+    """Реплику пропускаем (402 OpenRouter), манифест не обновляем — догенерируется позже."""
+
+
+def load_phrases():
+    """level3_eleven.json + локальный overlay personal_local.json (копия cb_radio.load_phrases:
+    монолит рации сюда не импортируем). Оверлей только дописывает строки в конец пулов."""
+    d = json.loads((ROOT / "phrases" / "level3_eleven.json").read_text(encoding="utf-8"))
+    try:
+        p = json.loads((ROOT / "phrases" / "personal_local.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return d
+    for gr, kinds in (p.get("reactions") or {}).items():
+        if not isinstance(kinds, dict):
+            continue
+        dst = d.setdefault("reactions", {}).setdefault(gr, {})
+        if not isinstance(dst, dict):
+            continue
+        for k, lines in kinds.items():
+            if isinstance(lines, list):
+                dst.setdefault(k, []).extend(lines)
+    return d
+
+
 def level3(only=None, force=False, seed=False):
     """Voice only phrases whose text/voice changed (manifest.json per actor) - saves free credits.
     seed=True: just record the current texts as already voiced."""
-    data = json.loads((ROOT / "phrases" / "level3_eleven.json").read_text(encoding="utf-8"))
+    data = load_phrases()
     used = 0
     for key, a in data["actors"].items():
         if only and key != only:
@@ -358,8 +394,12 @@ def voice_lines(d, lines, data, force=False, label=""):
             continue
         if not STRESS_OK:
             _stress_gate(ln["text"])
+        try:
+            mp3, x, spent = voice(a, ln["text"], ln.get("rec"))
+        except SkipLine:
+            print(f"! пропуск (402, нет баланса OpenRouter): {ln['actor']} {n}")
+            continue
         rng = np.random.default_rng(abs(hash((str(d), i))) % 2**32)
-        mp3, x, spent = voice(a, ln["text"], ln.get("rec"))
         save_dry(d / n, mp3, x)
         sf.write(d / f"{n}.wav", remix.render(x, a, ln.get("far", False), rng, force=ln.get("cab")), g.SR)
         man[n] = sig

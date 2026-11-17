@@ -21,6 +21,8 @@
 !/cb-radio/version.json
 !/cb-radio/handle_lines.json
 !/cb-radio/phrases/
+# личный локальный пул (Железяка) — не в git:
+/cb-radio/phrases/personal_local.json
 !/cb-radio/tools/
 !/cb-radio/installer_art/
 !/cb-radio/map/
@@ -129,3 +131,4 @@ promo/donations/*.md
 # promo и backup — рабочие бумаги, локально (решение 14.11: на GitHub только рация)
 /promo/
 /backup/
+/cb-radio/phrases/drafts_stream_banter_personal_2026-11-16.md

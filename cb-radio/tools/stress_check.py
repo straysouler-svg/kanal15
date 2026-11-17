@@ -19,6 +19,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TAG_RX = re.compile(r"\[[^\]]*\]|\([^)]*\)")          # ремарки вида [chuckles], (смеётся)
 WORD_RX = re.compile(r"[а-яёА-ЯЁ]+(?:-[а-яёА-ЯЁ]+)*")
+TOK_RX = re.compile(r"[а-яё+]+(?:-[а-яё+]+)*")
+
+
+def _word_tok(tok):
+    """Токен разметки ruaccent -> слово с '+' без пунктуации ('Гудни,' -> 'гудни')."""
+    m = TOK_RX.search(tok.lower())
+    return m.group(0) if m else None
 VOWELS = "аеёиоуыэюя"
 
 JARGON = {"лео"}  # позывные/клички вне словаря — на память; подтверждённые живут в stress_dict.json
@@ -89,10 +96,10 @@ def check_line(text):
     d = stress_dict()
     flags = []
     for tok in marked.split():
-        low = tok.lower()
-        w = low.replace("+", "")
-        if not WORD_RX.fullmatch(w):
+        low = _word_tok(tok)
+        if not low:
             continue
+        w = low.replace("+", "")
         if sum(ch in VOWELS for ch in w) <= 1:     # односложные: ударение не нужно
             continue
         if w in d:
@@ -106,10 +113,25 @@ def check_line(text):
             if got != want:
                 flags.append((w, entry["stressed"], "dict-mismatch", True))
         elif "+" not in low and "ё" not in w and w not in NO_STRESS_IGNORE and _truly_unstressed(w):
-            flags.append((w, None, "no-stress", False))
+            if not _chatter(w):
+                flags.append((w, None, "no-stress", False))
         if w in JARGON and w not in d:
             flags.append((w, None, "jargon", False))
     return flags
+
+
+CHATTER_PARTS = ("то", "та", "либо", "нибудь")   # «кто-то», «спишь-то» — клитики, ударение несущественно
+
+
+def _chatter(w):
+    """Слэнговая слоговая разбивка/междометие («вой-бо», «да-да», «та-та-та-та», «не-е-ет»): TTS читает
+    по слогам как написано, ударение не коварное — в пропуск (17.11, после интеграции стрим-пулов)."""
+    parts = w.split("-")
+    if len(parts) < 2:
+        return False
+    if any(p in CHATTER_PARTS for p in parts):
+        return True
+    return all(len(p) <= 4 for p in parts)
 
 
 def _lines_from_md(path):
@@ -149,9 +171,23 @@ def _lines_level3():
     return out
 
 
+def ruaccent_opinion(text):
+    """ВТОРОЕ МНЕНИЕ (оценка 17.11: омографы разрешает отлично, но на коварных словах
+    («гудни»->гУдни, «йогурты»->йОгурты) ошибается ровно как TTS — НЕ источник истины).
+    -> {word: stressed_form_с_+} — только информационно, exit-код не меняет."""
+    marked = _acc().process_all(TAG_RX.sub(" ", text))
+    out = {}
+    for tok in marked.split():
+        low = _word_tok(tok)
+        if low and "+" in low:
+            out[low.replace("+", "")] = low
+    return out
+
+
 def main(argv):
     stress_ok = "--stress-ok" in argv
-    argv = [a for a in argv if a != "--stress-ok"]
+    second = "--ruaccent" in argv          # второе мнение ruaccent: только печать, не блокирует
+    argv = [a for a in argv if a not in ("--stress-ok", "--ruaccent")]
     if len(argv) >= 2 and argv[1] == "level3":
         rows = _lines_level3()
     elif len(argv) >= 2 and argv[1] == "--text":
@@ -165,6 +201,20 @@ def main(argv):
             n_unconf += not confirmed
             print(f"{actor} | {text[:70]} | {word} → {proposed or '???'} | {reason}"
                   + ("" if confirmed else "  НЕПОДТВЕРЖДЁН"))
+        if second:
+            d = stress_dict()
+            for w, marked_form in sorted(ruaccent_opinion(text).items()):
+                if w not in d:
+                    continue
+                got_v = None
+                low = marked_form.lower()
+                for i, ch in enumerate(low):
+                    if ch == "+" and i + 1 < len(low):
+                        got_v = low[i + 1]
+                        break
+                want_v = _expected_vowel(d[w])
+                if got_v != want_v:
+                    print(f"   [ruaccent] {w}: модель {marked_form} | словарь {d[w]['stressed']}  (сверить вручную)")
     print(f"строк: {len(rows)}, флагов подтверждённых: {n_conf}, неподтверждённых: {n_unconf}"
           + ("  (--stress-ok)" if stress_ok and n_unconf else ""))
     return 0 if stress_ok or n_unconf == 0 else 1

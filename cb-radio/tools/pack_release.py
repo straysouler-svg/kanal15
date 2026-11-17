@@ -86,6 +86,19 @@ def main(variant):
     for name, a in d["actors"].items():                         # сольные реплики с вариантом (12.11: 40 строк звучали «Железякой» в общей сборке)
         handle_rel |= {f"level3/{name}/{i:02d}" for i, ln in enumerate(a.get("phrases", []), 1)
                        if isinstance(ln, dict) and "v_neutral" in ln}
+    # личный локальный пул (17.11): его wav-и лежат в общих пулах (позиции после основных строк),
+    # в релиз не идут — источник personal_local.json (локальный, не в git)
+    personal_rel = set()
+    pl = ROOT / "phrases" / "personal_local.json"
+    if pl.exists():
+        try:
+            pd = json.loads(pl.read_text(encoding="utf-8"))
+            for g, kinds in (pd.get("reactions") or {}).items():
+                for k, lines in kinds.items():
+                    base = len(d.get("reactions", {}).get(g, {}).get(k, []))
+                    personal_rel |= {f"reactions/{g}/{k}/{base + i:02d}" for i in range(1, len(lines) + 1)}
+        except (OSError, ValueError):
+            pass
     n = skipped = 0
     for sub in ("level3", "scenes", "reactions", "fx"):
         for f in sorted((A / sub).rglob("*.wav")):
@@ -95,6 +108,8 @@ def main(variant):
                 continue                                          # sources, dropped lines
             if any(p in PERSONAL for p in parts):
                 continue                                          # Сорока's dirs
+            if rel in personal_rel:
+                continue                                          # личный локальный пул (Железяка)
             if any(p.startswith("only_") and p != f"only_{variant}" for p in parts):
                 continue                                          # another build's personal lines
             src = f
@@ -121,7 +136,13 @@ def main(variant):
         if any(p.startswith("only_") and p != f"only_{variant}" for p in rel.parts):
             continue
         (out / "audio" / rel).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(meta, out / "audio" / rel)
+        if rel.name == "index.json" and rel.parts[0] == "reactions":
+            acts = json.loads(meta.read_text(encoding="utf-8"))["actors"]
+            prefix = rel.with_name("").as_posix()
+            keep = [a for i, a in enumerate(acts, 1) if f"{prefix}/{i:02d}" not in personal_rel]
+            (out / "audio" / rel).write_text(json.dumps({"actors": keep}, ensure_ascii=False), encoding="utf-8")
+        else:
+            shutil.copy2(meta, out / "audio" / rel)
     # a scene with a missing line (a name call without a voiced variant) is dropped whole
     for sj in (out / "audio" / "scenes").rglob("scene.json"):
         acts = json.loads(sj.read_text(encoding="utf-8"))["actors"]

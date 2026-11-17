@@ -53,7 +53,29 @@ SCENES = ROOT / "audio" / "scenes"
 FX = ROOT / "audio" / "fx"
 REACT = ROOT / "audio" / "reactions"
 PHRASES_JSON = ROOT / "phrases" / "level3_eleven.json"
+PERSONAL_PHRASES = ROOT / "phrases" / "personal_local.json"   # локальный личный оверлей (Железяка): не в git, не в релиз
 AUDIO_ROOT = ROOT / "audio"
+
+
+def load_phrases():
+    """level3_eleven.json + локальный overlay personal_local.json. Оверлей ТОЛЬКО дописывает
+    строки в конец пулов reactions (позиции озвученного/manifest.json не сдвигаются).
+    Файла нет или он битый -> голый эфир (релиз без личного пула работает)."""
+    d = json.loads(PHRASES_JSON.read_text(encoding="utf-8"))
+    try:
+        p = json.loads(PERSONAL_PHRASES.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return d
+    for g, kinds in (p.get("reactions") or {}).items():
+        if not isinstance(kinds, dict):
+            continue
+        dst = d.setdefault("reactions", {}).setdefault(g, {})
+        if not isinstance(dst, dict):
+            continue
+        for k, lines in kinds.items():
+            if isinstance(lines, list):
+                dst.setdefault(k, []).extend(lines)
+    return d
 
 
 def snd(p):
@@ -88,7 +110,7 @@ def load_variant(cfg):
     if not VARIANT:
         return
     try:
-        d = json.loads(PHRASES_JSON.read_text(encoding="utf-8"))
+        d = load_phrases()
         for sid, ls in d.get("scenes", {}).items():
             for i, ln in enumerate(ls, 1):
                 if "v_neutral" in ln:
@@ -695,7 +717,7 @@ def load_roles():
     """{actor: {"greet": {"actor/NN"}, "signoff": {...}}} from the phrases file."""
     roles = {}
     try:
-        data = json.loads(PHRASES_JSON.read_text(encoding="utf-8"))
+        data = load_phrases()
         for key, a in data["actors"].items():
             roles[key] = {r: {f"{key}/{n:02d}" for n in a.get(r, [])} for r in ("greet", "signoff")}
     except (OSError, ValueError, KeyError):
@@ -818,7 +840,7 @@ class Deck:
                 pass
         self.roles = load_roles()
         try:
-            acts = json.loads(PHRASES_JSON.read_text(encoding="utf-8"))["actors"]
+            acts = load_phrases()["actors"]
             self.weights = {k: float(a.get("weight", 1.0)) for k, a in acts.items()}
         except (OSError, ValueError, KeyError):
             self.weights = {}
@@ -2911,7 +2933,7 @@ def selftest():
     first = next(iter(snd_glob(AUDIO, "*/*.wav")), None)
     x, sr = sf.read(first, dtype="float32")
     print("звук читается:", first.name, sr, f"{len(x) / sr:.1f} с")
-    acts = json.loads(PHRASES_JSON.read_text(encoding="utf-8"))["actors"]
+    acts = load_phrases()["actors"]
     w = world_mod.World(load_cfg(), acts)
     print("мир:", len(w.cities), "городов,", len(w.drivers), "водителей")
     try:
@@ -3234,7 +3256,7 @@ def main(argv):
     if "--console" not in argv:               # the radio's icon by the clock instead of a console window
         try:
             import tray as tray_mod
-            names = {k: a.get("name", k) for k, a in json.loads(PHRASES_JSON.read_text(encoding="utf-8"))["actors"].items()}
+            names = {k: a.get("name", k) for k, a in load_phrases()["actors"].items()}
             if tray_mod.start(cfg, CFG_FILE, LOG_FILE, ROOT, names, VERSION):
                 tray, TRAY_STATE = tray_mod, tray_mod.STATE
                 globals()["TRAY_MOD"] = tray_mod
@@ -3459,7 +3481,7 @@ def main(argv):
     if (cfg.get("world") or {}).get("enabled", True):
         try:
             import world as world_mod
-            acts = json.loads(PHRASES_JSON.read_text(encoding="utf-8"))["actors"]
+            acts = load_phrases()["actors"]
             world = world_mod.World(cfg, acts)
             if world.ok:
                 PLAYER.world = world
