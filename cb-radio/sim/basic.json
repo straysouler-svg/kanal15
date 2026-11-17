@@ -1,0 +1,28 @@
+{
+ "_comment": "Этап A: сценарии из инцидентов стрима 15.11 (prompts/log_review_2026-11-15.md) + базовые проверки. summon — мир ставит водителя рядом (2 км позади); who — ожидаемый адресат; q — фраза-вопрос; greetq — «привет+вопрос»; set_min — скачок игрового времени (смены: ment 23-09, ten 20-07, sova 22-08, boroda 07-03); expect_silence — в эфире ничего не должно прозвучать.",
+ "steps": [
+  {"id": "multi", "summon": "boroda", "who": "boroda", "q": true,
+   "text": "Борода, как дела, куда едешь, как погода?"},
+  {"id": "kto_v_efire", "q": true,
+   "text": "Кто в эфире?"},
+  {"id": "zametka", "expect_silence": true,
+   "text": "Заметка: проверить офлайн-стенд"},
+  {"id": "joke_any",
+   "text": "Парни, расскажите анекдот, а то скучно ехать."},
+  {"id": "repeat",
+   "text": "Повтори."},
+  {"id": "night", "set_min": 60},
+  {"id": "palych_mentom", "summon": "ment", "who": "ment", "q": true,
+   "text": "Палыч, а ты ментом был?"},
+  {"id": "pavlych_alias", "q": true,
+   "text": "Павлыч, как же меня зовут?"},
+  {"id": "palych_life", "who": "ment", "q": true,
+   "text": "Ах, Палыч, а жизнь-то как у тебя-то, а?"},
+  {"id": "palych_family", "who": "ment", "q": true,
+   "text": "Палыч, как семья?"},
+  {"id": "privet_ten", "summon": "ten", "who": "ten", "q": true, "greetq": true,
+   "text": "Привет, Тень. Как дела?"},
+  {"id": "sova_hi", "summon": "sova", "who": "sova",
+   "text": "Сова, привет!"}
+ ]
+}

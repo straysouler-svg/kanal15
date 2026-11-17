@@ -24,6 +24,7 @@
 # личный локальный пул (Железяка) — не в git:
 /cb-radio/phrases/personal_local.json
 !/cb-radio/tools/
+!/cb-radio/sim/
 !/cb-radio/installer_art/
 !/cb-radio/map/
 /cb-radio/map/extracted/

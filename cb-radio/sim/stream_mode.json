@@ -1,0 +1,36 @@
+{
+ "_comment": "Режим стрима (пасхалка 16.11, пилот stream_mode_pilot): «мы на стриме» -> режим вкл (приветствие зрителей, expect_rel stream_greet), повторное включение -> отбивка stream_ack (expect_rel), «стрим закончился» -> выкл, повторное выключение -> тишина. Пулы заполнены и озвучены (коммит 9c3f9a6). Шаг cfg включает пилот для сценария (в живом config.json флаг НЕ включён).",
+ "steps": [
+  {
+   "id": "cfg_pilot",
+   "cfg": {
+    "stream_mode_pilot": true
+   }
+  },
+  {
+   "id": "stream_on",
+   "summon": "lastochka",
+   "who": "lastochka",
+   "text": "Ребята, мы на стриме, всем привет!",
+   "expect_rel": "stream_greet"
+  },
+  {
+   "id": "stream_on_again",
+   "who": "lastochka",
+   "text": "Мы на стриме, слышите меня?",
+   "expect_rel": "stream_ack"
+  },
+  {
+   "id": "stream_off",
+   "who": "lastochka",
+   "expect_silence": true,
+   "text": "Всё, стрим закончился, спасибо всем."
+  },
+  {
+   "id": "stream_off_again",
+   "who": "lastochka",
+   "expect_silence": true,
+   "text": "Стрим окончен, я сказал."
+  }
+ ]
+}

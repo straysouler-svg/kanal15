@@ -1,0 +1,28 @@
+{
+ "_comment": "Разбор 2 Клода 15.11 (log_review2): «Серёга» — только обращение; Тени нет в зоне — тайна не раскрывается (без absent); «брат Серёга» в рассказе — не Тень. Запуск ночью: --start-min 1400 (смена ten 20-07). gone: увозит И стирает льготные 120 с «только что уехал».",
+ "steps": [
+  {
+   "id": "serega_call_ten_here",
+   "summon": "ten",
+   "who": "ten",
+   "expect_rel": "intent/ten_name",
+   "text": "Серёга, привет."
+  },
+  {
+   "id": "serega_in_story",
+   "forbid_rel": "ten_name",
+   "text": "У меня брат Серёга тоже дальнобойщик."
+  },
+  {
+   "id": "ten_leaves_long",
+   "banish": "ten",
+   "gone": true
+  },
+  {
+   "id": "serega_no_ten_no_secret",
+   "q": true,
+   "forbid_rel": "absent",
+   "text": "Серёга, ты тут?"
+  }
+ ]
+}

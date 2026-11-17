@@ -1,0 +1,1725 @@
+{
+ "_comment": "Бот целенаправленно качает дружбу с mihalych/professor/lastochka 10 игровых дней без шагов bond: каждый день 9 фраз разных интентов (кап 15/день, повтор темы в сутки = 0). Замер: игровые часы и число фраз до уровней 2 (приятель 60) и 3 (друг 150) + повторы rel.",
+ "steps": [
+  {
+   "id": "d0_setmin",
+   "set_min": 600
+  },
+  {
+   "id": "d0_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d0_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d0_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d0_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d0_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d0_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d0_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d0_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d0_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d0_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d0_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d0_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d0_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d0_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d0_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d0_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d0_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d0_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d0_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d0_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d0_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d0_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d0_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d0_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d0_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d0_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d0_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d1_setmin",
+   "set_min": 2040
+  },
+  {
+   "id": "d1_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d1_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d1_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d1_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d1_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d1_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d1_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d1_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d1_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d1_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d1_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d1_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d1_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d1_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d1_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d1_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d1_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d1_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d1_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d1_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d1_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d1_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d1_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d1_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d1_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d1_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d1_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d2_setmin",
+   "set_min": 3480
+  },
+  {
+   "id": "d2_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d2_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d2_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d2_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d2_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d2_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d2_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d2_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d2_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d2_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d2_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d2_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d2_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d2_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d2_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d2_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d2_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d2_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d2_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d2_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d2_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d2_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d2_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d2_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d2_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d2_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d2_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d3_setmin",
+   "set_min": 4920
+  },
+  {
+   "id": "d3_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d3_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d3_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d3_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d3_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d3_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d3_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d3_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d3_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d3_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d3_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d3_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d3_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d3_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d3_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d3_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d3_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d3_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d3_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d3_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d3_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d3_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d3_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d3_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d3_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d3_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d3_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d4_setmin",
+   "set_min": 6360
+  },
+  {
+   "id": "d4_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d4_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d4_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d4_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d4_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d4_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d4_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d4_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d4_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d4_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d4_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d4_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d4_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d4_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d4_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d4_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d4_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d4_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d4_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d4_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d4_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d4_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d4_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d4_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d4_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d4_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d4_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d5_setmin",
+   "set_min": 7800
+  },
+  {
+   "id": "d5_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d5_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d5_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d5_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d5_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d5_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d5_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d5_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d5_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d5_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d5_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d5_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d5_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d5_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d5_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d5_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d5_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d5_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d5_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d5_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d5_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d5_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d5_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d5_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d5_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d5_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d5_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d6_setmin",
+   "set_min": 9240
+  },
+  {
+   "id": "d6_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d6_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d6_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d6_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d6_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d6_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d6_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d6_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d6_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d6_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d6_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d6_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d6_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d6_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d6_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d6_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d6_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d6_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d6_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d6_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d6_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d6_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d6_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d6_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d6_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d6_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d6_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d7_setmin",
+   "set_min": 10680
+  },
+  {
+   "id": "d7_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d7_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d7_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d7_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d7_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d7_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d7_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d7_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d7_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d7_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d7_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d7_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d7_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d7_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d7_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d7_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d7_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d7_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d7_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d7_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d7_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d7_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d7_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d7_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d7_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d7_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d7_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d8_setmin",
+   "set_min": 12120
+  },
+  {
+   "id": "d8_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d8_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d8_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d8_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d8_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d8_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d8_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d8_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d8_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d8_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d8_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d8_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d8_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d8_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d8_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d8_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d8_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d8_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d8_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d8_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d8_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d8_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d8_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d8_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d8_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d8_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d8_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  },
+  {
+   "id": "d9_setmin",
+   "set_min": 13560
+  },
+  {
+   "id": "d9_mihalych_p0",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, привет! Рад тебя слышать.",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "d9_mihalych_p1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, как дела? Как ты?"
+  },
+  {
+   "id": "d9_mihalych_p2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d9_mihalych_p3",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d9_mihalych_p4",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d9_mihalych_p5",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d9_mihalych_p6",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d9_mihalych_p7",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d9_mihalych_p8",
+   "who": "mihalych",
+   "q": false,
+   "text": "Михалыч, молодец, держишься!"
+  },
+  {
+   "id": "d9_professor_p0",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, привет! Рад тебя слышать.",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "d9_professor_p1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, как дела? Как ты?"
+  },
+  {
+   "id": "d9_professor_p2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d9_professor_p3",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d9_professor_p4",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d9_professor_p5",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d9_professor_p6",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d9_professor_p7",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d9_professor_p8",
+   "who": "professor",
+   "q": false,
+   "text": "Профессор, молодец, держишься!"
+  },
+  {
+   "id": "d9_lastochka_p0",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, привет! Рад тебя слышать.",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "d9_lastochka_p1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, как дела? Как ты?"
+  },
+  {
+   "id": "d9_lastochka_p2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, расскажи анекдот, а то дорога скучная."
+  },
+  {
+   "id": "d9_lastochka_p3",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, что слушаешь? Спой что-нибудь!"
+  },
+  {
+   "id": "d9_lastochka_p4",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, куда едешь? Далеко тебе?"
+  },
+  {
+   "id": "d9_lastochka_p5",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, давно за рулём? Сколько лет уже ездишь?"
+  },
+  {
+   "id": "d9_lastochka_p6",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, где поедим сегодня? Что на обед?"
+  },
+  {
+   "id": "d9_lastochka_p7",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, есть что рассказать? Что нового?"
+  },
+  {
+   "id": "d9_lastochka_p8",
+   "who": "lastochka",
+   "q": false,
+   "text": "Ласточка, молодец, держишься!"
+  }
+ ]
+}

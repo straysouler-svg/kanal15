@@ -1,0 +1,35 @@
+{
+ "_comment": "Эпоха «режим стрима» (Испытатель 17.11): пилот вкл -> «мы на стриме» (ждём stream_greet) -> повторное «мы на стриме» (stream_ack или тишина) -> «стрим закончился» -> повторное выключение (тишина). Ожидания через expect_rel, не expect_silence: пулы stream_* уже заполнены (коммит 9c3f9a6).",
+ "steps": [
+  {
+   "id": "cfg_pilot",
+   "cfg": {
+    "stream_mode_pilot": true
+   }
+  },
+  {
+   "id": "stream_on",
+   "summon": "lastochka",
+   "who": "lastochka",
+   "text": "Ребята, мы на стриме, всем привет!",
+   "expect_rel": "stream_greet"
+  },
+  {
+   "id": "stream_on_again",
+   "who": "lastochka",
+   "text": "Мы на стриме, слышите меня?"
+  },
+  {
+   "id": "stream_off",
+   "who": "lastochka",
+   "text": "Всё, стрим закончился, спасибо всем.",
+   "expect_silence": true
+  },
+  {
+   "id": "stream_off_again",
+   "who": "lastochka",
+   "text": "Стрим окончен, я сказал.",
+   "expect_silence": true
+  }
+ ]
+}

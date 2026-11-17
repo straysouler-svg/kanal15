@@ -1,0 +1,1057 @@
+{
+ "_comment": "Бот-тестер: покрытие СВЕЖИХ тем из drafts_hooks_bible_2026-11-15.md и drafts_banter_2026-11-15.md ДО озвучки. Ответов на эти темы в эфире нет — тишина/dunno/evade это НОРМА и есть измеряемый результат (см. build/sim/violations_seed*.txt, топ непонятых). Живые вопросы, не цитаты из библии. bond: 0=незнакомый(0), 1=знакомый(40), 2=приятель(70). who выставлен явно. expect_answer везде false.",
+ "steps": [
+  {
+   "id": "mih_galya0",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, а жена твоя давно за рулём не была? Галя, кажется?",
+   "summon": "mihalych",
+   "when_inside": "mihalych"
+  },
+  {
+   "id": "mih_vnuki0",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, а внуки твои уже большие? Сколько их у тебя?"
+  },
+  {
+   "id": "mih_bond1",
+   "bond": {
+    "mihalych": 40
+   }
+  },
+  {
+   "id": "mih_kum1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, а кум твой ещё на связи? Володя, кажется?"
+  },
+  {
+   "id": "mih_senoval1",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, расскажи, как в молодости по дискотекам хаживал?"
+  },
+  {
+   "id": "mih_bond2",
+   "bond": {
+    "mihalych": 70
+   }
+  },
+  {
+   "id": "mih_starushka2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, а «Старушка» твоя ещё бегает? Сколько ей уже?"
+  },
+  {
+   "id": "mih_rybalka2",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, на рыбалку-то выбрался за сезон? Или удочки только катаются?"
+  },
+  {
+   "id": "mih_banish",
+   "banish": "mihalych",
+   "gone": true
+  },
+  {
+   "id": "stas_mama0",
+   "who": "stas",
+   "q": true,
+   "text": "Стас, а мама твоя не звонит по вечерам?",
+   "summon": "stas",
+   "when_inside": "stas"
+  },
+  {
+   "id": "stas_kanal0",
+   "who": "stas",
+   "q": true,
+   "text": "Стас, как канал-то твой? Сколько там уже подписчиков?"
+  },
+  {
+   "id": "stas_bond1",
+   "bond": {
+    "stas": 40
+   }
+  },
+  {
+   "id": "stas_plastinki1",
+   "who": "stas",
+   "q": true,
+   "text": "Стас, а чего ты музыку такую слушаешь? Есть любимая группа какая?"
+  },
+  {
+   "id": "stas_blog1",
+   "who": "stas",
+   "q": true,
+   "text": "Стас, ты ж блогером стал не просто так? Кто тебя вообще в дальнобой-то занёс?"
+  },
+  {
+   "id": "stas_bond2",
+   "bond": {
+    "stas": 70
+   }
+  },
+  {
+   "id": "stas_tok2",
+   "who": "stas",
+   "q": true,
+   "text": "Стас, а ролик-то новый когда выйдет? Ты же вроде монтируешь чего-то?"
+  },
+  {
+   "id": "stas_dev2",
+   "who": "stas",
+   "q": true,
+   "text": "Стас, а девушка у тебя есть? Или работа не даёт?"
+  },
+  {
+   "id": "stas_banish",
+   "banish": "stas",
+   "gone": true
+  },
+  {
+   "id": "yan_les0",
+   "who": "yanek",
+   "q": true,
+   "text": "Янек, а ты ж лесовоз-то чего выбрал? С детства мечтал?",
+   "summon": "yanek",
+   "when_inside": "yanek"
+  },
+  {
+   "id": "yan_grodno0",
+   "who": "yanek",
+   "q": true,
+   "text": "Янек, жена твоя в Гродно сидит, да? Скучаешь?"
+  },
+  {
+   "id": "yan_bond1",
+   "bond": {
+    "yanek": 40
+   }
+  },
+  {
+   "id": "yan_syn1",
+   "who": "yanek",
+   "q": true,
+   "text": "Янек, а сын-то твой чем занимается? Учится ещё?"
+  },
+  {
+   "id": "yan_paseka1",
+   "who": "yanek",
+   "q": true,
+   "text": "Янек, мёд ты свой возишь иногда? Или вся пасека дома?"
+  },
+  {
+   "id": "yan_bond2",
+   "bond": {
+    "yanek": 70
+   }
+  },
+  {
+   "id": "yan_mag2",
+   "who": "yanek",
+   "q": true,
+   "text": "Янек, а магнитики из стран таскаешь? Коллекция уже большая?"
+  },
+  {
+   "id": "yan_palec2",
+   "who": "yanek",
+   "q": true,
+   "text": "Янек, правда, что ты в лесу однажды замёрз чуть не насмерть?"
+  },
+  {
+   "id": "yan_banish",
+   "banish": "yanek",
+   "gone": true
+  },
+  {
+   "id": "las_doch0",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, а дочка-то твоя студентка? На кого учится?",
+   "summon": "lastochka",
+   "when_inside": "lastochka"
+  },
+  {
+   "id": "las_nogti0",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, цветочки в кабине у тебя живые стоят?"
+  },
+  {
+   "id": "las_bond1",
+   "bond": {
+    "lastochka": 40
+   }
+  },
+  {
+   "id": "las_byvsh1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, а бывший-то твой где сейчас? Видишься?"
+  },
+  {
+   "id": "las_dalnob1",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, ты женщина за рулём — это как, сложно было начинать?"
+  },
+  {
+   "id": "las_bond2",
+   "bond": {
+    "lastochka": 70
+   }
+  },
+  {
+   "id": "las_splet2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, откуда ты всё про всех знаешь? Кто тебе рассказывает?"
+  },
+  {
+   "id": "las_nogti2",
+   "who": "lastochka",
+   "q": true,
+   "text": "Ласточка, ногти сегодня какие? Опять красила, поди?"
+  },
+  {
+   "id": "las_banish",
+   "banish": "lastochka",
+   "gone": true
+  },
+  {
+   "id": "bor_mama0",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, мама твоя ещё каждый вечер звонит?",
+   "summon": "boroda",
+   "when_inside": "boroda"
+  },
+  {
+   "id": "bor_kosh0",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, а кошка твоя одна дома сидит? Кто кормит?"
+  },
+  {
+   "id": "bor_bond1",
+   "bond": {
+    "boroda": 40
+   }
+  },
+  {
+   "id": "bor_ser1",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, ты сериалы чего смотришь? Есть любимый?"
+  },
+  {
+   "id": "bor_shtraf1",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, штрафы-то твои уже сколько собрались?"
+  },
+  {
+   "id": "bor_bond2",
+   "bond": {
+    "boroda": 70
+   }
+  },
+  {
+   "id": "bor_zhena2",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, ты женат был когда-то?"
+  },
+  {
+   "id": "bor_shtraf2",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, а самый дорогой штраф у тебя какой был?"
+  },
+  {
+   "id": "bor_banish",
+   "banish": "boroda",
+   "gone": true
+  },
+  {
+   "id": "sor_nauka0",
+   "who": "soroka",
+   "q": true,
+   "text": "Сорока, ты ж по образованию кто? Учёная, говорят?",
+   "summon": "soroka",
+   "when_inside": "soroka"
+  },
+  {
+   "id": "sor_chek0",
+   "who": "soroka",
+   "q": true,
+   "text": "Сорока, ты вроде всё по списку проверяешь перед рейсом?"
+  },
+  {
+   "id": "sor_bond1",
+   "bond": {
+    "soroka": 40
+   }
+  },
+  {
+   "id": "sor_nauka1",
+   "who": "soroka",
+   "q": true,
+   "text": "Сорока, а чем ты до фуры занималась? На заводе что ли?"
+  },
+  {
+   "id": "sor_oblaka1",
+   "who": "soroka",
+   "q": true,
+   "text": "Сорока, ты ж облака раньше считала, да? А сейчас по ним скучаешь?"
+  },
+  {
+   "id": "sor_bond2",
+   "bond": {
+    "soroka": 70
+   }
+  },
+  {
+   "id": "sor_nauka2",
+   "who": "soroka",
+   "q": true,
+   "text": "Сорока, почему ушла-то с науки? Денег не платили?"
+  },
+  {
+   "id": "sor_chek2",
+   "who": "soroka",
+   "q": true,
+   "text": "Сорока, чек-лист твой откуда? Сам составляла?"
+  },
+  {
+   "id": "sor_banish",
+   "banish": "soroka",
+   "gone": true
+  },
+  {
+   "id": "stu_mama0",
+   "who": "student",
+   "q": true,
+   "text": "Студент, мама твоя звонит часто? Переживает, наверное?",
+   "summon": "student",
+   "when_inside": "student"
+  },
+  {
+   "id": "stu_uch0",
+   "who": "student",
+   "q": true,
+   "text": "Студент, а учёбу-то ты чего бросил? На кого учился вообще?"
+  },
+  {
+   "id": "stu_bond1",
+   "bond": {
+    "student": 40
+   }
+  },
+  {
+   "id": "stu_otec1",
+   "who": "student",
+   "q": true,
+   "text": "Студент, а отец у тебя есть? Помогает чем-то?"
+  },
+  {
+   "id": "stu_reis1",
+   "who": "student",
+   "q": true,
+   "text": "Студент, как ты вообще в рейс попал? Кто взял-то тебя?"
+  },
+  {
+   "id": "stu_bond2",
+   "bond": {
+    "student": 70
+   }
+  },
+  {
+   "id": "stu_dev2",
+   "who": "student",
+   "q": true,
+   "text": "Студент, а девушка у тебя есть?"
+  },
+  {
+   "id": "stu_mama2",
+   "who": "student",
+   "q": true,
+   "text": "Студент, а мама-то знает, что ты в Европе, а не в соседнем городе?"
+  },
+  {
+   "id": "stu_banish",
+   "banish": "student",
+   "gone": true
+  },
+  {
+   "id": "prof_urok0",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, вы ж преподавали когда-то, да? Что читали?",
+   "summon": "professor",
+   "when_inside": "professor"
+  },
+  {
+   "id": "prof_yog0",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, а йогурты вы чего возите? Скучный же груз."
+  },
+  {
+   "id": "prof_bond1",
+   "bond": {
+    "professor": 40
+   }
+  },
+  {
+   "id": "prof_supr1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, а жена ваша кем работает?"
+  },
+  {
+   "id": "prof_doch1",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, дочь ваша учёная, говорят? Диссертацию пишет?"
+  },
+  {
+   "id": "prof_bond2",
+   "bond": {
+    "professor": 70
+   }
+  },
+  {
+   "id": "prof_cheh2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, что вы сейчас читаете? Всё того же Чехова?"
+  },
+  {
+   "id": "prof_uchen2",
+   "who": "professor",
+   "q": true,
+   "text": "Профессор, а бывшие ваши ученики пишут вам?"
+  },
+  {
+   "id": "prof_banish",
+   "banish": "professor",
+   "gone": true
+  },
+  {
+   "id": "pet_vnuk0",
+   "who": "petrovna",
+   "q": true,
+   "text": "Петровна, внуки-то твои как? Сколько уже?",
+   "summon": "petrovna",
+   "when_inside": "petrovna"
+  },
+  {
+   "id": "pet_doch0",
+   "who": "petrovna",
+   "q": true,
+   "text": "Петровна, дочка твоя за руль не садится?"
+  },
+  {
+   "id": "pet_bond1",
+   "bond": {
+    "petrovna": 40
+   }
+  },
+  {
+   "id": "pet_poed1",
+   "who": "petrovna",
+   "q": true,
+   "text": "Петровна, ты ж на поездах раньше работала, да? Проводницей?"
+  },
+  {
+   "id": "pet_pir1",
+   "who": "petrovna",
+   "q": true,
+   "text": "Петровна, пирожки-то свои в эфир не передашь?"
+  },
+  {
+   "id": "pet_bond2",
+   "bond": {
+    "petrovna": 70
+   }
+  },
+  {
+   "id": "pet_mugh2",
+   "who": "petrovna",
+   "q": true,
+   "text": "Петровна, а мужа твоего как звали? Давно его нет?"
+  },
+  {
+   "id": "pet_vnuk2",
+   "who": "petrovna",
+   "q": true,
+   "text": "Петровна, внук твой поваром стал, говоришь?"
+  },
+  {
+   "id": "pet_banish",
+   "banish": "petrovna",
+   "gone": true
+  },
+  {
+   "id": "vit_brat0",
+   "who": "vitek",
+   "q": true,
+   "text": "Витёк, брат твой правда в Исландии живёт? Чем занимается?",
+   "summon": "vitek",
+   "when_inside": "vitek"
+  },
+  {
+   "id": "vit_mama0",
+   "who": "vitek",
+   "q": true,
+   "text": "Витёк, мама твоя часто звонит?"
+  },
+  {
+   "id": "vit_bond1",
+   "bond": {
+    "vitek": 40
+   }
+  },
+  {
+   "id": "vit_ded1",
+   "who": "vitek",
+   "q": true,
+   "text": "Витёк, деда-то своего помнишь?"
+  },
+  {
+   "id": "vit_svadba1",
+   "who": "vitek",
+   "q": true,
+   "text": "Витёк, а свадьба-то на брата как прошла? Подарил чего?"
+  },
+  {
+   "id": "vit_bond2",
+   "bond": {
+    "vitek": 70
+   }
+  },
+  {
+   "id": "vit_dev2",
+   "who": "vitek",
+   "q": true,
+   "text": "Витёк, а сам-то ты когда женишься? Девушка есть?"
+  },
+  {
+   "id": "vit_nev2",
+   "who": "vitek",
+   "q": true,
+   "text": "Витёк, невестка твоя из Исландии как, по-русски говорит?"
+  },
+  {
+   "id": "vit_banish",
+   "banish": "vitek",
+   "gone": true
+  },
+  {
+   "id": "rus_doch0",
+   "who": "rustam",
+   "q": true,
+   "text": "Самарканд, у тебя ж дочек трое, да?",
+   "summon": "rustam",
+   "when_inside": "rustam"
+  },
+  {
+   "id": "rus_zhena0",
+   "who": "rustam",
+   "q": true,
+   "text": "Самарканд, жена твоя Мадина дома сидит?"
+  },
+  {
+   "id": "rus_bond1",
+   "bond": {
+    "rustam": 40
+   }
+  },
+  {
+   "id": "rus_let1",
+   "who": "rustam",
+   "q": true,
+   "text": "Самарканд, ты ж летать боишься, да? Как вообще в Европу-то попал?"
+  },
+  {
+   "id": "rus_zal1",
+   "who": "rustam",
+   "q": true,
+   "text": "Самарканд, правда, что у тебя свадебный зал свой был?"
+  },
+  {
+   "id": "rus_bond2",
+   "bond": {
+    "rustam": 70
+   }
+  },
+  {
+   "id": "rus_mama2",
+   "who": "rustam",
+   "q": true,
+   "text": "Самарканд, мама твоя в Самарканде осталась? Скучаешь?"
+  },
+  {
+   "id": "rus_star2",
+   "who": "rustam",
+   "q": true,
+   "text": "Самарканд, старшая-то дочь замуж выскочила уже?"
+  },
+  {
+   "id": "rus_banish",
+   "banish": "rustam",
+   "gone": true
+  },
+  {
+   "id": "bah_amer0",
+   "who": "bahti",
+   "q": true,
+   "text": "Ковбой, правда, что ты в Америку собрался?",
+   "summon": "bahti",
+   "when_inside": "bahti"
+  },
+  {
+   "id": "bah_angl0",
+   "who": "bahti",
+   "q": true,
+   "text": "Ковбой, ты ж английский учишь, да? По аудиокурсу?"
+  },
+  {
+   "id": "bah_bond1",
+   "bond": {
+    "bahti": 40
+   }
+  },
+  {
+   "id": "bah_skani1",
+   "who": "bahti",
+   "q": true,
+   "text": "Ковбой, Скания твоя в кредит, говорят? Сколько лет уже платишь?"
+  },
+  {
+   "id": "bah_fut1",
+   "who": "bahti",
+   "q": true,
+   "text": "Ковбой, за какой клуб болеешь? «Пахтакор», что ли?"
+  },
+  {
+   "id": "bah_bond2",
+   "bond": {
+    "bahti": 70
+   }
+  },
+  {
+   "id": "bah_mama2",
+   "who": "bahti",
+   "q": true,
+   "text": "Ковбой, мама твоя Гавхар в Ташкенте живёт?"
+  },
+  {
+   "id": "bah_dev2",
+   "who": "bahti",
+   "q": true,
+   "text": "Ковбой, девушка у тебя есть?"
+  },
+  {
+   "id": "bah_banish",
+   "banish": "bahti",
+   "gone": true
+  },
+  {
+   "id": "ver_syn0",
+   "who": "vera",
+   "q": true,
+   "text": "Вера, сын твой уже большой, да? Где учится?",
+   "summon": "vera",
+   "when_inside": "vera"
+  },
+  {
+   "id": "ver_graf0",
+   "who": "vera",
+   "q": true,
+   "text": "Вера, Граф твой в кабине ездит? Это ж пёс?"
+  },
+  {
+   "id": "ver_bond1",
+   "bond": {
+    "vera": 40
+   }
+  },
+  {
+   "id": "ver_muzh1",
+   "who": "vera",
+   "q": true,
+   "text": "Вера, муж твой ждёт дома? Он вроде спасателем был?"
+  },
+  {
+   "id": "ver_mchs1",
+   "who": "vera",
+   "q": true,
+   "text": "Вера, ты ж в МЧС работала раньше, да?"
+  },
+  {
+   "id": "ver_bond2",
+   "bond": {
+    "vera": 70
+   }
+  },
+  {
+   "id": "ver_graf2",
+   "who": "vera",
+   "q": true,
+   "text": "Вера, Граф — это твой первый пёс?"
+  },
+  {
+   "id": "ver_mchs2",
+   "who": "vera",
+   "q": true,
+   "text": "Вера, чего из МЧС-то ушла? Надоело людей вытаскивать?"
+  },
+  {
+   "id": "ver_banish",
+   "banish": "vera",
+   "gone": true
+  },
+  {
+   "id": "set_night",
+   "set_min": 1395
+  },
+  {
+   "id": "ten_noch0",
+   "who": "ten",
+   "q": true,
+   "text": "Тень, ты чего только ночью в эфире? Днём спишь?",
+   "summon": "ten",
+   "when_inside": "ten"
+  },
+  {
+   "id": "ten_imia0",
+   "who": "ten",
+   "q": true,
+   "text": "Тень, а настоящее твоё имя какое? Серёга, говорят?"
+  },
+  {
+   "id": "ten_bond1",
+   "bond": {
+    "ten": 40
+   }
+  },
+  {
+   "id": "ten_ranshe1",
+   "who": "ten",
+   "q": true,
+   "text": "Тень, а кем ты раньше работал? До фуры-то?"
+  },
+  {
+   "id": "ten_kur1",
+   "who": "ten",
+   "q": true,
+   "text": "Тень, ты курил когда-нибудь?"
+  },
+  {
+   "id": "ten_bond2",
+   "bond": {
+    "ten": 70
+   }
+  },
+  {
+   "id": "ten_mama2",
+   "who": "ten",
+   "q": true,
+   "text": "Тень, а мама твоя жива? Видишься?"
+  },
+  {
+   "id": "ten_kofe2",
+   "who": "ten",
+   "q": true,
+   "text": "Тень, это правда, что ты кофе литрами пьёшь?"
+  },
+  {
+   "id": "ten_banish",
+   "banish": "ten",
+   "gone": true
+  },
+  {
+   "id": "sov_odna0",
+   "who": "sova",
+   "q": true,
+   "text": "Сова, а ты одна в кабине всегда? Не скучно?",
+   "summon": "sova",
+   "when_inside": "sova"
+  },
+  {
+   "id": "sov_noch0",
+   "who": "sova",
+   "q": true,
+   "text": "Сова, ты ж ночной, да? Филин, в общем?"
+  },
+  {
+   "id": "sov_bond1",
+   "bond": {
+    "sova": 40
+   }
+  },
+  {
+   "id": "sov_det1",
+   "who": "sova",
+   "q": true,
+   "text": "Сова, дети твои уже большие? Куда уехали?"
+  },
+  {
+   "id": "sov_viaz1",
+   "who": "sova",
+   "q": true,
+   "text": "Сова, правда, что ты вяжешь в кабине на стоянках?"
+  },
+  {
+   "id": "sov_bond2",
+   "bond": {
+    "sova": 70
+   }
+  },
+  {
+   "id": "sov_esen2",
+   "who": "sova",
+   "q": true,
+   "text": "Сова, а книги ты чего читаешь? Поэтов любишь?"
+  },
+  {
+   "id": "sov_odna2",
+   "who": "sova",
+   "q": true,
+   "text": "Сова, а мужа у тебя никогда не было?"
+  },
+  {
+   "id": "sov_banish",
+   "banish": "sova",
+   "gone": true
+  },
+  {
+   "id": "ment_gai0",
+   "who": "ment",
+   "q": true,
+   "text": "Палыч, ты ж в ГАИ лет двадцать отслужил, да?",
+   "summon": "ment",
+   "when_inside": "ment"
+  },
+  {
+   "id": "ment_usy0",
+   "who": "ment",
+   "q": true,
+   "text": "Палыч, усы твои — это закон такой был или своя инициатива?"
+  },
+  {
+   "id": "ment_bond1",
+   "bond": {
+    "ment": 40
+   }
+  },
+  {
+   "id": "ment_syn1",
+   "who": "ment",
+   "q": true,
+   "text": "Палыч, а сын-то твой за границей живёт? В Праге, говорили?"
+  },
+  {
+   "id": "ment_zhena1",
+   "who": "ment",
+   "q": true,
+   "text": "Палыч, жена твоя простила уже, что ты из ментов ушёл?"
+  },
+  {
+   "id": "ment_bond2",
+   "bond": {
+    "ment": 70
+   }
+  },
+  {
+   "id": "ment_uchen2",
+   "who": "ment",
+   "q": true,
+   "text": "Палыч, а учителя ты не останавливал никогда? Была такая история?"
+  },
+  {
+   "id": "ment_bess2",
+   "who": "ment",
+   "q": true,
+   "text": "Палыч, ты ж ночью не спишь совсем. Бессонница, что ли?"
+  },
+  {
+   "id": "ment_banish",
+   "banish": "ment",
+   "gone": true
+  },
+  {
+   "id": "kar_git0",
+   "who": "kardan",
+   "q": true,
+   "text": "Кардан, правда, что ты на гитаре играешь?",
+   "summon": "kardan",
+   "when_inside": "kardan"
+  },
+  {
+   "id": "kar_grup0",
+   "who": "kardan",
+   "q": true,
+   "text": "Кардан, а группа у тебя была когда-то? Серьёзно играли?"
+  },
+  {
+   "id": "kar_bond1",
+   "bond": {
+    "kardan": 40
+   }
+  },
+  {
+   "id": "kar_zhena1",
+   "who": "kardan",
+   "q": true,
+   "text": "Кардан, жена твоя долго тебя терпит, говорят?"
+  },
+  {
+   "id": "kar_syn1",
+   "who": "kardan",
+   "q": true,
+   "text": "Кардан, а сын-то твой с тобой общается?"
+  },
+  {
+   "id": "kar_bond2",
+   "bond": {
+    "kardan": 70
+   }
+  },
+  {
+   "id": "kar_berlin2",
+   "who": "kardan",
+   "q": true,
+   "text": "Кардан, а чего ты в Берлин-то не съездишь сыграть?"
+  },
+  {
+   "id": "kar_ballada2",
+   "who": "kardan",
+   "q": true,
+   "text": "Кардан, а что это про тебя «Баллада о Кардане» называется?"
+  },
+  {
+   "id": "kar_banish",
+   "banish": "kardan",
+   "gone": true
+  },
+  {
+   "id": "lis_klub0",
+   "who": "lisa",
+   "q": true,
+   "text": "Лиса, правда, что ты раньше в клубе работала?",
+   "summon": "lisa",
+   "when_inside": "lisa"
+  },
+  {
+   "id": "lis_odna0",
+   "who": "lisa",
+   "q": true,
+   "text": "Лиса, а ты одна в рейс ходишь всегда?"
+  },
+  {
+   "id": "lis_bond1",
+   "bond": {
+    "lisa": 40
+   }
+  },
+  {
+   "id": "lis_porozh1",
+   "who": "lisa",
+   "q": true,
+   "text": "Лиса, ты чего порожняком вечно мотаешься? Груза не найти?"
+  },
+  {
+   "id": "lis_klub1",
+   "who": "lisa",
+   "q": true,
+   "text": "Лиса, а чем ты до фуры занималась? Ночью, говорят, работала?"
+  },
+  {
+   "id": "lis_bond2",
+   "bond": {
+    "lisa": 70
+   }
+  },
+  {
+   "id": "lis_odna2",
+   "who": "lisa",
+   "q": true,
+   "text": "Лиса, семья у тебя есть? Кто дома ждёт?"
+  },
+  {
+   "id": "lis_banish",
+   "banish": "lisa",
+   "gone": true
+  },
+  {
+   "id": "set_day2",
+   "set_min": 2040
+  },
+  {
+   "id": "banter_mih_stas",
+   "summon": "stas",
+   "bond": {
+    "mihalych": 160,
+    "stas": 160
+   },
+   "who": "stas",
+   "q": false,
+   "text": "Михалыч, а Стас говорит, ты тормозишь, как сало солится. Правда?"
+  },
+  {
+   "id": "banter_pair1",
+   "who": "stas",
+   "q": false,
+   "text": "Вы чего оба молчите-то? Живые там?"
+  },
+  {
+   "id": "banter_mih_tease",
+   "who": "mihalych",
+   "q": true,
+   "text": "Михалыч, карася в ведре, говорят, разговорчивей тебя. Так и есть?"
+  },
+  {
+   "id": "banter_banish1",
+   "banish": "mihalych",
+   "gone": true
+  },
+  {
+   "id": "banter_banish2",
+   "banish": "stas",
+   "gone": true
+  },
+  {
+   "id": "banter_pet_bor",
+   "summon": "petrovna",
+   "bond": {
+    "boroda": 160,
+    "petrovna": 160
+   },
+   "who": "petrovna",
+   "q": false,
+   "text": "Петровна, а Борода у тебя, говорят, штрафы коллекционирует. Пирожком бы его откормить."
+  },
+  {
+   "id": "banter_bor_tease",
+   "who": "boroda",
+   "q": true,
+   "text": "Борода, Муся твоя, говорят, быстрее тебя едет. Ответишь что-нибудь?"
+  },
+  {
+   "id": "banter_banish3",
+   "banish": "boroda",
+   "gone": true
+  },
+  {
+   "id": "banter_banish4",
+   "banish": "petrovna",
+   "gone": true
+  }
+ ]
+}
