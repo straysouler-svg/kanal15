@@ -1,6 +1,7 @@
 """QA переозвучки: Whisper-проверка свежих реплик актёра + сборка прослушки.
 
   qa_recast.py professor mihalych [n]
+  qa_recast.py professor --engine gigaam   — распознавание dry-треков через GigaAM v3
 
 Для каждого актёра берёт n случайных реплик из reactions/scenes, прогоняет
 Whisper (как в gen_eleven._heard_ratio) и печатает совпадение текста.
@@ -9,17 +10,23 @@ Whisper (как в gen_eleven._heard_ratio) и печатает совпаден
 """
 import json
 import random
+import re
 import sys
+import difflib
 from pathlib import Path
 
 import numpy as np
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import gen_level3 as g  # noqa: E402
-from gen_eleven import _heard_ratio  # noqa: E402  (ленивый whisper внутри)
 
-ROOT = g.ROOT
+ROOT = Path(__file__).resolve().parents[1]
+SR = 48000  # рабочая частота конвейера (gen_level3.SR) — для сборки прослушки
+
+
+def _norm(s):
+    s = re.sub(r"\[[^\]]*\]", "", s.lower()).replace("ё", "е").replace("-", " ")
+    return re.sub(r"[^а-яa-z ]", "", s).split()
 
 
 def collect(actor):
@@ -53,8 +60,16 @@ def collect(actor):
 
 
 def main():
-    actors = [a for a in sys.argv[1:] if not a.isdigit()]
-    n = int(next((a for a in sys.argv[1:] if a.isdigit()), 12))
+    engine = "whisper"
+    args = list(sys.argv[1:])
+    if "--engine" in args:
+        i = args.index("--engine")
+        engine = args[i + 1]
+        del args[i:i + 2]
+    actors = [a for a in args if not a.isdigit()]
+    n = int(next((a for a in args if a.isdigit()), 12))
+    if engine == "gigaam":
+        import asr_gigaam
     rng = random.Random(15)
     for actor in actors:
         pool = collect(actor)
@@ -65,10 +80,13 @@ def main():
             x, sr = sf.read(dry, dtype="float32")
             if x.ndim > 1:
                 x = x.mean(axis=1)
-            if sr != g.SR:
-                from scipy.signal import resample_poly
-                x = resample_poly(x, g.SR, sr).astype(np.float32)
-            r = _heard_ratio(x, text)
+            from scipy.signal import resample_poly
+            x = resample_poly(x, 16000, sr).astype(np.float32)
+            if engine == "gigaam":
+                r = difflib.SequenceMatcher(None, _norm(text), _norm(asr_gigaam.heard_text(x))).ratio()
+            else:
+                from gen_eleven import _heard_ratio  # тянет whisper/torch — только для whisper-движка
+                r = _heard_ratio(x, text)
             tag = wet.parent.name
             print(f"  {r:.2f}  {tag}/{wet.stem}  {text[:70]}")
             worst.append((r, tag, wet.stem, text))
@@ -81,7 +99,7 @@ def main():
             parts += [x, np.zeros(int(0.9 * sr), np.float32)]
         if parts:
             out = ROOT / "samples" / f"recast_{actor}.wav"
-            sf.write(out, np.concatenate(parts), g.SR)
+            sf.write(out, np.concatenate(parts), SR)
             print(f"  прослушка: {out}")
 
 

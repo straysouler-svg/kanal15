@@ -1,6 +1,7 @@
 """Проверка свежей озвучки ElevenLabs распознаванием: для реплик, озвученных после указанного времени,
 сравнивает текст (без [тегов]) с тем, что слышит Whisper. Печатает подозрительные (< порога).
     python tools/qa_recent.py "2026-11-04 15:00" [порог=0.8] [модель=small]
+    python tools/qa_recent.py "2026-11-04 15:00" --engine gigaam   — dry-треки через GigaAM v3
 """
 import difflib
 import json
@@ -46,10 +47,21 @@ def items(d):
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
-    since = datetime.strptime(sys.argv[1], "%Y-%m-%d %H:%M").timestamp()
-    thr = float(sys.argv[2]) if len(sys.argv) > 2 else 0.8
-    from faster_whisper import WhisperModel
-    m = WhisperModel(sys.argv[3] if len(sys.argv) > 3 else "small", device="cpu", compute_type="int8")
+    engine = "whisper"
+    argv = list(sys.argv)
+    if "--engine" in argv:
+        i = argv.index("--engine")
+        engine = argv[i + 1]
+        del argv[i:i + 2]
+    if engine == "gigaam":
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import asr_gigaam
+    since = datetime.strptime(argv[1], "%Y-%m-%d %H:%M").timestamp()
+    thr = float(argv[2]) if len(argv) > 2 else 0.8
+    m = None
+    if engine != "gigaam":
+        from faster_whisper import WhisperModel
+        m = WhisperModel(argv[3] if len(argv) > 3 else "small", device="cpu", compute_type="int8")
     d = json.loads((ROOT / "phrases" / "level3_eleven.json").read_text(encoding="utf-8"))
     n = bad = 0
     for p, actor, text in items(d):
@@ -57,8 +69,11 @@ def main():
             continue
         x, sr = sf.read(p, dtype="float32")
         x = x.mean(axis=1) if x.ndim > 1 else x
-        heard = " ".join(s.text.strip() for s in m.transcribe(resample_poly(x, 16000, sr).astype(np.float32),
-                                                               language="ru", beam_size=5)[0])
+        x = resample_poly(x, 16000, sr).astype(np.float32)
+        if engine == "gigaam":
+            heard = asr_gigaam.heard_text(x)
+        else:
+            heard = " ".join(s.text.strip() for s in m.transcribe(x, language="ru", beam_size=5)[0])
         r = difflib.SequenceMatcher(None, norm(text), norm(heard)).ratio()
         n += 1
         if r < thr:

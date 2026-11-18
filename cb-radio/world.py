@@ -138,8 +138,9 @@ class World:
         self.roads = Roads(self.cities) if self.ok else None
         self.drivers = {}
         self.hour = 12.0
+        off = set(cfg.get("actors_off") or [])   # 18.11: вне ротации — не создаём (как отсутствующий, summon вернёт None)
         for key, a in actors.items():
-            if a.get("extra"):
+            if a.get("extra") or key in off:
                 continue                      # nameless passers-by (foreigners) are not simulated drivers
             sched = a.get("schedule", "20-07" if key == "ten" else "06-22")
             drv = Driver(key, float(a.get("speed", random.uniform(19, 24))), sched)

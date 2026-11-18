@@ -151,6 +151,7 @@ GUEST_HOOK = None       # «онлайн-конвой» (convoy.py): хозяи�
 GUEST_QUIET = [0]       # >0 — идёт ответ гостю (онлайн-конвой): дружба и настроение не меняются
 
 DEFAULT_CFG = {
+    "actors_off": [],              # 18.11: ключи актёров вне ротации (решение пользователя): не едут в мире и не говорят в эфире; данные не удаляются
     "gap_min_s": 300,          # pause between phrases: random in [min, max]
     "gap_max_s": 720,
     "first_after_s": [60, 180],  # first phrase after this much driving
@@ -162,6 +163,8 @@ DEFAULT_CFG = {
     "horn_pilot": False,           # «бибикни — гудок», пилот 11.11: триггер ТОЛЬКО голосовой просьба (16.11)
     "hooks_pilot": False,          # зацепки из библии (reactions/hooks/<actor>) после личного вопроса, пилот 15.11
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
+    "stream_banter_min_s": 240,    # 18.11: интервал обращений к стримеру, 240-420 с ≈ 9-15 попыток/час
+    "stream_banter_max_s": 420,
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
@@ -844,6 +847,10 @@ class Deck:
             self.weights = {k: float(a.get("weight", 1.0)) for k, a in acts.items()}
         except (OSError, ValueError, KeyError):
             self.weights = {}
+        try:                                  # 18.11: actors_off — вне ротации, не говорят даже без мира (allowed=None)
+            self.off = set(json.loads(CFG_FILE.read_text(encoding="utf-8-sig")).get("actors_off") or [])
+        except (OSError, ValueError, AttributeError):
+            self.off = set()
         self.on_air = set()      # greeted / spoke this session
         self.spoken = {}         # actor -> transmissions this session (for balancing)
         self.allowed = None      # actors within radio range (living highway); None = everybody
@@ -869,6 +876,8 @@ class Deck:
         acts = actors_of(item)
         if not acts:
             return False
+        if set(acts) & self.off:
+            return False                               # 18.11: actor out of rotation (actors_off)
         if self.allowed is not None:
             if item.startswith("scene/"):
                 # 11.11 (разбор стрима 3.1): в сценке звучат только те, кто В зоне рации.
@@ -2349,7 +2358,7 @@ class Operator:
             # 15.11 (пакет стенда): пул без фильтра зоны — маркер настроения мог ответить водитель
             # за сотни км (mihalych из far на «Вер, как дела?») и обиженный (off_until). Теперь только
             # ближние и не обиженные; при адресате — только он сам.
-            acts = [a for a, _ in pool if not self.deck.offline(a)
+            acts = [a for a, _ in pool if not self.deck.offline(a) and a not in self.deck.off
                     and (self.deck.allowed is None or a in self.deck.allowed)]
             if acts and (not who or who in acts):
                 a = who if who in acts else (prefer if prefer in acts else random.choice(acts))
@@ -2643,7 +2652,7 @@ HORN_DONE = {}            # actor -> monotonic: гудок уже был за э
 # рации всегда выключен (решение пользователя), в state.json/bonds.json не сохраняется, сбрасывается
 # перезапуском. Включается/выключается только фразами интентов stream_on/stream_off.
 STREAM_ON = [False]
-STREAM_BANTER_COOL = {}   # actor -> monotonic: следующее обращение к стримеру не раньше этой метки (10-15 мин)
+STREAM_BANTER_COOL = {}   # actor -> monotonic: следующее обращение к стримеру не раньше этой метки (5-9 мин)
 STREAM_GAP_K = 0.55       # «эфир живее»: паузы болтовни короче (×0.55), пресет не меняем
 
 
@@ -2676,9 +2685,10 @@ def _stream_gap(cfg):
 
 def _stream_banter(world, deck):
     """Режим стрима: водитель в зоне обращается к стримеру (вопрос/подкол, пул stream_banter/<actor>).
-    Кулдаун на актёра 10-15 мин; пустые пулы = молчание. Реже обычной болтовни — зовётся из редкого тика."""
+    Кулдаун на актёра 5-9 мин; пустые пулы = молчание. True — сыграло, False — некому (повтор через
+    90-150 с, тик не сгорает). Реже обычной болтовни — зовётся из редкого тика."""
     if not world or deck.allowed is None:
-        return
+        return False
     now = time.monotonic()
     fresh = [a for a in deck.allowed
              if not deck.offline(a) and now >= STREAM_BANTER_COOL.get(a, 0.0)]
@@ -2686,11 +2696,12 @@ def _stream_banter(world, deck):
     for a in fresh:
         p = line_of("stream_banter", a, a)
         if p:
-            STREAM_BANTER_COOL[a] = now + random.uniform(600, 900)
+            STREAM_BANTER_COOL[a] = now + random.uniform(300, 540)
             if PLAYER.file(p[1], a) == "ok":
                 deck.on_air.add(a)
                 log(f"режим стрима: обращение к стримеру ({a})")
-            return
+                return True
+    return False
 
 
 def horn_scene(mouth, who, direct=False):
@@ -3667,7 +3678,7 @@ def main(argv):
     foreign_acc, next_foreign = 0.0, random.uniform(180, 420)
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
     meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
-    next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — обращения к стримеру реже обычной болтовни
+    next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — первый тик бантера; дальше интервал из cfg
     stream_acc = 0.0   # 17.11 (стрим #8): отдельный аккумулятор времени в пути — driving_s после каждой
                        # реплики сбрасывается в 0, по нему бантер до 480-900 с никогда не доживал
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
@@ -4143,13 +4154,19 @@ def main(argv):
             if st == "driving":
                 meme_acc += dt
                 stream_acc += dt
-            # 16.11: режим стрима (пилот) — редкие обращения к стримеру (пул stream_banter, кулдаун 10-15 мин).
-            # 17.11: интервал по stream_acc (не сбрасывается болтовнёй), цель 4-6 обращений в час
-            if (STREAM_ON[0] and (PLAYER.cfg or {}).get("stream_mode_pilot") and st == "driving" and not hush
+            # 16.11: режим стрима (пилот) — обращения к стримеру (пул stream_banter, кулдаун 5-9 мин).
+            # 17.11: интервал по stream_acc (не сбрасывается болтовнёй). 18.11: интервал 240-420 с
+            # (cfg stream_banter_min_s/max_s), приоритет над мемами и болтовнёй — тик стоит раньше них;
+            # просроченный бантер срабатывает сразу после освобождения эфира (блоки до него отодвигают
+            # его максимум на 1 тик). Пустая попытка — повтор через 90-150 с, а не полный интервал.
+            if (STREAM_ON[0] and cfg.get("stream_mode_pilot") and st == "driving" and not hush
                     and not op.pending and stream_acc >= next_stream_banter):
                 stream_acc = 0.0
-                next_stream_banter = random.uniform(600, 900)
-                _stream_banter(world, deck)
+                if _stream_banter(world, deck):
+                    next_stream_banter = random.uniform(float(cfg.get("stream_banter_min_s", 240)),
+                                                        float(cfg.get("stream_banter_max_s", 420)))
+                else:
+                    next_stream_banter = random.uniform(90, 150)
             if (meme_acc >= next_meme and st == "driving" and not hush
                     and not op.pending and world and world.inside and driving_s >= next_at):
                 mk = None
