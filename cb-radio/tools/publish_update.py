@@ -7,7 +7,9 @@
 Нужно: cb-radio/yandex_storage_key.txt (1-я строка — идентификатор ключа, 2-я — секрет; Git его не видит),
         cb-radio/update_signing_key.txt (создаёт --init; БЕЗ НЕГО ОБНОВЛЕНИЯ ВЫПУСКАТЬ НЕЛЬЗЯ — храни копию),
         tools/update_channels.json (бакет и имена каналов; личные каналы — со случайной частью в имени).
-Порядок выпуска: bump_version -> build_exe -> publish_update (по каналу на сборку)."""
+Порядок выпуска: bump_version -> build_exe -> publish_update (по каналу на сборку).
+GitHub-релиз и стабильная ссылка на установщик (Kanal15-Setup.exe) — отдельно:
+tools/publish_github.py <тег> <установщик> (updater сюда не обращается, он берёт installer_url из манифеста)."""
 import datetime
 import hashlib
 import hmac
