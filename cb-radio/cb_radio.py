@@ -44,6 +44,7 @@ import sounddevice as sd  # noqa: E402
 import soundfile as sf  # noqa: E402
 
 from report_log import pick_log_fragment  # noqa: E402  # P0-3 (19.11): фрагмент журнала для отчёта — чистый модуль
+import streampeek  # noqa: E402  # 19.11 (stream_viewers_pilot): счётчик зрителей YouTube — модуль, в рации только узкий вызов (урок 9)
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent   # next to CB-Radio.exe when frozen
 CFG_FILE = ROOT / "config.json"
@@ -165,8 +166,14 @@ DEFAULT_CFG = {
     "horn_pilot": False,           # «бибикни — гудок», пилот 11.11: триггер ТОЛЬКО голосовой просьба (16.11)
     "hooks_pilot": False,          # зацепки из библии (reactions/hooks/<actor>) после личного вопроса, пилот 15.11
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
-    "stream_banter_min_s": 240,    # 18.11: интервал обращений к стримеру, 240-420 с ≈ 9-15 попыток/час
-    "stream_banter_max_s": 420,
+    "donation_pilot": False,       # 19.11: донаты DonationAlerts -> голосовое бухгалтерии (пул buh/donation)
+    "stream_greet_pilot": False,   # 19.11: при включении режима стрима — голосовое buh/stream_greet через 1-2 мин
+    "stream_news_pilot": False,    # 19.11: в режиме стрима каждые 15-25 мин голосовое buh/stream_news (раз за сессию)
+    "stream_viewers_pilot": False, # 19.11: бухгалтерия комментирует зрителей YouTube (пул buh/viewers, события из streampeek.py)
+    "stream_donate_pitch_pilot": False,  # 19.11: питч донатов (пулы buh/donate_pitch/*, решения в streampeek.pitch_tick)
+    "stream_banter_min_s": 120,    # 19.11 (стрим #10, «реплик мало»): интервал обращений к стримеру 120-240 с
+    "stream_banter_max_s": 240,    # (было 240-420; бантер звучит ТОЛЬКО в режиме стрима, обычная езда не задета)
+    "stream_banter_cool_s": [180, 360],   # 19.11: кулдаун на актёра после обращения (было жёстко 300-540)
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
@@ -2661,6 +2668,64 @@ HORN_DONE = {}            # actor -> monotonic: гудок уже был за э
 STREAM_ON = [False]
 STREAM_BANTER_COOL = {}   # actor -> monotonic: следующее обращение к стримеру не раньше этой метки (5-9 мин)
 STREAM_GAP_K = 0.55       # «эфир живее»: паузы болтовни короче (×0.55), пресет не меняем
+STREAM_NEWS_USED = set()  # 19.11 (stream_news_pilot): wav реплик stream_news, звучавших за сессию (каждая — раз)
+
+
+# --- Донаты DonationAlerts -> голосовое бухгалтерии (пилот 19.11, donation_pilot) ---
+DA_URL = "https://www.donationalerts.com/api/v1/alerts/donations"
+DONATIONS_STATE_F = ROOT / "donations_state.json"     # не в git, см. .gitignore (как state.json)
+DA_TOKEN_F = ROOT.parent / "promo" / "donations" / "da_token.txt"   # тот же токен, что у receipts.py
+DA_MOCK = os.environ.get("K15_DA_MOCK")   # тесты: json-файл-заглушка, без сети и платных вызовов
+
+
+def _donations_state():
+    """(обработанные id, init). Файл с версией, терпимая загрузка (урок 8)."""
+    try:
+        st = json.loads(DONATIONS_STATE_F.read_text(encoding="utf-8"))
+        return set(st.get("ids", [])), bool(st.get("init"))
+    except (OSError, ValueError):
+        return set(), False
+
+
+def _donations_save(ids):
+    try:
+        DONATIONS_STATE_F.write_text(json.dumps({"v": 1, "init": True, "ids": sorted(ids)}),
+                                     encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _donations_fetch():
+    """Список донатов. Мок (K15_DA_MOCK) — для тестов; иначе DA API по токену receipts.py (токен читает сам)."""
+    if DA_MOCK:
+        return json.loads(Path(DA_MOCK).read_text(encoding="utf-8"))
+    import requests
+    token = DA_TOKEN_F.read_text(encoding="utf-8").strip()
+    r = requests.get(DA_URL, params={"page": 1},
+                     headers={"Authorization": f"Bearer {token}"}, timeout=30)
+    if r.status_code != 200:
+        raise RuntimeError(f"DA HTTP {r.status_code}")
+    return r.json().get("data") or []
+
+
+def donations_poll(log):
+    """Новые донаты -> их id. Первый запуск помечает имеющиеся как обработанные (старые не зачитываем).
+    Сетевые ошибки — в лог, без падения рации."""
+    try:
+        data = _donations_fetch()
+    except Exception as e:
+        log(f"донаты: опрос не удался: {e!r}")
+        return []
+    seen, init = _donations_state()
+    ids = {str(d.get("id")) for d in data if d.get("id") is not None}
+    if not init:
+        _donations_save(ids)
+        log(f"донаты: первый запуск, помечено {len(ids)} имеющихся как обработанные")
+        return []
+    fresh = ids - seen
+    if fresh:
+        _donations_save(seen | fresh)
+    return sorted(fresh)
 
 
 def _horn_pick(mouth, who, ignore_done=False):
@@ -2692,8 +2757,8 @@ def _stream_gap(cfg):
 
 def _stream_banter(world, deck):
     """Режим стрима: водитель в зоне обращается к стримеру (вопрос/подкол, пул stream_banter/<actor>).
-    Кулдаун на актёра 5-9 мин; пустые пулы = молчание. True — сыграло, False — некому (повтор через
-    90-150 с, тик не сгорает). Реже обычной болтовни — зовётся из редкого тика."""
+    Кулдаун на актёра — stream_banter_cool_s (дефолт 180-360 с); пустые пулы = молчание. True — сыграло,
+    False — некому (повтор через 90-150 с, тик не сгорает)."""
     if not world or deck.allowed is None:
         return False
     now = time.monotonic()
@@ -2703,7 +2768,8 @@ def _stream_banter(world, deck):
     for a in fresh:
         p = line_of("stream_banter", a, a)
         if p:
-            STREAM_BANTER_COOL[a] = now + random.uniform(300, 540)
+            cool = (PLAYER.cfg or {}).get("stream_banter_cool_s") or [300, 540]
+            STREAM_BANTER_COOL[a] = now + random.uniform(float(cool[0]), float(cool[1]))
             if PLAYER.file(p[1], a) == "ok":
                 deck.on_air.add(a)
                 log(f"режим стрима: обращение к стримеру ({a})")
@@ -3022,36 +3088,111 @@ def _msgbox(text, title, flags):
 def send_report():
     """«Отправить журнал разработчикам…» (2026-11-06, user): a warning first (speech transcripts are in the log),
     then one click — the archive goes to the receive-only bucket. No keys in the radio: an anonymous PUT.
-    Without internet: the old way — the archive in a folder + the bot chat."""
-    import secrets
-    import urllib.request
-    # 2026-11-06 (user): the player chooses — the whole log, the log without his own phrases, or nothing.
-    # The radio never offers this by itself (not even after a crash): only this menu item.
-    ans = _msgbox(REPORT_WARN, "Канал 15 — отправить журнал", 0x3 | 0x40)              # MB_YESNOCANCEL|ICONINFO
-    if ans not in (6, 7):                                                               # IDYES / IDNO
-        log("журнал: игрок не стал отправлять")
-        return None
-    z = make_report(show=False, hide_speech=ans == 7)
-    rid = f"{datetime.now():%Y%m%d-%H%M%S}_{BUILD_NAME or VARIANT or 'public'}_{secrets.token_hex(3)}"
+    Without internet: the old way — the archive in a folder + the bot chat.
+    19.11: окно — собственное tkinter (MessageBoxW под pythonw+pystray зависал, кнопки мертвы);
+    весь tk-код — в этом потоке (tray.py его уже запускает отдельно), внутри одного окна:
+    вопрос -> прогресс -> финал. Ошибки любого шага — текстом в окне и в журнале."""
+    log("журнал: показываю диалог")
     try:
-        rk = _report_key()
-        if not rk:
-            raise RuntimeError("нет ключа отправки")
-        _s3_put_signed("kanal15-reports", f"in/{rid}.zip", z.read_bytes(), rk[0], rk[1])
-    except Exception as e:
-        log(f"журнал не отправился: {e!r} — показываю архив и чат с ботом")
-        _msgbox(NL.join(["Не получилось отправить журнал (нет интернета?).", "",
-                         "Архив сейчас откроется в папке — можно перетащить его в чат с ботом @kanal15_publisher_bot."]),
-                "Канал 15", 0x30)
-        _show_report(z)
-        return z
-    num = rid.split("_")[-1]
-    log(f"журнал отправлен разработчикам: {rid}")
-    _msgbox(NL.join(["Журнал отправлен. Спасибо!", "", f"Номер отчёта: {num}", "",
-                     "Если хотите рассказать, что случилось или что хочется в рации, напишите боту "
-                     "@kanal15_publisher_bot и укажите этот номер."]), "Канал 15", 0x40)
-    return z
+        _report_dialog()
+    except Exception:
+        import traceback
+        log("журнал: окно отправки не открылось:\n" + traceback.format_exc())
+        try:
+            _msgbox("Не получилось открыть окно отправки журнала. Подробности в cb_radio.log.",
+                    "Канал 15", 0x30)
+        except Exception:
+            pass
 
+
+def _report_dialog():
+    """Окно «отправить журнал» (tkinter, 19.11). Состояния: 1) вопрос (Да/Нет/Отмена), 2) прогресс
+    (архив -> отправка), 3) финал с номером отчёта или ошибкой + кнопка «Закрыть». Работа (make_report,
+    PUT) — в рабочем потоке, UI обновляется через очередь и root.after, mainloop не блокируется."""
+    import queue
+    import secrets
+    import tkinter as tk
+    from tkinter import ttk
+
+    root = tk.Tk()
+    root.title("Канал 15 — отправить журнал")
+    root.geometry("580x320")
+    body = ttk.Frame(root, padding=12)
+    body.pack(fill="both", expand=True)
+    status = tk.StringVar(value="")
+    q = queue.Queue()
+
+    def clear():
+        for w in body.winfo_children():
+            w.destroy()
+
+    def step(msg):
+        status.set(msg)
+        log(f"журнал: {msg}")
+
+    def worker(hide_speech):
+        try:
+            z = make_report(show=False, hide_speech=hide_speech)
+        except Exception as e:
+            q.put(("fail", e, None))
+            return
+        q.put(("made", None, z))
+        rid = f"{datetime.now():%Y%m%d-%H%M%S}_{BUILD_NAME or VARIANT or 'public'}_{secrets.token_hex(3)}"
+        log(f"журнал: отправляю {rid}")
+        try:
+            rk = _report_key()
+            if not rk:
+                raise RuntimeError("нет ключа отправки")
+            _s3_put_signed("kanal15-reports", f"in/{rid}.zip", z.read_bytes(), rk[0], rk[1])
+        except Exception as e:
+            q.put(("fail", e, z))
+            return
+        q.put(("sent", rid, z))
+
+    def poll():
+        try:
+            kind, payload, z = q.get_nowait()
+        except queue.Empty:
+            root.after(100, poll)
+            return
+        if kind == "made":
+            step("Отправляю (может занять до минуты на медленной сети)…")
+            root.after(100, poll)
+        elif kind == "sent":
+            num = payload.split("_")[-1]
+            step(f"Журнал отправлен. Номер отчёта: {num}")
+            log(f"журнал отправлен разработчикам: {payload}")
+            ttk.Button(body, text="Закрыть", command=root.destroy).pack(pady=8)
+        else:
+            log(f"журнал не отправился: {payload!r}")
+            if z is not None:
+                step(f"Не получилось: {payload!r}"[:300] + "\n\nАрхив открыт в папке — перетащите боту @kanal15_publisher_bot.")
+                try:
+                    _show_report(z)
+                except Exception as e2:
+                    log(f"журнал: не смог показать архив: {e2!r}")
+            else:
+                step(f"Не получилось собрать архив: {payload!r}"[:300] +
+                     "\n\nПопробуйте ещё раз или напишите боту @kanal15_publisher_bot.")
+            ttk.Button(body, text="Закрыть", command=root.destroy).pack(pady=8)
+
+    def choose(hide_speech):
+        clear()
+        step("Собираю архив…")
+        pb = ttk.Progressbar(body, mode="indeterminate", length=520)
+        pb.pack(pady=12)
+        pb.start(12)
+        ttk.Label(body, textvariable=status, wraplength=520).pack(anchor="w")
+        threading.Thread(target=worker, args=(hide_speech,), daemon=True).start()
+        root.after(100, poll)
+
+    ttk.Label(body, text=REPORT_WARN, wraplength=540, justify="left").pack(anchor="w")
+    btns = ttk.Frame(body)
+    btns.pack(fill="x", pady=12)
+    ttk.Button(btns, text="Да — отправить журнал", command=lambda: choose(False)).pack(side="left")
+    ttk.Button(btns, text="Нет — без моих фраз", command=lambda: choose(True)).pack(side="left", padx=8)
+    ttk.Button(btns, text="Отмена", command=root.destroy).pack(side="right")
+    root.mainloop()
 
 def _report_key():
     """The upload-only key (service account kanal15-reporter: may only PUT into kanal15-reports/in/, can't read,
@@ -3119,7 +3260,13 @@ def make_report(show=True, hide_speech=False):
     import subprocess
     import zipfile
     out = ROOT / "reports"
-    out.mkdir(exist_ok=True)
+    try:
+        out.mkdir(exist_ok=True)
+    except OSError:
+        # установка в защищённую папку (нет прав на запись) — архив собираем в %TEMP% (19.11:
+        # иначе PermissionError уходил в tray-хук молча, «Да» в диалоге ничего не делала)
+        out = Path(os.environ.get("TEMP") or ".") / "kanal15-reports"
+        out.mkdir(exist_ok=True)
     z = out / f"Kanal15-report-{datetime.now():%Y%m%d-%H%M%S}.zip"
     with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED) as zf:
         for name in ("cb_radio.log", "cb_radio_errors.log", "crash.log", "update/update.log", "update/applied.json", "version.json",
@@ -3582,6 +3729,7 @@ def main(argv):
                 except (OSError, ValueError):
                     pass
             tray.HOOKS.update(report=send_report)
+            tray.HOOKS["log"] = log      # 19.11: трей пишет ошибки hook'ов в журнал рации
             tray.HOOKS.update(upd_status=lambda: upd.status, upd_check=upd_check, upd_auto=upd_auto,
                               upd_auto_on=lambda: upd.auto, upd_enabled=lambda: upd.enabled,
                               changelog=lambda: os.startfile(str(ROOT / "CHANGELOG.md")))
@@ -3686,6 +3834,13 @@ def main(argv):
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
     meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
     next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — первый тик бантера; дальше интервал из cfg
+    stream_was_on, stream_news_at = False, None   # 19.11: фронт включения режима стрима; следующее голосовое stream_news (monotonic)
+    next_viewers_poll = 60.0  # 19.11 (stream_viewers_pilot): первый опрос зрителей через минуту (monotonic, настоящие с)
+    next_chat_poll = 90.0     # 19.11: чат — чуть позже (сначала liveChatId)
+    next_subs_poll = 120.0    # 19.11: подписчики
+    next_sc_poll = 150.0      # 19.11: super chat
+    next_pitch_poll = 200.0   # 19.11 (stream_donate_pitch_pilot): первый шанс питча
+    next_donations_poll = 60.0   # 19.11 (donation_pilot): первый опрос донатов через минуту после старта
     stream_acc = 0.0   # 17.11 (стрим #8): отдельный аккумулятор времени в пути — driving_s после каждой
                        # реплики сбрасывается в 0, по нему бантер до 480-900 с никогда не доживал
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
@@ -4161,17 +4316,18 @@ def main(argv):
             if st == "driving":
                 meme_acc += dt
                 stream_acc += dt
-            # 16.11: режим стрима (пилот) — обращения к стримеру (пул stream_banter, кулдаун 5-9 мин).
-            # 17.11: интервал по stream_acc (не сбрасывается болтовнёй). 18.11: интервал 240-420 с
-            # (cfg stream_banter_min_s/max_s), приоритет над мемами и болтовнёй — тик стоит раньше них;
-            # просроченный бантер срабатывает сразу после освобождения эфира (блоки до него отодвигают
-            # его максимум на 1 тик). Пустая попытка — повтор через 90-150 с, а не полный интервал.
+            # 16.11: режим стрима (пилот) — обращения к стримеру (пул stream_banter).
+            # 17.11: интервал по stream_acc (не сбрасывается болтовнёй). 18.11: интервал 240-420 с.
+            # 19.11 (стрим #10, «реплик мало»): дефолт интервала 120-240 с (stream_banter_min_s/max_s),
+            # кулдаун на актёра — из stream_banter_cool_s (было жёстко 300-540). Приоритет над мемами
+            # и болтовнёй — тик стоит раньше них; просроченный бантер срабатывает сразу после
+            # освобождения эфира. Пустая попытка — повтор через 90-150 с, а не полный интервал.
             if (STREAM_ON[0] and cfg.get("stream_mode_pilot") and st == "driving" and not hush
                     and not op.pending and stream_acc >= next_stream_banter):
                 stream_acc = 0.0
                 if _stream_banter(world, deck):
-                    next_stream_banter = random.uniform(float(cfg.get("stream_banter_min_s", 240)),
-                                                        float(cfg.get("stream_banter_max_s", 420)))
+                    next_stream_banter = random.uniform(float(cfg.get("stream_banter_min_s", 120)),
+                                                        float(cfg.get("stream_banter_max_s", 240)))
                 else:
                     next_stream_banter = random.uniform(90, 150)
             if (meme_acc >= next_meme and st == "driving" and not hush
@@ -4190,12 +4346,98 @@ def main(argv):
                     deck.on_air.add(mk[0])
                     next_at = max(next_at, driving_s + random.uniform(20, 40))
                     continue
+            # 19.11: фронт включения режима стрима — планируем голосовые бухгалтерии
+            if STREAM_ON[0] != stream_was_on:
+                stream_was_on = STREAM_ON[0]
+                if STREAM_ON[0]:
+                    if cfg.get("stream_greet_pilot") and reaction_pool("buh", "stream_greet"):
+                        buh_q.append((time.monotonic() + random.uniform(60, 120), "stream_greet"))
+                    if cfg.get("stream_news_pilot"):
+                        # новости — после приветствия (не раньше 2-3 мин после включения)
+                        stream_news_at = time.monotonic() + random.uniform(120, 180)
+                    if cfg.get("stream_viewers_pilot"):
+                        streampeek.session_start()   # новая сессия стрима: рекорд/фишка заново, зерно свежее
+                        next_viewers_poll = time.monotonic() + 60.0
+                    if len(buh_q) > 1:
+                        # дедуп по kind, как у штрафов/доставок: одинаковые голосовые не копятся
+                        seen_k, ded = set(), []
+                        for q in sorted(buh_q, key=lambda q: q[0]):
+                            if q[1] not in seen_k:
+                                seen_k.add(q[1]); ded.append(q)
+                        buh_q[:] = ded
+            # 19.11 (stream_news_pilot): в режиме стрима каждые 15-25 мин одна новость; каждая реплика —
+            # раз за сессию (STREAM_NEWS_USED), пул иссяк — больше не звоним
+            if (stream_news_at is not None and STREAM_ON[0] and cfg.get("stream_news_pilot")
+                    and st in ("driving", "engine_off") and not op.pending
+                    and time.monotonic() >= stream_news_at):
+                pool = [x for x in reaction_pool("buh", "stream_news")
+                        if str(x[1]) not in STREAM_NEWS_USED]
+                if pool:
+                    stream_news_at = time.monotonic() + random.uniform(900, 1500)
+                    buh_q.append((time.monotonic() + random.uniform(5, 15), "stream_news"))
+                else:
+                    stream_news_at = float("inf")
+            # 19.11 (stream_viewers_pilot): опрос зрителей раз в POLL_EVERY_S, ТОЛЬКО в режиме стримера
+            # (иначе не зовём — сеть не трогаем; пауза игры просто откладывает следующий тик);
+            # событие -> голосовое бухгалтерии из пула buh/viewers (категория, без цифр)
+            if (STREAM_ON[0] and cfg.get("stream_viewers_pilot") and now >= next_viewers_poll):
+                next_viewers_poll = now + streampeek.POLL_EVERY_S
+                kind = streampeek.tick(log=log)
+                if kind and reaction_pool("buh", f"viewers__{kind}"):   # вложенные пулы плоские: viewers__zero
+                    buh_q.append((now + random.uniform(5, 15), f"viewers__{kind}"))
+                    if len(buh_q) > 1:
+                        seen_k, ded = set(), []
+                        for q in sorted(buh_q, key=lambda q: q[0]):
+                            if q[1] not in seen_k:
+                                seen_k.add(q[1]); ded.append(q)
+                        buh_q[:] = ded
+            # 19.11: чат (liveChatMessages = 5 ед. квоты; ~300 ед./час, в бюджете 10 000/сутки),
+            # подписчики и super chat — по своим интервалам, все только в режиме стримера
+            if (STREAM_ON[0] and cfg.get("stream_viewers_pilot") and now >= next_chat_poll):
+                next_chat_poll = now + streampeek.CHAT_POLL_EVERY_S
+                kind = streampeek.chat_tick(now=now, log=log)
+                if kind and reaction_pool("buh", f"chat__{kind}"):
+                    buh_q.append((now + random.uniform(5, 15), f"chat__{kind}"))
+            if (STREAM_ON[0] and cfg.get("stream_viewers_pilot") and now >= next_subs_poll):
+                next_subs_poll = now + streampeek.SUBS_POLL_EVERY_S
+                kind = streampeek.subs_tick(now=now, log=log)
+                if kind and reaction_pool("buh", "subs"):
+                    buh_q.append((now + random.uniform(5, 15), "subs"))
+            if (STREAM_ON[0] and cfg.get("stream_viewers_pilot") and now >= next_sc_poll):
+                next_sc_poll = now + streampeek.SUPERCHAT_POLL_EVERY_S
+                kind = streampeek.superchat_tick(now=now, log=log)
+                if kind and reaction_pool("buh", "superchat"):
+                    buh_q.append((now + random.uniform(5, 15), "superchat"))
+            # 19.11 (stream_donate_pitch_pilot): питч донатов — решения в модуле (заслон 15-18 мин,
+            # «щедрость глушит economy»), здесь только постановка голосового
+            if (STREAM_ON[0] and cfg.get("stream_donate_pitch_pilot") and now >= next_pitch_poll):
+                next_pitch_poll = now + 60.0
+                kind = streampeek.pitch_tick(now=now, log=log)
+                if kind and reaction_pool("buh", f"donate_pitch__{kind}"):
+                    buh_q.append((now + random.uniform(5, 15), f"donate_pitch__{kind}"))
+            # 19.11 (donation_pilot): фоновый опрос донатов раз в 15-20 с; новый донат -> голосовое бухгалтерии
+            if cfg.get("donation_pilot") and now >= next_donations_poll:
+                next_donations_poll = now + random.uniform(15, 20)
+                fresh_donations = donations_poll(log)
+                if fresh_donations:
+                    streampeek.note_donation(now)   # 19.11: метка для after_donation-питча
+                if fresh_donations and reaction_pool("buh", "donation"):
+                    buh_q.append((now + random.uniform(30, 90), "donation"))
+                    if len(buh_q) > 1:
+                        seen_k, ded = set(), []
+                        for q in sorted(buh_q, key=lambda q: q[0]):
+                            if q[1] not in seen_k:
+                                seen_k.add(q[1]); ded.append(q)
+                        buh_q[:] = ded
             if buh_q and st in ("driving", "engine_off") and not op.pending and time.monotonic() >= buh_q[0][0]:
                 _, kind = buh_q.pop(0)
                 pool = reaction_pool("buh", kind) or reaction_pool("buh", "generic")
                 if pool:
+                    pool = [x for x in pool if str(x[1]) not in STREAM_NEWS_USED] or pool
                     actor, wav = random.choice(fresh_first(pool))
                     heard(wav)
+                    if kind == "stream_news":
+                        STREAM_NEWS_USED.add(str(wav))   # 19.11: каждая новость — раз за сессию
                     log(f"голосовое от бухгалтерии: {kind}")
                     ping = snd(FX / "phone_ping.wav")
                     if ping.exists():

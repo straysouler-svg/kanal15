@@ -63,6 +63,7 @@ __pycache__/
 *.pyc
 *.log
 state.json
+donations_state.json
 world_state*.json
 crash.log
 last_ptt*.wav
@@ -123,6 +124,10 @@ promo/donations/*.md
 /promo/vk/
 /promo/tiktok/
 /promo/donations/
+/promo/reports/reader_key.txt
+/promo/reports/state.json
+/promo/reports/watch.log
+/promo/reports/inbox/
 /promo/CHANNELS_API.md
 /promo/telegram/autopost.py
 /promo/telegram/install_autopost.ps1

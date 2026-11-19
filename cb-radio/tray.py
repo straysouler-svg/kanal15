@@ -6,6 +6,7 @@
 import json
 import os
 import threading
+import traceback
 from pathlib import Path
 
 STATE = {"status": "запуск…", "st": "no_game", "inside": [], "muted": False, "quit": False}
@@ -99,6 +100,11 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
             try:
                 return fn(*a) if fn else default
             except Exception:
+                # 19.11: молчаливая смерть hook'а оставляет нас слепыми — причина уходит в журнал рации
+                try:
+                    (HOOKS.get("log") or (lambda m: None))(f"трей: ошибка в hook {name}:\n" + traceback.format_exc())
+                except Exception:
+                    pass
                 return default
         return f
 
@@ -154,7 +160,11 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
                  checked=lambda i: bool(hook("upd_auto_on", True)())),
             Item("Что нового…", lambda icon, item: hook("changelog")()))),
         Item("Журнал эфира…", open_file(log_file)),
-        Item("Отправить журнал разработчикам…", lambda icon, item: hook("report")()),
+        # 19.11: callback исполняется ВНУТРИ message-loop потока pystray сразу из TrackPopupMenuEx —
+        # модальное окно (MessageBox) из него зависает: кнопки не отвечают. send_report гоним
+        # в свежий поток, из callback только запуск.
+        Item("Отправить журнал разработчикам…",
+             lambda icon, item: threading.Thread(target=hook("report"), daemon=True).start()),
         Menu.SEPARATOR,
         # 2026-11-07 (user): a quiet voluntary donation link, nothing more - no pop-ups, no reminders, ever
         Item("☕ На токены и хлебушек", open_url(cfg.get("donate_url") or DONATE_URL)),
@@ -164,9 +174,27 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
     _icon = pystray.Icon("kanal15", _image(base, STATE["st"]), "Канал 15", menu)
     _icon._k15_base = base
     _icon.run_detached()
+    threading.Thread(target=_window_title, daemon=True).start()   # заголовок скрытого окна для Диспетчера задач
     refresh()
     threading.Thread(target=_promote, daemon=True).start()
     return True
+
+
+def _window_title(tries=20):
+    """Скрытое окно трея pystray создаётся без заголовка — в «Приложениях» Диспетчера задач
+    рация из исходников (pythonw) висит безымянной иконкой. Ставим заголовок окна, как только
+    pystray его создал (в его потоке). Релиз (CB-Radio.exe) не страдает — тайтл тот же."""
+    import ctypes
+    import time
+    for _ in range(tries):
+        hwnd = getattr(_icon, "_hwnd", None)
+        if hwnd:
+            try:
+                ctypes.windll.user32.SetWindowTextW(hwnd, "Канал 15 — рация (CB-Radio)")
+            except Exception:
+                pass
+            return
+        time.sleep(0.5)
 
 
 def _promote(tries=20):
