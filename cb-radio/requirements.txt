@@ -1,0 +1,40 @@
+# Зависимости «Канала 15» (cb-radio).
+# Для чего: воспроизводимая установка окружения разработки/сборки рации.
+# Python: 3.13 (зафиксировано на 3.13.2, 64-bit Windows).
+# Состав: ТОЛЬКО реальные runtime-зависимости рации — прямые импорты cb_radio.py
+# (включая отложенные в функциях), world.py, bonds.py, intents.py, updater.py,
+# transport.py, report_log.py, tray.py + их транзитивные зависимости.
+# Версии сняты с рабочего build-venv проекта (pip freeze на 2026-11-19).
+# Намеренно НЕ включены: dev-инструменты (pyinstaller, pyflakes), утилиты
+# продвижения/публикации (yt-dlp, moy-nalog, gigachat, google-api-* и т.п.) —
+# они нужны другим скриптам воркспейса, а не рации.
+numpy==2.5.4
+scipy==1.18.1
+sounddevice==0.5.6
+soundfile==0.14.0
+pynput==1.8.2
+pystray==0.19.5
+pillow==13.0.0
+faster-whisper==1.2.1
+av==19.0.2
+ctranslate2==4.8.5
+huggingface_hub==2.4.0
+onnxruntime==1.31.1
+tokenizers==0.23.3
+tqdm==4.70.1
+filelock==4.2.8
+fsspec==2026.9.0
+PyYAML==6.0.3
+typing_extensions==4.16.0
+requests==2.34.2
+certifi==2026.10.23
+charset-normalizer==3.5.2
+idna==3.20
+urllib3==2.8.0
+protobuf==7.36.2
+flatbuffers==25.12.19
+# pygame-ce: рация импортирует pygame (проигрыватель музыки, cb_radio.py),
+# но пакета нет в dev-venv разработчика — ставится в venv релиза установщиком
+# (pack_release пишет его в requirements собранной копии). Версию зафиксируй
+# при первой чистой установке по этому файлу.
+pygame-ce
