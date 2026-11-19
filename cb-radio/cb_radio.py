@@ -43,6 +43,8 @@ import numpy as np  # noqa: E402
 import sounddevice as sd  # noqa: E402
 import soundfile as sf  # noqa: E402
 
+from report_log import pick_log_fragment  # noqa: E402  # P0-3 (19.11): фрагмент журнала для отчёта — чистый модуль
+
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent   # next to CB-Radio.exe when frozen
 CFG_FILE = ROOT / "config.json"
 STATE_FILE = ROOT / "state.json"
@@ -3121,8 +3123,8 @@ def make_report(show=True, hide_speech=False):
             if p.exists():
                 data = p.read_bytes()
                 if name == "cb_radio.log":
-                    data = b"\n".join(data.splitlines()[-4000:])     # the last few hours are enough
-                if name in ("cb_radio.log", "cb_radio_errors.log") and hide_speech:
+                    data = pick_log_fragment(data, hide_speech)     # свежий хвост в хронологии (report_log.py, P0-3)
+                elif name == "cb_radio_errors.log" and hide_speech:
                     data = _hide_speech(data)      # в ошибках тоже бывают слова игрока (intent, понимание речи)
                 zf.writestr(name, data)
         zf.writestr("about.json", json.dumps({"version": VERSION, "date": VERSION_DATE, "build": BUILD_NAME,

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_BASE = ROOT.parent / "release"
 PERSONAL = {"soroka"}
 CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tray.py", "mic.py", "gamecheck.py",
-        "updater.py", "ed25519.py", "launcher.py", "tainik.py"]
+        "updater.py", "ed25519.py", "launcher.py", "tainik.py", "report_log.py"]
 HANDLE = {"kirill": "Сиди-Посиди", "alive": "Пятьдесят пятый", "neutral": ""}   # alive = blogger TheAlive55 (Алексей)
 README = r"""# CB-рация для Euro Truck Simulator 2
 

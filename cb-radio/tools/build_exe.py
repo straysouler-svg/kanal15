@@ -69,7 +69,7 @@ def build_app(variant):
     shutil.copytree(BUILD / "dist" / "CB-Radio", app)
     (app / "app").mkdir()                       # the radio's own code: plain .py, updated without touching any exe
     for mod in ("cb_radio", "world", "intents", "company", "tray", "mic", "gamecheck", "updater", "ed25519", "overlay",
-                "bonds", "tainik"):
+                "bonds", "tainik", "report_log"):
         shutil.copy2(CB / f"{mod}.py", app / "app" / f"{mod}.py")
     shutil.copy2(CB / "tools" / "savegame.py", app / "app" / "savegame.py")
     for part in ("audio", "phrases", "map", "config.json", "CREDITS.md"):
