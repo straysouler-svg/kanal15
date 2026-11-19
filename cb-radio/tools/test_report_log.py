@@ -1,8 +1,10 @@
-"""Тесты выбора фрагмента журнала для диагностического отчёта (P0-3, промт stabilizaciya_2026-11-19).
+"""Тесты выбора фрагмента журнала для диагностического отчёта (P0-3 + P1-9, промт stabilizaciya_2026-11-19).
 
-Журнал на диске — newest-first (_flush_log в cb_radio.py): свежие записи — первые физические строки.
-Было: make_report() брал splitlines()[-4000:] — в отчёт попадали СТАРЫЕ записи, свежие отбрасывались.
-Стало: report_log.pick_log_fragment берёт первые REPORT_LINES строк и переворачивает в хронологию.
+Контракт порядка строк (P1-9): журнал на диске — append-only ХРОНОЛОГИЯ (новые записи — в конец
+файла). pick_log_fragment берёт ПОСЛЕДНИЕ REPORT_LINES строк (самые свежие), переворот не нужен.
+История: до P0-3 make_report() брал splitlines()[-4000:] на newest-first файле — в отчёт попадали
+СТАРЫЕ записи; P0-3 брал первые 4000 newest-first и переворачивал; P1-9 перевёл журнал на
+append-only — свежие стали последними.
 
 Запуск: G:\\Claude\\gruzovichki\\build\\venv\\Scripts\\python.exe -X utf8 cb-radio/tools/test_report_log.py
 """
@@ -26,27 +28,27 @@ def check(cond, what):
     print(f"ok: {what}")
 
 
-# 1. Журнал короче 4000 строк: ничего не теряется, порядок — хронологический.
-short = [f"12:0{i}:00 строка {i}" for i in range(5)]            # newest-first: строка 4 — первая
+# 1. Журнал короче 4000 строк: ничего не теряется, порядок — хронологический (как в файле).
+short = [f"12:0{i}:00 строка {i}" for i in range(5)]            # append-only: строка 4 — последняя и самая свежая
 out = pick_log_fragment(enc(short)).decode("utf-8")
-check(out == NL.join(reversed(short)), "короткий журнал целиком, в хронологическом порядке")
+check(out == NL.join(short), "короткий журнал целиком, в хронологическом порядке")
 
 # 2. Журнал из 5000 строк с маркерами OLD/NEW: свежие на месте, самые старые отсутствуют.
-#    newest-first: первая строка файла — самая свежая (NEW), последние — самые старые (OLD).
-big = [f"NEW-{i:04d}" for i in range(5000)]                    # 0000 — самая свежая
-big[-1] = "OLD-старт"
+#    append-only: последние строки файла — самые свежие (NEW), первые — самые старые (OLD).
+big = [f"NEW-{i:04d}" for i in range(5000)]                    # 4999 — самая свежая (последняя строка)
+big[0] = "OLD-старт"
 out_lines = pick_log_fragment(enc(big)).decode("utf-8").splitlines()
 check(len(out_lines) == REPORT_LINES, f"ровно {REPORT_LINES} строк в отчёте")
-check(out_lines[0] == f"NEW-{REPORT_LINES - 1:04d}" and out_lines[-1] == "NEW-0000",
+check(out_lines[0] == f"NEW-{5000 - REPORT_LINES:04d}" and out_lines[-1] == "NEW-4999",
       "самые свежие записи на месте, в хронологическом порядке")
-check("OLD-старт" not in out_lines and "NEW-4999" not in out_lines, "самые старые записи отсутствуют")
+check("OLD-старт" not in out_lines and "NEW-0000" not in out_lines, "самые старые записи отсутствуют")
 
 # 3. Пустой журнал.
 check(pick_log_fragment(b"") == b"", "пустой журнал -> пустой фрагмент")
 
 # 4. Unicode и очень длинные строки проходят без искажений.
-uni = ["свежая запись ☃ é ё", "старая «цитата» \U0001f600"]
-check(pick_log_fragment(enc(uni)) == enc(list(reversed(uni))), "unicode без искажений")
+uni = ["старая запись ☃ é ё", "свежая «цитата» \U0001f600"]
+check(pick_log_fragment(enc(uni)) == enc(uni), "unicode без искажений, порядок хронологический")
 long_line = "X" * 200000
 out = pick_log_fragment(enc([long_line, "old"])).decode("utf-8")
 check(long_line in out, "очень длинная строка проходит целиком")

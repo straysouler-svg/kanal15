@@ -176,10 +176,11 @@ DEFAULT_CFG = {
 
 
 def log(msg, ch=None, tb=None):
-    """Журнал рации (переделка 09.11, спека в STATUS.md): новые строки СВЕРХУ файла (запись
-    порциями-буфером), схлопывание повторов ×N, префиксы-каналы [эфир]/[тангента]/[дружба]/[тех]/
-    [ОШИБКА], тех. шум — только при --verbose, кап ~10 МБ (хвост — в cb_radio_archive.log),
-    ошибки с traceback — в cb_radio_errors.log."""
+    """Журнал рации (переделка 09.11, спека в STATUS.md; P1-9 19.11): append-only,
+    строки пишутся В ХРОНОЛОГИЧЕСКОМ порядке (новые — в конец файла), порциями-буфером
+    под lock (I/O вне lock), схлопывание повторов ×N, префиксы-каналы [эфир]/[тангента]/
+    [дружба]/[тех]/[ОШИБКА], тех. шум — только при --verbose, кап ~10 МБ (старые строки —
+    в cb_radio_archive.log), ошибки с traceback — в cb_radio_errors.log."""
     now = datetime.now()
     if ch is None:
         low = msg.lower()
@@ -198,10 +199,11 @@ def log(msg, ch=None, tb=None):
         pass    # a cp1251 console can't print «→» (06.11: the radio died on start); the log file is what matters
     if ch == "ОШИБКА":
         _err_write(line, tb or "")
-    if _log_buf and _log_buf[-1][0] == line:
-        _log_buf[-1][1] += 1
-        return
-    _log_buf.append([line, 1])
+    with _log_lock:                                   # P1-9: dedup+append атомарно, гонок потоков нет
+        if _log_buf and _log_buf[-1][0] == line:
+            _log_buf[-1][1] += 1
+            return
+        _log_buf.append([line, 1])
     now_m = time.monotonic()
     if now_m - _flush_t[0] > _FLUSH_EVERY:
         _flush_log()
@@ -214,7 +216,8 @@ ERR_FILE = ROOT / "cb_radio_errors.log"
 ARC_FILE = ROOT / "cb_radio_archive.log"
 VERBOSE = "--verbose" in sys.argv
 _FLUSH_EVERY = 2.0
-_log_buf = []          # [[text, count]] — порция до флаша
+_log_buf = []          # [[text, count]] — порция до флаша (доступ — только под _log_lock)
+_log_lock = threading.Lock()          # P1-9: защита буфера; файловый I/O флаша — ВНЕ lock
 _flush_t = [time.monotonic()]
 
 
@@ -261,26 +264,28 @@ _ERR_SEEN = {}
 
 
 def _flush_log():
-    """Записать накопленную порцию СВЕРХУ файла; при превышении капа — хвост в архив."""
-    if not _log_buf:
-        return
+    """Записать накопленную порцию В КОНЕЦ файла (append-only, хронология — P1-9).
+    Под lock буфер меняется на свежий пустой список (записи, пришедшие во время
+    записи chunk, НЕ теряются и не стираются), весь файловый I/O — вне lock.
+    При превышении капа старые строки (голова файла) уходят в архив."""
     _flush_t[0] = time.monotonic()
-    chunk = "".join(t + (f"  ×{n}" if n > 1 else "") + "\n" for t, n in reversed(_log_buf))
-    _log_buf.clear()
+    with _log_lock:
+        if not _log_buf:
+            return
+        chunk = "".join(t + (f"  ×{n}" if n > 1 else "") + "\n" for t, n in _log_buf)
+        _log_buf[:] = []
     try:
-        old = LOG_FILE.read_text(encoding="utf-8", errors="replace") if LOG_FILE.exists() else ""
-        body = chunk + old
-        enc = body.encode("utf-8")
-        if len(enc) > LOG_CAP:
-            head_b = enc[: LOG_CAP // 2]
-            tail_b = enc[LOG_CAP // 2:]
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(chunk)
+        size = LOG_FILE.stat().st_size
+        if size > LOG_CAP:
+            old = LOG_FILE.read_bytes()
             try:
                 arc_old = ARC_FILE.read_bytes() if ARC_FILE.exists() else b""
-                ARC_FILE.write_bytes((tail_b + arc_old)[:ARC_KEEP])
+                ARC_FILE.write_bytes((old + arc_old)[:ARC_KEEP])
             except OSError:
                 pass
-            body = head_b.decode("utf-8", "ignore")
-        LOG_FILE.write_text(body, encoding="utf-8")
+            LOG_FILE.write_bytes(old[len(old) // 2:])   # хронология: режем СТАРЫЕ строки с головы
     except OSError:
         pass
 
