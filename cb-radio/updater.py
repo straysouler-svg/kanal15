@@ -40,6 +40,41 @@ def sha256_file(p, buf=1 << 20):
     return h.hexdigest()
 
 
+def check_rel_path(rel):
+    """Безопасен ли относительный путь из манифеста. None = безопасен, строка = причина отказа.
+
+    Запрещаем: пустые/не-строковые пути, абсолютные пути и диски (C:, \\server), '..',
+    двоеточие в любом сегменте (Windows ADS и 'C:foo'), а также резервные имена устройств —
+    подпись манифеста подтверждает автора, но не делает путь безопасным сам по себе."""
+    if not isinstance(rel, str) or not rel:
+        return "путь пустой или не строка"
+    if "\x00" in rel:
+        return "нулевой байт в пути"
+    p = rel.replace("\\", "/").rstrip("/")          # манифест posix-style; "app/" -> "app", \\ -> /
+    if p.startswith("/"):
+        return "абсолютный путь"
+    parts = p.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        return "сегмент '.', '..' или пустой"
+    if any(":" in part for part in parts):
+        return "двоеточие в сегменте (диск/ADS)"
+    if any(part.upper() in ("CON", "PRN", "AUX", "NUL") or part.upper().startswith(("CON.", "PRN.", "AUX.", "NUL.")) for part in parts):
+        return "зарезервированное имя устройства Windows"
+    if parts[0].endswith(":"):
+        return "буква диска"
+    return None
+
+
+def bad_manifest_paths(m):
+    """Все небезопасные пути манифеста: файлы, список managed и базовые имена NEVER."""
+    bad = []
+    for rel in list(m.get("files", {})) + list(m.get("managed", MANAGED)):
+        why = check_rel_path(rel)
+        if why:
+            bad.append(f"{rel!r}: {why}")
+    return bad
+
+
 def base_signature(root):
     """What only a full installer can change: the exe + the library folder (names and sizes)."""
     h = hashlib.sha256()
@@ -130,6 +165,10 @@ class Updater:
             self.log("обновления: ПОДПИСЬ НЕ СОШЛАСЬ — обновление отклонено")
             return "обновление отклонено: неверная подпись"
         m = json.loads(raw.decode("utf-8"))
+        bad = bad_manifest_paths(m)
+        if bad:
+            self.log(f"обновления: ОТКАЗ — небезопасные пути в манифесте: {bad[:3]}")
+            return "обновление отклонено: небезопасный путь в манифесте"
         ver = str(m.get("version"))
         if ver == self.version:
             return f"последняя версия ({ver})"
