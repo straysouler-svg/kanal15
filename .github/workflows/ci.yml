@@ -36,6 +36,9 @@ jobs:
             exit 1
           fi
       - name: Unit-тесты чистых модулей (stdlib only)
+        env:
+          PYTHONUTF8: 1          # русские буквы в выводе тестов: иначе cp1251 на Windows роняет прогон
+          PYTHONIOENCODING: utf-8
         run: python -m unittest discover -s cb-radio/tests -v
 
   windows-smoke:
@@ -53,6 +56,9 @@ jobs:
         shell: bash
         run: python -m compileall -q -x '.*\.before_.*\.py' cb-radio
       - name: Unit-тесты чистых модулей
+        env:
+          PYTHONUTF8: 1          # русские буквы в выводе тестов: иначе cp1251 на Windows роняет прогон
+          PYTHONIOENCODING: utf-8
         run: python -m unittest discover -s cb-radio/tests -v
       - name: "Релизный smoke: install / update / rollback / uninstall"
         run: |

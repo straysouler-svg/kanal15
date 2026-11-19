@@ -10,9 +10,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import cb_radio as cb  # noqa: E402  (тяжёлый импорт: numpy/sounddevice — запускать venv'ом рации)
+try:
+    import cb_radio as cb  # noqa: E402  (тяжёлый импорт: numpy/sounddevice/soundfile)
+    _HEAVY_ENV = True
+    _HEAVY_SKIP = ""
+except ImportError as e:                     # CI stdlib-only: без numpy/аудио-стека — честный skip,
+    cb = None                                # а не ошибка импорта (зелёный прогон локально в venv рации)
+    _HEAVY_ENV = False
+    _HEAVY_SKIP = f"тяжёлое окружение рации недоступно ({e}) — тест журнала запускается локально в venv"
 
 
+@unittest.skipUnless(_HEAVY_ENV, _HEAVY_SKIP or None)
 class LogRaceTest(unittest.TestCase):
     def setUp(self):
         self._dir = tempfile.TemporaryDirectory()
@@ -52,7 +60,6 @@ class LogRaceTest(unittest.TestCase):
 
     def test_records_logged_during_flush_are_not_lost(self):
         cb.log("before-flush")
-        captured = []
 
         def concurrent_logger():
             for i in range(50):
