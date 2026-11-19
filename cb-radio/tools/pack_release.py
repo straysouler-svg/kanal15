@@ -170,6 +170,20 @@ def main(variant):
             dst = out / "audio" / "reactions" / "x" / tainik.dirname(k)
             dst.parent.mkdir(parents=True, exist_ok=True)
             src_dir.replace(dst)
+    # 19.11 (P0-4, промт stabilizaciya_2026-11-19): ключ отправки диагностических отчётов (upload-only,
+    # сервисный аккаунт kanal15-reporter — только PUT в kanal15-reports/in/). Ключ — локальный секрет ВНЕ git
+    # (build/ в .gitignore): две строки (access key id, secret) в build/report_upload_key.txt. Без ключа
+    # сборка прерывается — иначе «Отправить журнал» в собранном релизе всегда уходила бы в fallback
+    # «нет ключа отправки». Ключ извлекаем из клиента — предусмотрена ротация (см. RELEASE.md).
+    key_file = ROOT.parent / "build" / "report_upload_key.txt"
+    try:
+        key_lines = [x.strip() for x in key_file.read_text(encoding="utf-8-sig").splitlines() if x.strip()]
+    except OSError:
+        key_lines = []
+    if len(key_lines) < 2:
+        raise SystemExit(f"Нет ключа отправки отчётов: положите две строки (access key id и secret) в {key_file}\n"
+                         f"(файл вне git, см. RELEASE.md, раздел «Ключ отправки отчётов»). Сборка прервана.")
+    sec["rk"] = key_lines[:2]
     (out / "phrases" / "x.dat").write_bytes(tainik.encode(sec))
     print("  секреты в тайнике:", {k: len(v) for k, v in sec["texts"].items()})
     (out / "phrases" / "level3_eleven.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
