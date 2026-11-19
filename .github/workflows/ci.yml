@@ -28,6 +28,7 @@ jobs:
           pip install pyflakes==4.1.0
           cd cb-radio
           pyflakes cb_radio.py intents.py bonds.py world.py updater.py launcher.py ed25519.py transport.py \
+            tools/setup_app.py tools/uninstall_app.py \
             | tr -d '\r' > /tmp/pyflakes_now.txt
           # baseline хранит строки вида cb_radio.py:3022:5: ...; pyflakes печатает cb_radio.py:3022:5: ...
           if ! diff <(sort tools/pyflakes_baseline.txt) <(sort /tmp/pyflakes_now.txt); then
