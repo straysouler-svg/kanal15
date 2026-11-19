@@ -6,12 +6,22 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import tkinter as tk
 from pathlib import Path
 
 APP = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\CB-Radio"
 BG, FG = "#1d1f21", "#c5c8c6"
+
+
+def slog(msg):
+    """%TEMP%\\Kanal15-uninstall.log: где деинсталлятор был, когда что-то пошло не так."""
+    try:
+        with open(os.environ.get("TEMP", "C:\\") + "\\Kanal15-uninstall.log", "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {msg}\n")
+    except OSError:
+        pass
 
 
 def manifest():
@@ -84,8 +94,12 @@ class Uninstall:
         keep = APP.parent / "CB-Radio-настройки"
         if self.keep.get() and (APP / "config.json").exists():
             keep.mkdir(exist_ok=True)
-            shutil.copy2(APP / "config.json", keep / "config.json")
-            notes.append(f"настройки сохранены в {keep}")
+            try:
+                shutil.copy2(APP / "config.json", keep / "config.json")
+                notes.append(f"настройки сохранены в {keep}")
+            except OSError as e:                                   # 19.11 (P0-2): не маскируем — журнал и экран
+                slog(f"не сохранил настройки: {e!r}")
+                notes.append(f"не сохранил настройки: {e}")
         # only what the installer put here + what the radio itself creates; folders only if empty afterwards
         me = Path(sys.executable).resolve()
         made = ["cb_radio.log", "state.json", "world_state.json", "last_ptt.wav", "last_ptt_boosted.wav",
@@ -100,7 +114,6 @@ class Uninstall:
                 notes.append(f"не удалил {rel}")
         # folders that only the radio and its updates fill (updates add files the install list doesn't know)
         if (APP / "CB-Radio.exe").exists() and APP.name.lower() == "cb-radio":
-            import shutil
             for sub in ("update", "reports", "app", "audio", "phrases", "map", "installer", "models", "_internal"):
                 shutil.rmtree(APP / sub, ignore_errors=True)
         for d in sorted((q for q in APP.rglob("*") if q.is_dir()), key=lambda q: -len(q.parts)):
