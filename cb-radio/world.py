@@ -16,10 +16,12 @@ import heapq
 import json
 import math
 import random
+import sys  # noqa: E402
 from pathlib import Path
 
-import sys  # noqa: E402
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+import json_store  # noqa: E402
 CITIES = ROOT / "map" / "cities_full.json"
 STATE = ROOT / "world_state.json"
 HAZ = ROOT / "map" / "hazards.json"          # cameras learned from your fines (the 'people's map')
@@ -727,7 +729,7 @@ class World:
     def _save_hazards(self):
         try:
             cams = [h for h in self.hazards if h["kind"] == "camera"]
-            HAZ.write_text(json.dumps(cams, ensure_ascii=False, indent=1), encoding="utf-8")
+            json_store.save_json(HAZ, cams, indent=1)
         except OSError:
             pass
 
@@ -764,14 +766,13 @@ class World:
                       "goal": d.goal, "goal_for": d.goal_for}
                   for k, d in self.drivers.items()}
             st["_met"] = self.met
-            STATE.write_text(json.dumps(st), encoding="utf-8")
+            json_store.save_json(STATE, st)
         except OSError:
             pass
 
     def _load(self):
-        try:
-            st = json.loads(STATE.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        st = json_store.load_json(STATE)
+        if not isinstance(st, dict):
             return
         self.met = st.pop("_met", {}) or {}
         for k, s in st.items():

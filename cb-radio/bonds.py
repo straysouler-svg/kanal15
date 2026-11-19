@@ -18,7 +18,11 @@ ElevenLabs в тексте: [tired], [laughs], [frustrated] …). Хмурый �
 import hashlib
 import json
 import re
+import sys  # noqa: E402
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import json_store  # noqa: E402
 
 LEVELS = [(0, "незнакомый"), (35, "знакомый"), (60, "приятель"), (150, "друг")]
 HEARTS = ["", "♥", "♥♥", "♥♥♥"]
@@ -113,10 +117,9 @@ class Bonds:
         self.path = Path(path)
         self.log = log
         self.st = {}
-        try:
-            self.st = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            self.st = {}
+        st = json_store.load_json(self.path, log=self.log)
+        if isinstance(st, dict):
+            self.st = st
         self.text = {}          # rel ("reactions/player/greet/05", "<actor>/03", "scenes/x/02") -> text with tags
         self.name_lines = set()  # rels that call the player by name (have a v_neutral version)
         self.lv = {}             # rel -> минимальный уровень дружбы ("lv" в phrases-файле, личные реплики)
@@ -260,7 +263,7 @@ class Bonds:
 
     def save(self):
         try:
-            self.path.write_text(json.dumps(self.st, ensure_ascii=False, indent=1), encoding="utf-8")
+            json_store.save_json(self.path, self.st, log=self.log, indent=1)
         except OSError:
             pass
 
