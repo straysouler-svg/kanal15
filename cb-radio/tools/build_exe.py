@@ -1,5 +1,5 @@
-"""Build the one-file installer (2026-11-04). Run with the BUILD venv (G:\\Claude\\gruzovichki\\build\\venv):
-  build_exe.py kirill | neutral
+"""Build the one-file installer (2026-11-04). Run from the repo root with the BUILD venv:
+  build\\venv\\Scripts\\python.exe cb-radio\\tools\\build_exe.py kirill | neutral
 Needs: release/<variant>/CB-Radio made by pack_release.py (the air in Opus, phrases, map, config, plugin, art).
 Steps: PyInstaller CB-Radio.exe (onedir) -> fix old VC runtime DLLs -> app folder + whisper-small model ->
 payload.zip -> PyInstaller CB-Radio-Setup*.exe (onefile, windowed, splash) with payload inside."""

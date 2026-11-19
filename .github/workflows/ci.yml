@@ -1,0 +1,58 @@
+# Минимальный CI «Канала 15» (промт стабилизации 2026-11-19, P1-10).
+# Честные границы: здесь проверяются syntax, сфокусированный pyflakes (только НОВЫЕ ошибки
+# относительно baseline) и unit-тесты чистых модулей. Это НЕ доказывает работу аудио, Whisper,
+# телеметрии ETS2, установщика и автообновления — они требуют Windows, собранного exe и контента
+# (см. build/EXTERNAL_RESOURCES.md) и проверяются вручную на релизной сборке.
+name: ci
+
+on:
+  push:
+    paths:
+      - 'cb-radio/**'
+  pull_request:
+    paths:
+      - 'cb-radio/**'
+
+jobs:
+  lint-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Syntax check (compileall)
+        run: python -m compileall -q -x '.*\.before_.*\.py' cb-radio
+      - name: pyflakes (только новые ошибки против baseline)
+        run: |
+          pip install pyflakes==4.1.0
+          cd cb-radio
+          pyflakes cb_radio.py intents.py bonds.py world.py updater.py launcher.py ed25519.py transport.py \
+            | tr -d '\r' > /tmp/pyflakes_now.txt
+          # baseline хранит строки вида cb_radio.py:3022:5: ...; pyflakes печатает cb_radio.py:3022:5: ...
+          if ! diff <(sort tools/pyflakes_baseline.txt) <(sort /tmp/pyflakes_now.txt); then
+            echo "::error::Появились новые pyflakes-предупреждения или исчезли старые (обнови tools/pyflakes_baseline.txt осознанно)"
+            exit 1
+          fi
+      - name: Unit-тесты чистых модулей (stdlib only)
+        run: python -m unittest discover -s cb-radio/tests -v
+
+  windows-smoke:
+    # Что реально в CI без контента и секретов: syntax + те же тесты на Windows-интерпретаторе.
+    # Сценарии install/update/rollback/uninstall требуют собранного exe, payload с аудио/моделью
+    # и файлового окружения установленного приложения — их нельзя честно прогнать здесь.
+    # Они помечены skip с пояснением, а не «пройдены».
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Syntax check (compileall)
+        shell: bash
+        run: python -m compileall -q -x '.*\.before_.*\.py' cb-radio
+      - name: Unit-тесты чистых модулей
+        run: python -m unittest discover -s cb-radio/tests -v
+      - name: "Релизный smoke: install / update / rollback / uninstall"
+        run: |
+          Write-Host "::warning::SKIP: требуется собранный установщик, аудиоконтент, модель Whisper и ключи подписи — недоступно в CI. Проверяется вручную на релизной сборке (см. smoke-test в промте стабилизации)."

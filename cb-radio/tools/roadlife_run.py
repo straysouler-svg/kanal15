@@ -5,7 +5,7 @@
 
 Выход: build/roadlife/diary_seed<N>.txt и summary_seed<N>.txt.
 
-Запуск:  G:/Claude/gruzovichki/build/venv/Scripts/python.exe cb-radio/tools/roadlife_run.py --seed 7
+Запуск:  <repo>\\build\\venv\\Scripts\\python.exe cb-radio/tools/roadlife_run.py --seed 7
 """
 import argparse
 import json

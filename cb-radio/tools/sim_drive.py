@@ -13,7 +13,7 @@ Operator._decide(). Часы виртуальные: time.monotonic/time.time/ti
 код возврата != 0, если есть нарушения уровня fail.
 
 Запуск (venv coop-buddy: нужны numpy/sounddevice/soundfile для import cb_radio):
-  G:\\Claude\\coop-buddy\\.venv\\Scripts\\python.exe -X utf8 tools/sim_drive.py \
+  <build-venv>\\Scripts\\python.exe -X utf8 tools/sim_drive.py \
       --seed 7 --route helsinki:oulu --minutes 120 --script sim/basic.json
 
 Не проверяется здесь (честно): реальная телеметрия, задержки звука, микрофон и whisper,

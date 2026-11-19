@@ -1,11 +1,12 @@
 """Build a shareable copy of the radio (2026-11-04).
-  pack_release.py kirill    -> G:\\Claude\\gruzovichki\\release\\kirill\\CB-Radio   (Кирилл / Сиди-Посиди)
-  pack_release.py neutral   -> ...\\release\\neutral\\CB-Radio                     (no name, public)
+  pack_release.py kirill    -> <repo>\\release\\kirill\\CB-Radio   (Кирилл / Сиди-Посиди)
+  pack_release.py neutral   -> ...\\release\\neutral\\CB-Radio    (no name, public)
 What goes in: only what the radio plays (Opus .ogg, mono 48 kHz), the code, phrases json, city map, credits.
 What never goes in: Сорока (Tatiana's voice is personal), API keys, the user's state/logs/fines map, sources,
 backups, samples, music sources, game files. Lines that call the player «Железяка» are replaced by the variant;
 if a line has no voiced variant yet it is left out (never ships the user's handle)."""
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -217,8 +218,17 @@ def main(variant):
     shutil.copy2(ROOT / "installer_art" / "banner_final.png", out / "installer" / "banner.png")
     shutil.copy2(ROOT / "installer_art" / "icon.png", out / "installer" / "icon.png")
     (out / "installer" / "plugins").mkdir()
-    shutil.copy2(Path(r"G:\SteamLibrary\steamapps\common\Euro Truck Simulator 2\bin\win_x64\plugins")
-                 / "ets2-telemetry.dll", out / "installer" / "plugins" / "ets2-telemetry.dll")   # makes SimTelemetryETS2
+    # Funbit ets2-telemetry.dll: локальный путь у разработчика или переменная окружения ETS2_TELEMETRY_DLL
+    ets2_dll = Path(os.environ["ETS2_TELEMETRY_DLL"]) if os.environ.get("ETS2_TELEMETRY_DLL") else None
+    if ets2_dll is None:
+        for lib in (Path("G:/SteamLibrary"), Path("C:/Program Files (x86)/Steam"), Path("D:/SteamLibrary")):
+            cand = lib / "steamapps/common/Euro Truck Simulator 2/bin/win_x64/plugins/ets2-telemetry.dll"
+            if cand.exists():
+                ets2_dll = cand
+                break
+    if ets2_dll is None or not ets2_dll.exists():
+        raise SystemExit("ets2-telemetry.dll не найден: укажи путь в переменной окружения ETS2_TELEMETRY_DLL")
+    shutil.copy2(ets2_dll, out / "installer" / "plugins" / "ets2-telemetry.dll")   # makes SimTelemetryETS2
     # 1.26: RenCloud scs-sdk-plugin (MIT, v1.12.1, sha256 1d03dbc7...) -> Local\\SCSTelemetry: fines and the job without SimHub
     shutil.copy2(ROOT / "vendor" / "scs-telemetry.dll", out / "installer" / "plugins" / "scs-telemetry.dll")
     sf.write(out / "installer" / "kardan_kruchitsya.wav", (y / (abs(y).max() + 1e-9) * 0.85).astype("float32"),

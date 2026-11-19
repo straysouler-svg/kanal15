@@ -1,0 +1,4 @@
+cb_radio.py:3022:5: 'urllib.request' imported but unused
+cb_radio.py:3114:5: 'subprocess' imported but unused
+cb_radio.py:3201:5: `global OVERLAY` is unused: name is never assigned in scope
+cb_radio.py:3253:5: local variable '_lock' is assigned to but never used

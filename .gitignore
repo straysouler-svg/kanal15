@@ -6,6 +6,7 @@
 /*
 !/.gitignore
 !/.gitattributes
+!/.github/
 !/README.md
 !/MODLOG.md
 !/cb-radio/
@@ -24,6 +25,8 @@
 # личный локальный пул (Железяка) — не в git:
 /cb-radio/phrases/personal_local.json
 !/cb-radio/tools/
+!/cb-radio/tests/
+!/cb-radio/requirements.txt
 !/cb-radio/sim/
 !/cb-radio/installer_art/
 !/cb-radio/map/
@@ -37,6 +40,7 @@
 /build/*
 !/build/radio.spec
 !/build/cb_radio.ico
+!/build/EXTERNAL_RESOURCES.md
 
 # ---------------------------------------------------------------- продвижение: тексты и скрипты, без медиа
 /promo/design/

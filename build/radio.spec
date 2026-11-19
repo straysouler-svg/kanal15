@@ -1,6 +1,8 @@
-# PyInstaller spec: CB-Radio.exe (onedir). Built from G:\Claude\gruzovichki\cb-radio sources.
+# PyInstaller spec: CB-Radio.exe (onedir). Built from the repo's cb-radio sources.
+# SPECPATH is set by PyInstaller to the folder containing this spec (build/).
+import os
 from PyInstaller.utils.hooks import collect_all
-SRC = r"G:\Claude\gruzovichki\cb-radio"
+SRC = os.path.abspath(os.path.join(SPECPATH, "..", "cb-radio"))
 # 2026-11-05: CB-Radio.exe is a STABLE launcher (launcher.py). Our own modules live as .py files in app/ (copied by
 # build_exe.build_app) so updates never replace an exe. They are analysed here for their dependencies, then dropped from PYZ.
 OURS = ["cb_radio", "world", "intents", "company", "savegame", "tray", "mic", "gamecheck", "updater", "ed25519", "overlay", "bonds", "tainik", "report_log"]
