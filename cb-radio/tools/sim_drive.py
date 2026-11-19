@@ -116,8 +116,10 @@ def main():
             r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
             tail = (r.stdout or "").strip().splitlines()
             results[s] = (r.returncode, tail[-1] if tail else "(нет вывода)")
-            print(f"seed {s}: код {r.returncode} :: {results[s][1]}", flush=True)
+            mark = {0: "OK", 3: "SKIP"}.get(r.returncode, "FAIL")   # P1-7: SKIP != зелёный
+            print(f"seed {s}: {mark} (код {r.returncode}) :: {results[s][1]}", flush=True)
         ok = sum(1 for rc, _ in results.values() if rc == 0)
+        skipped = sum(1 for rc, _ in results.values() if rc == 3)
         # доля «для» по каждому зерну: < 45% — подстановка имён сломана, пакет FAIL (ревью 15.11, 2-й круг)
         import re as _re2
         zone_bad = {}
@@ -132,15 +134,17 @@ def main():
         with open(summ, "w", encoding="utf-8") as f:
             f.write(f"# пакет {args.seeds} ({args.route}, {args.minutes} игр.мин)\n")
             for s, (rc, line) in results.items():
-                mark = "OK" if rc == 0 else "FAIL"
+                mark = "OK" if rc == 0 else ("SKIP" if rc == 3 else "FAIL")
                 if s in zone_bad:
                     mark = f"FAIL (доля «для» {zone_bad[s]:.0%} < 45%)"
                 f.write(f"seed {s}: {mark} :: {line}\n")
-            f.write(f"\nзелёных: {ok}/{len(seeds)}")
+            f.write(f"\nзелёных: {ok}/{len(seeds)}" + (f", SKIP (без ресурсов): {skipped}" if skipped else ""))
             if zone_bad:
                 f.write(f"; подстановка имён сломана у зёрен: {sorted(zone_bad)}")
             f.write("\n")
-        print(f"пакет окончен: зелёных {ok}/{len(seeds)}, сводка {summ.name}")
+        print(f"пакет окончен: зелёных {ok}/{len(seeds)}"
+              + (f", SKIP {skipped} (без ресурсов — не PASS)" if skipped else "")
+              + f", сводка {summ.name}")
         return 0 if ok == len(seeds) and not zone_bad else 1
 
     random.seed(args.seed)
@@ -191,6 +195,10 @@ def main():
     acts = json.loads(cb.PHRASES_JSON.read_text(encoding="utf-8"))["actors"]
     overlay_mod.load_texts(cb.PHRASES_JSON, "")
     text_of = overlay_mod._TEXT
+
+    # P1-7: честные ресурсы — без аудио/сценариев успешный PASS запрещён
+    audio_n = sum(1 for ext in ("*.wav", "*.ogg") for _ in cb.AUDIO_ROOT.rglob(ext)) \
+        if cb.AUDIO_ROOT.exists() else 0
 
     deck = cb.Deck()
     world = world_mod.World(cfg, acts)
@@ -260,6 +268,7 @@ def main():
 
     # ---------- RecPlayer: вместо звука — записи ----------
     played = []            # dict(t, actor, rel, text, dur, lvl, allowed)
+    real_files = [0]       # P1-7: сколько раз был найден реальный файл на диске (mock не считаем)
 
     class RecPlayer:
         """Полный дублёр Player по атрибутам, которые читает Operator (без звука)."""
@@ -281,9 +290,12 @@ def main():
                     return "error"
                 path = str(vp)
             rel = cb._rel(Path(path)) if not path.startswith("_") else path
+            existed = Path(path).exists()          # P1-7: mock-звука нет — считаем только реальные файлы
+            if existed:
+                real_files[0] += 1
             try:
                 import soundfile as sf
-                dur = sf.info(path).duration if Path(path).exists() else 2.0
+                dur = sf.info(path).duration if existed else 2.0
             except Exception:
                 dur = 2.0
             lvl = bonds.level(actor) if actor and bonds else None
@@ -426,6 +438,7 @@ def main():
     lvl_seen = {}          # actor -> последний уровень (правило 8)
     zone_stat = {}         # корпусные фразы: «для» (в зоне) / «про» (вне зоны) / «без имени» (2-й круг 15.11)
     pool_lines = {}        # (group, kind) -> {actor: n} для правила 7 (16.11)
+    stat = {"steps": 0, "skipped": 0, "corpus": 0}   # P1-7: честные счётчики прогона
 
     def _actor_pool_lines(rel, actor):
         """Сколько строк пула у актёра (по index.json); rel вида reactions/<group>/<kind>/<NN>."""
@@ -530,6 +543,7 @@ def main():
             who = intents.addressee(text)
         # счётчик «для/про/без имени» по корпусным фразам (ревью 15.11, 2-й круг)
         if desc == "корпус":
+            stat["corpus"] += 1
             key = ("для" if who in (deck.allowed or ()) else "про") if who else "без имени"
             zone_stat[key] = zone_stat.get(key, 0) + 1
         log(f"[сим] бот: «{text}»" + (f" (кто: {who})" if who else ""))
@@ -641,6 +655,7 @@ def main():
                 got = world.summon(st["summon"])
                 log(f"[сим] summon {st['summon']}: {got or 'не вышел (не смена?)'}")
             if need is None or need in deck.allowed:
+                stat["steps"] += 1
                 run_bot_phrase(st["text"], st.get("who"), st.get("q"), st.get("greetq", False),
                                st.get("expect_silence", False), st.get("id", ""),
                                st.get("expect_rel"), st.get("forbid_rel"), st.get("expect_answer", False))
@@ -656,6 +671,7 @@ def main():
                 wait_since = wait_since or _vnow()
                 if _vnow() - wait_since > 900:
                     note(10, f"шаг «{st.get('id', step_i)}» пропущен: {need} не появился в зоне")
+                    stat["skipped"] += 1
                     step_i += 1
                     wait_since = None
         elif corpus and _vnow() >= next_corpus_t and deck.allowed and not corpus_done[0]:
@@ -707,6 +723,25 @@ def main():
                 f.write(f"#   ×{n} «{t}»\n")
     print(f"прогон окончен: FAIL={len(fails)} note={len(viol) - len(fails)}; "
           f"лог {run_log.name}, нарушения {vfile.name}")
+    # P1-7: нулевой эфир — не успешный тест. Нет ресурсов / ни одной проверки / ни одного
+    # логического ответа -> честный SKIP (код 3), а не PASS с FAIL=0 (публичный клон без
+    # аудио раньше «проходил» так).
+    checks = stat["steps"] + stat["corpus"]
+    print(f"[сим] счётчики: ресурсы (аудио {audio_n}, актёры {len(acts)}, корпус {len(corpus)}), "
+          f"сценариев запущено {stat['steps']} (шагов пропущено {stat['skipped']}), "
+          f"корпусных фраз {stat['corpus']}, логических ответов {len(played)}, "
+          f"файлов найдено на диске {real_files[0]} (mock нет), проверок пропущено {stat['skipped']}")
+    if audio_n == 0 or checks == 0 or not played:
+        why = []
+        if audio_n == 0:
+            why.append("нет аудиоресурсов")
+        if checks == 0:
+            why.append("ни одна проверка не выполнена")
+        if not played:
+            why.append("ноль логических ответов в эфире")
+        print(f"СТАТУС: SKIP ({'; '.join(why)}) — успешным PASS это не считается")
+        return 3
+    print("СТАТУС: PASS")
     return 1 if fails else 0
 
 

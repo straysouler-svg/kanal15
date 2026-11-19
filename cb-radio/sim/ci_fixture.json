@@ -1,0 +1,9 @@
+{
+ "_comment": "P1-7 (промт stabilizaciya_2026-11-19): минимальный CI-fixture диалоговой логики. Запуск: tools/sim_drive.py --script sim/ci_fixture.json --minutes 30. Каждый шаг — обязательная проверка: q/greetq (вопрос не должен получить «принял», привет+вопрос не должен быть съеден), expect_answer (минимум один логический ответ в эфире). В клоне без аудио прогон честно уходит в SKIP (код 3), а не PASS. Mock-аудио стенд не использует: RecPlayer считает только реально найденные файлы.",
+ "steps": [
+  {"id": "greet-q", "text": "Привет, что слышно на канале?", "q": true, "greetq": true, "expect_answer": true},
+  {"id": "summon-stas", "summon": "stas", "when_inside": "stas", "text": "Стас, привет, ты далеко?", "who": "stas", "q": true, "expect_answer": true},
+  {"id": "stas-route", "text": "Стас, куда едешь?", "who": "stas", "q": true, "expect_answer": true},
+  {"id": "no-name-q", "text": "Что там за городом, кто знает?", "q": true, "expect_answer": true}
+ ]
+}
