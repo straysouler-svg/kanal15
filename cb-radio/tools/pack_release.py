@@ -139,7 +139,9 @@ def main(variant):
         (out / "audio" / rel).parent.mkdir(parents=True, exist_ok=True)
         if rel.name == "index.json" and rel.parts[0] == "reactions":
             acts = json.loads(meta.read_text(encoding="utf-8"))["actors"]
-            prefix = rel.with_name("").as_posix()
+            prefix = rel.parent.as_posix()
+            if prefix == ".":
+                prefix = ""
             keep = [a for i, a in enumerate(acts, 1) if f"{prefix}/{i:02d}" not in personal_rel]
             (out / "audio" / rel).write_text(json.dumps({"actors": keep}, ensure_ascii=False), encoding="utf-8")
         else:
