@@ -377,7 +377,8 @@ class Wizard:
             self.ui(self._installed)
         except Exception as e:  # noqa: BLE001
             slog(f"ошибка установки: {e!r}")
-            self.ui(lambda: (self.status.config(text=f"Не получилось: {e}", fg="#b00000"),
+            message = f"Не получилось: {e}"     # 19.11 (стабилизация, P0-1): e живёт только внутри except —
+            self.ui(lambda text=message: (self.status.config(text=text, fg="#b00000"),
                              self.buttons(back=True, nxt_on=False)))
 
     def _installed(self):
