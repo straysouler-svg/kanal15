@@ -4348,6 +4348,9 @@ def main(argv):
             # 1.33 мемы: редкая болтовня (низкий эффективный вес 0.3–0.4, заменяемый пул)
             # 11.11: интервал — по времени в пути (пауза в меню не копит мем); мем ждёт общую паузу
             # next_at и сдвигает её; один актёр не говорит два мема подряд
+            # 20.11: с тем же тиком чередуется пул анекдотов (reactions/joke — фон, не путать
+            # с intent/joke «расскажи анекдот» по просьбе игрока): тот же интервал, общий
+            # кулдаун MEME_ACTOR, лог «эфир: анекдот»
             if st == "driving":
                 meme_acc += dt
                 stream_acc += dt
@@ -4368,15 +4371,18 @@ def main(argv):
             if (meme_acc >= next_meme and st == "driving" and not hush
                     and not op.pending and world and world.inside and driving_s >= next_at):
                 mk = None
+                pool = "memes"
                 for _ in range(3):
                     a_ = random.choice(sorted(world.inside))
-                    mk = line_of("memes", a_, a_) if a_ != MEME_ACTOR[0] else None
+                    pool = random.choice(("memes", "joke"))
+                    mk = line_of(pool, a_, a_) if a_ != MEME_ACTOR[0] else None
                     if mk:
                         break
                 if mk:
                     MEME_ACTOR[0] = mk[0]
                     meme_acc, next_meme = 0.0, random.uniform(240, 480)
-                    log(f"эфир: мем ({mk[0]}/{mk[1].stem}, {mood_name(mk[0])})")
+                    kind_ru = "анекдот" if pool == "joke" else "мем"
+                    log(f"эфир: {kind_ru} ({mk[0]}/{mk[1].stem}, {mood_name(mk[0])})")
                     PLAYER.file(mk[1], mk[0])
                     deck.on_air.add(mk[0])
                     next_at = max(next_at, driving_s + random.uniform(20, 40))
