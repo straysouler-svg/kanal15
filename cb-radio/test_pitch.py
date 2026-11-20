@@ -24,7 +24,8 @@ def env(mod, tmp, seed=7):
     logs = []
     st_f = Path(tmp) / "viewers_state.json"
     mod.STATE_F = st_f                       # ничего не пишем в живой state
-    st = mod.session_start({"seed": seed}, now=0.0)
+    # session_start с реалистичным now (как monotonic у live) — метки «сейчас», не 0.0
+    st = mod.session_start({"seed": seed}, now=100000.0)
     mod.save_state(st)
     return logs, st_f
 
@@ -106,33 +107,36 @@ def test_superchat(tmp):
 
 def test_pitch_cycle(tmp):
     mod = load_mod()
-    logs, st_f = env(mod, tmp, seed=3)
+    logs, st_f = env(mod, tmp, seed=3)        # session_start(now=100000), метки «сейчас»
     rnd = random.Random(3)
-    now = 100000.0
-    # донатов не было вообще: первый economy по таймеру (viewers <5)
-    ev = mod.pitch_tick(now=now, log=logs.append, state_f=st_f, rnd=rnd)
+    T0 = 100000.0
+    # баг 2 (20.11): первые 15 минут стрима — НИКАКОГО питча (economy/norm/vnd)
+    assert mod.pitch_tick(now=T0 + 60, log=logs.append, state_f=st_f, rnd=rnd) is None
+    assert mod.pitch_tick(now=T0 + 899, log=logs.append, state_f=st_f, rnd=rnd) is None
+    # первый питч — economy на штатном интервале: кандидат с 15-й минуты, заслон
+    # pitch_last=«старт эфира» + полный гэп 15-18 мин -> звучит 18:00 от включения
+    ev = mod.pitch_tick(now=T0 + 1080, log=logs.append, state_f=st_f, rnd=rnd)
     assert ev == "economy", ev
-    # заслон 15-18 мин: сразу повтор невозможен
-    ev = mod.pitch_tick(now=now + 60, log=logs.append, state_f=st_f, rnd=rnd)
-    assert ev is None, ev
-    # «щедрость»: донат 30 с назад глушит economy (окно after_donation ещё не наступило)
-    mod.note_donation(now=now + 300, state_f=st_f)
+    # заслон: сразу повтор невозможен
+    assert mod.pitch_tick(now=T0 + 1081, log=logs.append, state_f=st_f, rnd=rnd) is None
+    # «щедрость»: донат 30 с назад глушит economy/vnd (окно after_donation ещё не наступило);
+    # norm в этом шаге не должна подменять — уводим её таймер
+    mod.note_donation(now=T0 + 1300, state_f=st_f)
     st = mod.load_state()
-    st["pitch_economy_next"] = now + 320                 # таймер созрел
-    st["pitch_last"] = 0.0                               # заслон прошёл
+    st.update(pitch_economy_next=T0 + 1320, pitch_last=T0 + 300, pitch_norm_next=T0 + 10 ** 9)
     mod.save_state(st)
-    ev = mod.pitch_tick(now=now + 330, log=logs.append, state_f=st_f, rnd=rnd)
+    ev = mod.pitch_tick(now=T0 + 1330, log=logs.append, state_f=st_f, rnd=rnd)
     assert ev is None, ev
     assert any("щедрости" in s for s in logs), logs
     # after_donation: окно 60-120 с после НОВОГО доната; бросок фиксируем (< P) — детерминизм
-    mod.note_donation(now=now + 1000, state_f=st_f)
+    mod.note_donation(now=T0 + 2000, state_f=st_f)
     st = mod.load_state()
-    st["after_roll"] = 0.1
+    st.update(after_roll=0.1, pitch_norm_next=T0 + 10 ** 9, pitch_economy_next=T0 + 10 ** 9)
     mod.save_state(st)
-    ev = mod.pitch_tick(now=now + 1080, log=logs.append, state_f=st_f, rnd=rnd)
+    ev = mod.pitch_tick(now=T0 + 2080, log=logs.append, state_f=st_f, rnd=rnd)
     assert ev == "after_donation", ev
-    assert mod.pitch_tick(now=now + 1140, log=logs.append, state_f=st_f, rnd=rnd) is None
-    print("4) питч: economy/заслон/щедрость/after_donation: OK")
+    assert mod.pitch_tick(now=T0 + 2140, log=logs.append, state_f=st_f, rnd=rnd) is None
+    print("4) питч: старт не раньше 15 мин/заслон/щедрость/after_donation: OK")
 
 
 def test_pitch_norm_and_viewers(tmp):

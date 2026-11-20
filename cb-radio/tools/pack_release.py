@@ -65,6 +65,49 @@ def opus(src, dst):
     shutil.copy2(c, dst.with_suffix(".ogg"))
 
 
+def filter_stream_banter(A, out, d):
+    """Стрим-бантер в сборке: ровно строки level3 json; сверка по ТЕКСТУ из manifest.json
+    источника (не по номеру): личные wav 04+ (позывной «Железяка») отсеяны personal_rel, но
+    при рассинхроне нумерации подбираем файлы по тексту. В сборке файлы перенумеровываются
+    01..N, index.json переписывается под N. Нехватка файла = стоп сборки (доклад)."""
+    issues = []
+    for actor, lines in (d.get("reactions", {}).get("stream_banter") or {}).items():
+        if actor in PERSONAL:                     # Сорока: её аудио персональное, в сборке папки нет by design
+            continue
+        src_dir = A / "reactions" / "stream_banter" / actor
+        dst_dir = out / "audio" / "reactions" / "stream_banter" / actor
+        if not dst_dir.exists():
+            issues.append(f"stream_banter/{actor}: нет сборочной папки")
+            continue
+        man_f = src_dir / "manifest.json"
+        man = json.loads(man_f.read_text(encoding="utf-8")) if man_f.exists() else {}
+        nums = sorted({int(k) for k in man})
+
+        def text_of(n):
+            parts = man.get(f"{n:02d}", "").split("|")   # voice|model|stab|TEXT|far=..
+            return parts[3] if len(parts) >= 4 else None
+
+        expected = [ln["text"] if isinstance(ln, dict) else ln for ln in lines]
+        keep, used = [], set()
+        for i, want in enumerate(expected, 1):
+            hit = next((n for n in nums if n not in used and text_of(n) == want), None)
+            if hit is None:
+                issues.append(f"stream_banter/{actor}: нет wav для строки {i} ({want[:40]}…)")
+            else:
+                used.add(hit)
+                keep.append(hit)
+        if issues:
+            continue
+        for f in dst_dir.glob("*.ogg"):               # пересобираем папку под keep
+            f.unlink()
+        for new, old in enumerate(keep, 1):
+            opus(A / "reactions" / "stream_banter" / actor / f"{old:02d}.wav",
+                 dst_dir / f"{new:02d}.ogg")
+        (dst_dir / "index.json").write_text(json.dumps({"actors": [actor] * len(keep)}),
+                                            encoding="utf-8")
+    return issues
+
+
 def main(variant):
     assert variant in HANDLE, " | ".join(HANDLE)
     VARIANT[0] = variant
@@ -146,6 +189,11 @@ def main(variant):
             (out / "audio" / rel).write_text(json.dumps({"actors": keep}, ensure_ascii=False), encoding="utf-8")
         else:
             shutil.copy2(meta, out / "audio" / rel)
+    # stream_banter: только общие строки level3 (личный пул «Железяка» — вне релиза),
+    # сверка по тексту manifest, не по номеру файла
+    issues = filter_stream_banter(A, out, d)
+    if issues:
+        raise SystemExit("stream_banter не сошёлся со сборкой:\n  " + "\n  ".join(issues))
     # a scene with a missing line (a name call without a voiced variant) is dropped whole
     for sj in (out / "audio" / "scenes").rglob("scene.json"):
         acts = json.loads(sj.read_text(encoding="utf-8"))["actors"]

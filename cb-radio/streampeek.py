@@ -104,15 +104,19 @@ def save_state(st):
 
 def session_start(st=None, now=None):
     """Новая сессия стрима (cb_radio зовёт на фронте включения режима): обнуляем сессионные
-    поля, зерно — свежее (случайность с зерном, правило 8). Возвращает состояние."""
+    поля, зерно — свежее (случайность с зерном, правило 8). Возвращает состояние.
+    Временные метки — «сейчас» (monotonic), НЕ 0.0: иначе против monotonic() они дают
+    «тишину в тысячах секунд» и питч на 1-й минуте (баги 20.11, симуляция stream_epoch)."""
+    now = time.monotonic() if now is None else now
     st = st if st is not None else load_state()
     st.update({"viewers": None, "record": 0, "record_ann": 0, "last_zero": 0.0,
                "last_record": 0.0, "bet_done": False, "bet_roll": None,
                "chat_id": None, "chat_first": False, "chat_active_ann": 0.0,
-               "chat_quiet_since": 0.0, "chat_quiet_ann": 0.0,
+               "chat_quiet_since": now, "chat_quiet_ann": 0.0,
                "subs_start": None, "subs_ann": 0.0, "sc_seen": [], "sc_off": False,
-               "donation_last": 0.0, "pitch_last": 0.0, "pitch_after_done": False,
-               "after_roll": None, "pitch_economy_next": 0.0, "pitch_norm_next": 0.0,
+               "donation_last": 0.0, "pitch_last": now, "pitch_after_done": False,
+               "after_roll": None, "pitch_economy_next": now + PITCH_GAP_MIN_S,
+               "pitch_norm_next": 0.0,
                "seed": random.randrange(2 ** 31)})
     save_state(st)
     return st

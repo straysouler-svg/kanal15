@@ -13,6 +13,9 @@
     160
   ],
   "greet_reply_chance": 0.85,
+  "actors_off": [
+    "soroka"
+  ],
   "ptt": {
     "device": "R5 Base",
     "button": 22,
@@ -49,5 +52,11 @@
   },
   "static": "low",
   "horn_pilot": true,
-  "hooks_pilot": true
+  "hooks_pilot": true,
+  "stream_mode_pilot": true,
+  "donation_pilot": true,
+  "stream_greet_pilot": true,
+  "stream_news_pilot": true,
+  "stream_viewers_pilot": true,
+  "stream_donate_pitch_pilot": true
 }
