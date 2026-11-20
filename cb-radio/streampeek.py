@@ -123,8 +123,11 @@ def session_start(st=None, now=None):
 
 
 def _token(log):
-    """access token из promo/youtube/token.json; при истечении — один refresh (google-либы).
-    -> (token, None) или (None, причина) — тогда пилот тихо отключается."""
+    """access token из promo/youtube/token.json; при истечении — refresh. Раньше refresh шёл через
+    google-либы, и при ImportError пилот отключался НАВСЕГДА (стрим 20.11: в окружении рации
+    coop-buddy venv либ нет). Теперь refresh — stdlib-only (OAuth refresh_token grant, те же
+    client_id/secret из token.json) — зависимостей нет вообще. Отключение пилота — только при
+    отсутствии/битом token.json (постоянное); сетевые ошибки — None и повтор на следующем тике."""
     global _disabled
     if _disabled:
         return None, _disabled
@@ -146,44 +149,89 @@ def _token(log):
         fresh = False
     if fresh and stored.get("token"):
         return stored["token"], None
-    try:                                    # refresh (как upload_short.py)
-        import sys
-        sys.path.insert(0, str(TOKEN_F.parent))
-        from google.auth.transport.requests import Request   # noqa: PLC0415
-        from google.oauth2.credentials import Credentials   # noqa: PLC0415
-        creds = Credentials.from_authorized_user_file(str(TOKEN_F), SCOPES)
-        creds.refresh(Request())
-        TOKEN_F.write_text(creds.to_json(), encoding="utf-8")
-        return creds.token, None
-    except ImportError:
-        _disabled = "google-либы недоступны (pip install google-auth google-auth-oauthlib)"
+    rt = stored.get("refresh_token")
+    if not rt or not stored.get("client_id"):
+        _disabled = "в token.json нет refresh_token/client_id — переавторизуйся (upload_short.py)"
         log(f"зрители: пилот выключен — {_disabled}")
-    except Exception as e:                  # 401 и прочее: не долбим, следующий tick повторит
+        return None, _disabled
+    body = urllib.parse.urlencode({
+        "client_id": stored["client_id"],
+        "client_secret": stored.get("client_secret", ""),
+        "refresh_token": rt,
+        "grant_type": "refresh_token",
+    }).encode()
+    req = urllib.request.Request("https://oauth2.googleapis.com/token", data=body,
+                                 headers={"Content-Type": "application/x-www-form-urlencoded"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            tok = json.loads(r.read())
+    except Exception as e:                  # сеть/401: НЕ отключаем пилот, следующий тик повторит
         log(f"зрители: refresh токена не удался: {e!r}")
         return None, "refresh failed"
-    return None, _disabled
+    access = tok.get("access_token")
+    if not access:
+        log(f"зрители: в ответе refresh нет access_token: {sorted(tok)}")
+        return None, "refresh failed"
+    stored.update(token=access, expiry=datetime.fromtimestamp(
+        time.time() + int(tok.get("expires_in", 3600)) - 300, timezone.utc).isoformat())
+    try:
+        TOKEN_F.write_text(json.dumps(stored, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+    return access, None
+
+
+_last_fail_log = 0.0                # throttle лога сетевых ошибок (не чаще раза в 10 мин)
+FAIL_LOG_EVERY_S = 600.0
+
+
+def _fail_log(log, msg):
+    global _last_fail_log
+    now = time.monotonic()
+    if now - _last_fail_log >= FAIL_LOG_EVERY_S:
+        _last_fail_log = now
+        log(msg)
 
 
 def _fetch(log):
-    """-> int зрителей или None (нет активного эфира). Мок K15_YT_MOCK — без сети (тесты)."""
+    """-> int зрителей или None (нет активного эфира / сбой — пилот остаётся в строю, тик повторит).
+    Мок K15_YT_MOCK — без сети (тесты). Два шага: liveBroadcasts.list(active) -> id эфира
+    (= videoId), videos.list(id).liveStreamingDetails.concurrentViewers (стрим 20.11: videos.list
+    с broadcastStatus отвечал 400 — этот параметр там не поддерживается)."""
     if MOCK:
         data = json.loads(Path(MOCK).read_text(encoding="utf-8"))
-    else:
-        token, why = _token(log)
-        if not token:
+        items = data.get("items") or []
+        if not items:
             return None
-        url = (f"{YT_API}/videos?part=liveStreamingDetails&broadcastStatus=active"
-               f"&broadcastType=all&access_token={urllib.parse.quote(token)}")
         try:
-            req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-            with urllib.request.urlopen(req, timeout=30) as r:
-                data = json.loads(r.read())
-        except Exception as e:
-            log(f"зрители: опрос не удался: {e!r}")
+            return int(items[0].get("liveStreamingDetails", {}).get("concurrentViewers"))
+        except (TypeError, ValueError):
             return None
+    token, why = _token(log)
+    if not token:
+        return None
+
+    def api(path, params):
+        url = f"{YT_API}/{path}?" + urllib.parse.urlencode(dict(params, access_token=token))
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read())
+
+    try:
+        br = api("liveBroadcasts", {"part": "id", "broadcastStatus": "active"})
+        items = br.get("items") or []
+        if not items:
+            return None                      # активного эфира нет
+        vid = items[0].get("id")
+        if not vid:
+            return None
+        data = api("videos", {"part": "liveStreamingDetails", "id": vid})
+    except Exception as e:
+        _fail_log(log, f"зрители: опрос не удался: {e!r}")
+        return None
     items = data.get("items") or []
     if not items:
-        return None                          # активного стрима нет (или у мока пусто)
+        return None
     try:
         return int(items[0].get("liveStreamingDetails", {}).get("concurrentViewers"))
     except (TypeError, ValueError):
@@ -267,7 +315,7 @@ def _api_get(endpoint, params, log, fetch=None):
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.loads(r.read())
     except Exception as e:
-        log(f"стрим: {endpoint} не ответил: {e!r}")
+        _fail_log(log, f"стрим: {endpoint} не ответил: {e!r}")
         return None
 
 
@@ -313,7 +361,7 @@ def chat_tick(now=None, log=log_default, state_f=None, fetch=None):
             ev = "quiet"
             log(f"чат: тишина {quiet_for / 60:.0f} мин при зрителях — quiet")
         else:
-            log(f"чат: тишина {quiet_for / 60:.0f} мин — повода нет")
+            _fail_log(log, f"чат: тишина {quiet_for / 60:.0f} мин — повода нет")
     save_state(st)
     return ev
 

@@ -171,9 +171,9 @@ DEFAULT_CFG = {
     "stream_news_pilot": False,    # 19.11: в режиме стрима каждые 15-25 мин голосовое buh/stream_news (раз за сессию)
     "stream_viewers_pilot": False, # 19.11: бухгалтерия комментирует зрителей YouTube (пул buh/viewers, события из streampeek.py)
     "stream_donate_pitch_pilot": False,  # 19.11: питч донатов (пулы buh/donate_pitch/*, решения в streampeek.pitch_tick)
-    "stream_banter_min_s": 120,    # 19.11 (стрим #10, «реплик мало»): интервал обращений к стримеру 120-240 с
-    "stream_banter_max_s": 240,    # (было 240-420; бантер звучит ТОЛЬКО в режиме стрима, обычная езда не задета)
-    "stream_banter_cool_s": [180, 360],   # 19.11: кулдаун на актёра после обращения (было жёстко 300-540)
+    "stream_banter_min_s": 90,     # 20.11 (стрим #11, второй запрос «совсем молчали»): интервал обращений 90-150 с
+    "stream_banter_max_s": 150,    # (было 120-240; бантер звучит ТОЛЬКО в режиме стрима, обычная езда не задета)
+    "stream_banter_cool_s": [120, 240],   # 20.11: кулдаун на актёра после обращения (было 180-360)
     "horn_button": {"device": "", "button": None},  # «кнопка гудка» для ответа водителю: как тангента (winmm)
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
@@ -1239,6 +1239,7 @@ class Player:
         self.world = None        # living highway: distance of the speaker -> signal quality
         self.guest_dist = None   # онлайн-конвой (гость): дистанция из события play — радиоэффект без своего мира
         self.spoke = set()       # actors who talked during their current encounter (for the "пропадаю" line)
+        self.spoke_at = {}       # 20.11 (стрим #11): actor -> monotonic последнего выхода в эфир (анти-наложение)
         self.playing = False
         self.speaker = None      # actor currently on air (for "don't interrupt")
         self.last_speaker, self.last_t = None, 0.0
@@ -1311,6 +1312,7 @@ class Player:
                     return "paused"
             if actor:
                 self.spoke.add(actor)
+                self.spoke_at[actor] = time.monotonic()
             if actor or Path(path).name in ("_foreign.wav", "_murmur.wav") or "buh" in str(path):
                 self.voices += 1
             return "ok"
@@ -1501,15 +1503,18 @@ class Ears:
                         self.last_info = f"тишина ({db:.0f} дБ) — микрофон живой, говорите громче/ближе"
                 if peak > 0.002:                            # the fifine is quiet (~-45 dB peaks): normalise
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
-                    segs, _ = self.model.transcribe(y, language="ru", beam_size=5, vad_filter=True,
-                                                    initial_prompt=self.PROMPT)
+                    segs, _ = self.model.transcribe(y, beam_size=5, vad_filter=True,
+                                                    initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
                     text = " ".join(s.text for s in segs).strip()
+                    self.langs[job] = (segs[0].language if segs else "ru")   # для тёплого ответа иностранцу (foreign_warm)
                     if any(h in text.lower() for h in self.HALLUCINATIONS):
                         text = ""
                     self.last_info = (f"«{text[:40]}»" if text else "звук есть, слов не разобрал") + f" ({db:.0f} дБ)"
             except Exception as e:
                 log(f"распознавание: {e!r}")
             self.results[job] = text
+
+    langs = {}            # job -> язык распознанной фразы (20.11, foreign_warm)
 
 
 class Operator:
@@ -1558,13 +1563,14 @@ class Operator:
         job, t_rel, interrupted, prefer = self.waiting
         if job in self.ears.results:
             self.waiting = None
-            self._decide(self.ears.results.pop(job), interrupted, prefer, t_rel, heard=True)
+            self._decide(self.ears.results.pop(job), interrupted, prefer, t_rel, heard=True,
+                     lang=getattr(self.ears, "langs", {}).pop(job, None))
         elif time.monotonic() - t_rel > self.STT_WAIT_S:
             self.waiting = None
             log("распознавание не успело — отвечаю как без микрофона")
             self._decide("", interrupted, prefer, t_rel, heard=False)
 
-    def _decide(self, text, interrupted, prefer, t_rel, heard):
+    def _decide(self, text, interrupted, prefer, t_rel, heard, lang=None):
         import intents
         now = time.monotonic()
         self.heard_text = text
@@ -1633,6 +1639,10 @@ class Operator:
                     OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
                 log(f"тангента: «{text}» -> проезжему иностранцу ({fl})")
                 self.multi = False             # отвечает иностранец — отбивку «по одному» не играем
+                # 20.11 (drafts_stream11): ответил на ЕГО языке -> тёплый пул foreign_warm/<lang>, не отбивка
+                self.pending_warm = bool(lang and lang == fl)
+                if self.pending_warm:
+                    log(f"тангента: язык фразы ({lang}) = языку иностранца — тёплый ответ")
                 self.pending = (max(now, t_rel + random.uniform(1.0, 2.2)), "foreign_reply", fl, None, None)
                 return
             if fw:
@@ -2231,9 +2241,15 @@ class Operator:
         if done:
             self.on_air = True
 
-    def foreign_reply(self, lang):
-        """The passing foreigner answers you in his language (reactions/foreign_reply/<lang>), a bit far and noisy."""
-        pool = reaction_pool("foreign_reply", lang)
+    def foreign_reply(self, lang, warm=False):
+        """The passing foreigner answers you in his language. Обычно — отбивка-непонимание
+        (reactions/foreign_reply/<lang>); warm=True — игрок ответил на его языке: тёплый пул
+        reactions/foreign_warm/<lang> (20.11); если его ещё не озвучили — честная старая отбивка."""
+        pool = reaction_pool("foreign_warm", lang) if warm else []
+        if warm and not pool:
+            log(f"иностранец ({lang}): тёплый ответ ещё не озвучен — обычная отбивка")
+        if not pool:
+            pool = reaction_pool("foreign_reply", lang)
         if not pool:
             log(f"иностранцу ({lang}) ответить нечем — реплики не озвучены")
             return
@@ -2260,7 +2276,9 @@ class Operator:
         self.pending = None
         multi, self.multi = self.multi, False     # отбивку играем один раз и только вместе с реальным ответом
         if group == "foreign_reply":
-            return self.foreign_reply(kind)
+            warm = getattr(self, "pending_warm", False)
+            self.pending_warm = False
+            return self.foreign_reply(kind, warm=warm)
         if group == "intent" and kind in SECRET_KINDS:
             if kind == "stream":
                 # 17.11: старая пасхалка «stream» слита с режимом стрима. Пилот вкл (сюда обычно не
@@ -2590,9 +2608,14 @@ class Operator:
         STREAM_ON[0] = on
         log(f"режим стрима: {'вкл' if on else 'выкл'}")
         if on:
-            p = self._stream_line("stream_greet", who)
-            if p:
-                log(f"режим стрима: приветствие зрителей ({p[0]})")
+            # 20.11 (стрим #11): при stream_greet_pilot зрителей приветствует голосовое бухгалтерии
+            # (buh/stream_greet через 1-2 мин) — актёрское приветствие тут давало двойное
+            if not (PLAYER.cfg or {}).get("stream_greet_pilot"):
+                p = self._stream_line("stream_greet", who)
+                if p:
+                    log(f"режим стрима: приветствие зрителей ({p[0]})")
+            else:
+                log("режим стрима: приветствие зрителей — голосовое бухгалтерии (stream_greet_pilot)")
 
     CROSS_P = 0.15
 
@@ -2713,9 +2736,10 @@ def donations_poll(log):
     Сетевые ошибки — в лог, без падения рации."""
     try:
         data = _donations_fetch()
-    except Exception as e:
-        log(f"донаты: опрос не удался: {e!r}")
-        return []
+    except Exception:
+        # 20.11 (стрим #11): DA режет зарубежные IP (SSLError EOF под VPN) — не спамим лог,
+        # возвращаем None, чтобы cb_radio нарастил бэкофф и сам восстановился при живой сети
+        return None
     seen, init = _donations_state()
     ids = {str(d.get("id")) for d in data if d.get("id") is not None}
     if not init:
@@ -3351,6 +3375,12 @@ def _report_prev_crash():
 
 def main(argv):
     global TRAY_STATE, OVERLAY, GUEST_HOOK
+    if sys.stdout is None or sys.stderr is None:      # 20.11 (стрим #11): print в умирающую консоль ронял рацию
+        try:                                          # (OSError 22 на print) — под pythonw/закрытом окне все
+            sys.stdout = open(os.devnull, "w")        # print'ы глушим devnull'ом, журнал — файлом
+            sys.stderr = open(os.devnull, "w")
+        except OSError:
+            pass
     try:                                      # native crashes (audio / whisper / joystick DLLs) -> crash.log
         import faulthandler
         faulthandler.enable(open(ROOT / "crash.log", "a", encoding="utf-8"), all_threads=True)
@@ -3841,6 +3871,7 @@ def main(argv):
     next_sc_poll = 150.0      # 19.11: super chat
     next_pitch_poll = 200.0   # 19.11 (stream_donate_pitch_pilot): первый шанс питча
     next_donations_poll = 60.0   # 19.11 (donation_pilot): первый опрос донатов через минуту после старта
+    da_fails = 0                 # 20.11 (стрим #11): подряд идущие сетевые сбои DA -> экспоненциальный бэкофф
     stream_acc = 0.0   # 17.11 (стрим #8): отдельный аккумулятор времени в пути — driving_s после каждой
                        # реплики сбрасывается в 0, по нему бантер до 480-900 с никогда не доживал
     log(f"Канал 15 v{VERSION} ({VERSION_DATE}) запущен: {len(all_phrases())} шт., пауза {cfg['gap_min_s']}-{cfg['gap_max_s']} с. Жду игру...")
@@ -4086,24 +4117,28 @@ def main(argv):
                                 wq.append(("world", "meet_again", k, now_))     # "опять пересеклись!"
                                 deck.on_air.add(k)
                                 deck.prefer.discard(k)
+                            # 20.11 (стрим #11, «как два разных человека»): актёр только что отвечал игроку —
+                            # фоновые реплики встречи (предупреждения/погода/дорога) откладываются до тишины
+                            air_fresh = (time.monotonic() - getattr(PLAYER, "spoke_at", {}).get(k, -1e9)) < 45.0
                             kn = world.knowledge(k)                          # he comes from where you go
-                            if kn in ("camera", "police") and line_of("world", "warn_" + kn, k):
+                            if kn in ("camera", "police") and not air_fresh and line_of("world", "warn_" + kn, k):
                                 wq.append(("world", "warn_" + kn, k, now_))
                             # он видел, как ты исчез с трассы (телепорт): реплика «куда ты пропал?».
                             # Только знакомый (lv1+) — на личный тон незнакомца не пускаем; witness живёт
                             # до встречи на lv1+. Пул reactions/teleport/<actor> — реплики Летописца.
-                            elif (k in world.teleport_witness
+                            elif (k in world.teleport_witness and not air_fresh
                                   and (not BONDS or BONDS.level(k) >= 1)
                                   and line_of("teleport", k, k)):
                                 wq.append(("teleport", k, k, now_))
                             # friends come on air by themselves more often (road ahead, weather); strangers less
-                            elif (kn == "clear" and random.random() < (0.15, 0.3, 0.5, 0.75)[lv]
+                            elif (kn == "clear" and not air_fresh
+                                  and random.random() < (0.15, 0.3, 0.5, 0.75)[lv]
                                   and line_of("world", "clear", k)):
                                 wq.append(("world", "clear", k, now_))
                             if random.random() < (0.15, 0.3, 0.45, 0.6)[lv]:
                                 wk = weather_kind(game, world)
                                 wkey = (k, wk)
-                                if (now_ - WTH_STAMP.get(wkey, -1e9) > 1800
+                                if (now_ - WTH_STAMP.get(wkey, -1e9) > 1800 and not air_fresh
                                         and line_of("weather", wk, k)):
                                     WTH_STAMP[wkey] = now_
                                     wq.append(("weather", wk, k, now_))
@@ -4415,10 +4450,23 @@ def main(argv):
                 kind = streampeek.pitch_tick(now=now, log=log)
                 if kind and reaction_pool("buh", f"donate_pitch__{kind}"):
                     buh_q.append((now + random.uniform(5, 15), f"donate_pitch__{kind}"))
-            # 19.11 (donation_pilot): фоновый опрос донатов раз в 15-20 с; новый донат -> голосовое бухгалтерии
+            # 19.11 (donation_pilot): фоновый опрос донатов раз в 15-20 с; новый донат -> голосовое бухгалтерии.
+            # 20.11 (стрим #11): DA режет зарубежные IP (SSLError EOF под VPN) — при сбое бэкофф
+            # 30 с * 2^n (потолок 15 мин), понятная причина в лог один раз; при живой сети сброс
             if cfg.get("donation_pilot") and now >= next_donations_poll:
-                next_donations_poll = now + random.uniform(15, 20)
                 fresh_donations = donations_poll(log)
+                if fresh_donations is None:
+                    da_fails += 1
+                    wait = min(30.0 * (2 ** min(da_fails, 5)), 900.0)
+                    next_donations_poll = now + wait
+                    if da_fails == 1 or da_fails % 10 == 0:
+                        log(f"донаты: DonationAlerts не отвечает (часто режет зарубежный IP/VPN) — "
+                            f"повтор через {wait:.0f} с")
+                else:
+                    if da_fails:
+                        log(f"донаты: опрос восстановился после {da_fails} сбоев")
+                    da_fails = 0
+                    next_donations_poll = now + random.uniform(15, 20)
                 if fresh_donations:
                     streampeek.note_donation(now)   # 19.11: метка для after_donation-питча
                 if fresh_donations and reaction_pool("buh", "donation"):
