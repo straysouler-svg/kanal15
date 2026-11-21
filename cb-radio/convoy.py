@@ -1,43 +1,68 @@
-"""Онлайн-конвой (гость в эфире) — этап 1: синхронизация двух раций на одной машине, 2026-11-12.
+"""Онлайн-конвой (гость в эфире) — этап 1: синхронизация двух раций на одной машине, 2026-11-12;
+этап 2 (21.11): связь через интернет (проброс порта, БЕЗ VPN — решение пользователя) с
+обязательной авторизацией пин-кодом; гость — живой человек: его речь распознаёт faster-whisper
+ЛОКАЛЬНО у гостя, в сеть уходит только текст said (звук гостя машину хозяина не покидает).
 
 Решения пользователя 12.11: друг слышит ВОДИТЕЛЕЙ игрока; рация передаёт не звук,
 а события (transport.py); приватность — Сорока и личные реплики (only_<build>) в
-гостевой канал НЕ идут; дружба гостю на этапе 1 не пишется; адресация по имени не
+гостевой канал НЕ идут; дружба гостю не пишется; адресация по имени не
 делается — гостю отвечают как игроку.
 
 Хозяин (эта рация, у игрока): шлёт play/stop за каждым звуком водителей (Player.file),
 принимает ptt/said гостя; приём включается пунктом меню значка, по умолчанию ВЫКЛ.
-Гость (`cb_radio.py --guest 127.0.0.1:47821`, отдельная папка со своим config):
+  config: guest.port — порт; convoy.bind — адрес bind (по умолчанию 127.0.0.1, этап 1 не меняется);
+           convoy.pin — пин для внешних подключений (пустой = localhost-only, как этап 1).
+Гость (`cb_radio.py --guest [addr:port]`, отдельная папка со своим config):
 тонкий клиент — проигрывает присланное через свой Player.file (своё радиоэффектом,
-дистанция приходит в событии), без Operator/Deck/мира; свою тангенту шлёт вверх;
-whisper выключен (mic.enabled=false), своя фраза — файлом guest_say.txt.
+дистанция приходит в событии), без Operator/Deck/мира; своя тангенту шлёт вверх;
+этап 2: микрофон гостя (mic.enabled) распознаёт речь локально (whisper), текст — событием
+said вверх; файл guest_say.txt остаётся как fallback.
 
 Таймеры — настоящие секунды (time.monotonic), в именах `_S`.
 """
 
+import json
 import time
 from pathlib import Path
 
 import transport
 
-GUEST_PORT = 47821          # хозяин слушает здесь (127.0.0.1)
+GUEST_PORT = 47821          # хозяин слушает здесь
 HOST = None                 # transport.Host, пока хозяин принимает гостя
 GUEST_LINK = None           # transport.Guest, пока эта рация — гость
 GUEST_PTT_DOWN = [False]    # тангента гостя у хозяина: эфир молчит, пока он говорит
 
 
-def host_start(port, log, on_guest=None):
-    """Включить приём гостя (меню значка). Уже включён — ничего."""
+def convoy_cfg(cfg):
+    c = cfg.get("convoy") or {}
+    return {"bind": str(c.get("bind") or "127.0.0.1"),
+            "pin": str(c.get("pin") or ""),
+            "host": str(c.get("host") or f"127.0.0.1:{GUEST_PORT}")}
+
+
+def radio_version(root):
+    try:
+        return str(json.loads((Path(root) / "version.json").read_text(encoding="utf-8")).get("version", "?"))
+    except Exception:
+        return "?"
+
+
+def host_start(port, log, cfg=None, on_guest=None):
+    """Включить приём гостя (меню значка). Уже включён — ничего. bind/pin из convoy-конфига."""
     global HOST
     if HOST:
         return True
+    cc = convoy_cfg(cfg or {})
     try:
-        HOST = transport.Host(port, path_ok=None, on_guest=on_guest)
+        HOST = transport.Host(port, bind=cc["bind"], pin=cc["pin"],
+                              mhash=transport.audio_manifest_hash(Path(__file__).resolve().parent / "audio"),
+                              on_guest=on_guest, on_warn=log)
     except OSError as e:
         log(f"конвой: порт {port} не открылся ({e!r}) — гость не подключится")
         HOST = None
         return False
-    log(f"конвой: жду гостя на 127.0.0.1:{port} (этап 1, локально)")
+    log(f"конвой: жду гостя на {cc['bind']}:{port}"
+        + (" (только localhost, pin пуст)" if not cc["pin"] else " (интернет, pin задан)"))
     return True
 
 
@@ -112,27 +137,46 @@ def guest_skip(rel, actor, variant_of, log, verbose=False):
 def guest_main(radio, addr_port):
     """Режим гостя: тонкий клиент эфира хозяина. radio — импортированный cb_radio
     (передаём параметром, чтобы не импортировать тяжёлый модуль на этапе проверки).
-    Вызывается из main() по --guest <addr:port>. Без игры, мира, дружбы, whisper."""
+    Вызывается из main() по --guest [addr:port] (без аргумента — convoy.host из config).
+    Без игры, мира, дружбы. Этап 2: микрофон гостя распознаёт речь локально (whisper),
+    в сеть уходит только текст said — звук гостя машину хозяина не покидает."""
+    cfg = radio.load_cfg()
+    cc = convoy_cfg(cfg)
+    if not addr_port:
+        addr_port = cc["host"]
     host, _, port_s = addr_port.rpartition(":")
     host = host or "127.0.0.1"
     port = int(port_s or GUEST_PORT)
-    cfg = radio.load_cfg()
     radio.PLAYER.cfg = cfg
     lock = radio.single_instance(cfg["lock_port"])          # noqa: F841 (держится за процесс)
     log = radio.log
-    log(f"конвой: режим ГОСТЯ, хозяин {host}:{port}")
+    pin = cc["pin"]                                          # pin — из config гостя, не из командной строки
+    log(f"конвой: режим ГОСТЯ, хозяин {host}:{port}" + (" (pin задан)" if pin else " (БЕЗ pin — хозяин локальный?)"))
 
     def link(on):
         log(f"конвой: {'гость на линии' if on else 'хозяин отвалился, переподключаюсь'}")
 
     global GUEST_LINK
-    GUEST_LINK = transport.Guest(host, port, path_ok=None, on_link=link)
+    GUEST_LINK = transport.Guest(host, port, pin=pin, version=radio_version(radio.ROOT),
+                                 mhash=transport.audio_manifest_hash(radio.AUDIO_ROOT),
+                                 path_ok=None, on_link=link, on_warn=log)
     radio.GUEST_HOOK = guest_ptt                            # тангента этой рации шлёт события, не whisper
     ptt = radio.PTT(cfg)
     radio.PLAYER.ptt = ptt
+    ears = None
+    if (cfg.get("mic") or {}).get("enabled", True):         # этап 2: голос гостя — локальный whisper
+        try:
+            ears = radio.Ears(cfg)
+            ptt.ears = ears
+            log(f"конвой: микрофон гостя — {ears.dev_name}"
+                + ("" if ears.ok else " (распознавание недоступно — fallback: guest_say.txt)"))
+        except Exception as e:
+            log(f"конвой: микрофон гостя не поднялся ({e!r}) — fallback: guest_say.txt")
+            ears = None
     say_file = radio.ROOT / "guest_say.txt"
     say_seen = say_file.stat().st_mtime if say_file.exists() else 0.0
-    log("конвой: готов — пишите фразу в guest_say.txt (рядом с этой папкой), тангенту — ваша кнопка")
+    log("конвой: готов — говорите тангентой (распознается локально) или пишите фразу в guest_say.txt")
+    wait = None                                              # (job, t_release): ждём распознанную фразу гостя
     try:
         while True:
             ptt.poll()
@@ -141,9 +185,24 @@ def guest_main(radio, addr_port):
             if radio.QUIT_REQ["why"] or radio.TRAY_STATE.get("quit"):
                 log("конвой: выход")
                 break
-            while ptt.presses:                              # гость не отвечает сам — очередь просто чистим
+            while ptt.presses:                              # тангента гостя: ptt уже ушёл через GUEST_HOOK
                 dur, interrupted, cut, job = ptt.presses.pop(0)
-                log(f"тангента (гость) {dur:.1f} с -> отправлено хозяину")
+                if job is not None:
+                    wait = [job, time.monotonic()]
+                elif dur >= 0.6:
+                    log(f"тангента (гость) {dur:.1f} с -> без текста (микрофон выключен, fallback: guest_say.txt)")
+            if wait and ears:
+                job, t_rel = wait
+                if job in ears.results:
+                    wait = None
+                    text = ears.results.pop(job)
+                    if text and GUEST_LINK.send({"e": "said", "t": text}):
+                        log(f"тангента (гость): «{text[:60]}» -> хозяину")   # разметка «тангента»: _hide_speech скроет
+                    elif text:
+                        log("конвой: не ушло хозяину (нет связи) — фраза потеряна")
+                elif time.monotonic() - t_rel > 9.0:
+                    wait = None
+                    log("распознавание (гость) не успело — фраза пропущена")
             evs, bad = GUEST_LINK.poll()
             for b in bad:
                 log(f"конвой: битое сообщение от хозяина: {b[:80]!r}")

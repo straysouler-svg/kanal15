@@ -91,8 +91,38 @@ def stop_running_radio(port=47819):
     time.sleep(1.0)
 
 
+def _reg_install_location(root_name):
+    """InstallLocation из записи деинсталлятора (HKCU, затем HKLM). OSError — нет записи/прав."""
+    import winreg
+    roots = {"HKCU": winreg.HKEY_CURRENT_USER, "HKLM": winreg.HKEY_LOCAL_MACHINE}
+    with winreg.OpenKey(roots[root_name], UNINSTALL_KEY) as k:
+        return Path(winreg.QueryValueEx(k, "InstallLocation")[0])
+
+
+def previous_install(reg_reader=None):
+    """Папка прежней установки на этой машине (21.11: ставил на D:, а мастер предлагал C:\\…).
+    Источники: запись деинсталлятора в реестре, затем папка по умолчанию, если рация там уже стоит.
+    reg_reader вынесен параметром (дефолт — реальное чтение реестра), чтобы тест мог его подменить."""
+    if reg_reader is None:
+        reg_reader = _reg_install_location
+    candidates = []
+    for root_name in ("HKCU", "HKLM"):
+        try:
+            candidates.append(reg_reader(root_name))
+        except Exception:
+            pass
+    candidates.append(Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "CB-Radio")
+    for p in candidates:
+        try:
+            if p and (p / "CB-Radio.exe").exists():
+                return p
+        except OSError:
+            continue
+    return None
+
+
 def default_dir():
-    return Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "CB-Radio"
+    return previous_install() or Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "CB-Radio"
 
 
 def register_uninstall(app, size_kb):

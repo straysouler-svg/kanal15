@@ -18,8 +18,10 @@ for pkg in ("faster_whisper", "ctranslate2", "sounddevice", "soundfile", "_sound
         datas += d; binaries += b; hidden += h
     except Exception:
         pass
+# 21.11: tkinter НЕ исключаем — диалог «Переназначить кнопку рации» из трея (cb_radio.ptt_rebind_dialog)
+#         открывается tkinter-окном; без tcl/tk в сборке пункт меню молча ничего не делал (баг 21.11).
 a = Analysis([SRC + r"\launcher.py"], pathex=[SRC, SRC + r"\tools"], binaries=binaries, datas=datas,
-             hiddenimports=hidden, excludes=["tkinter", "matplotlib", "pygame", "torch", "TTS", "IPython", "pytest"],
+             hiddenimports=hidden, excludes=["matplotlib", "pygame", "torch", "TTS", "IPython", "pytest"],
              noarchive=False)
 a.pure = [x for x in a.pure if x[0] not in OURS]          # they come from app/*.py, not from the exe
 pyz = PYZ(a.pure)

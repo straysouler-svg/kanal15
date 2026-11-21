@@ -178,6 +178,9 @@ DEFAULT_CFG = {
     "ptt": {"device": "R5 Base", "button": 23},  # 0-based (pygame); ETS2 controls.sii joy.bN = N-1
     "lock_port": 47819,
     "guest": {"port": 47821, "enabled": False},   # «онлайн-конвой» (этап 1): хозяин слушает гостя на 127.0.0.1 (выкл по умолчанию)
+    "convoy": {"bind": "127.0.0.1", "pin": "", "host": "127.0.0.1:47821"},
+    # этап 2 (21.11, решение пользователя): bind — адрес приёма хозяина (0.0.0.0 = проброс порта на роутере),
+    # pin — ОБЯЗАТЕЛЕН для внешних подключений (пустой = только localhost, как этап 1); host — адрес хозяина у гостя
     "update": {"url": "", "channel": "public", "auto": True},   # tools/pack_release.py fills url + channel per build
 }
 
@@ -1505,7 +1508,8 @@ class Ears:
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
                     segs, _ = self.model.transcribe(y, beam_size=5, vad_filter=True,
                                                     initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
-                    text = " ".join(s.text for s in segs).strip()
+                    segs = list(segs)                       # 21.11: transcribe отдаёт ГЕНЕРАТОР — segs[0] ниже
+                    text = " ".join(s.text for s in segs).strip()          # ронял всё TypeError'ом ×52 за стрим #12
                     self.langs[job] = (segs[0].language if segs else "ru")   # для тёплого ответа иностранцу (foreign_warm)
                     if any(h in text.lower() for h in self.HALLUCINATIONS):
                         text = ""
@@ -3404,10 +3408,11 @@ def main(argv):
         return ptt_test()
     if "--selftest" in argv:
         return selftest()
-    if "--guest" in argv:                     # «онлайн-конвой», этап 1: эта рация — гость (тонкий клиент хозяина)
+    if "--guest" in argv:                     # «онлайн-конвой»: эта рация — гость (тонкий клиент хозяина)
         import convoy
         i = argv.index("--guest")
-        ap = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("--") else f"127.0.0.1:{convoy.GUEST_PORT}"
+        nxt = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("--") else None
+        ap = nxt or (convoy.convoy_cfg(load_cfg()).get("host"))   # без аргумента — convoy.host из config (pin там же)
         return convoy.guest_main(sys.modules[__name__], ap)
     if not all_phrases():
         sys.exit(f"нет фраз в {AUDIO} — сначала tools\\gen_eleven.py level3")
@@ -3502,7 +3507,19 @@ def main(argv):
 
         # 1.27: rebind PTT from the tray menu (for players without a wheel who missed the installer step)
         # 1.28: any device, any moment — mouse buttons too, and the new button works at once (no radio restart)
+        # 21.11: раньше тело диалога исполнялось прямо в callback'е pystray (поток его message-loop) —
+        # при ImportError tkinter в собранном exe (radio.spec его исключал) это была молчаливая смерть:
+        # меню закрывалось, окна нет. По образцу 19.11 («Отправить журнал») диалог гоним в свой поток,
+        # а весь body накрыт try/except: любая ошибка — в журнал и уведомление, «ничего не произошло» не бывает.
         def ptt_rebind():
+            try:
+                ptt_rebind_dialog()
+            except Exception as e:
+                import traceback
+                log(f"переназначение кнопки: окно не открылось {e!r}", tb=traceback.format_exc())
+                tray.notify("Окно переназначения не открылось. Подробности в журнале эфира.")
+
+        def ptt_rebind_dialog():
             import tkinter as tk
             from tkinter import ttk
             root = tk.Tk()
@@ -3842,7 +3859,7 @@ def main(argv):
             gport = int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT))
             on = not convoy.host_on()
             if on:
-                convoy.host_start(gport, log)
+                convoy.host_start(gport, log, cfg=cfg)
             else:
                 convoy.host_stop(log)
             try:
@@ -3862,9 +3879,9 @@ def main(argv):
         def guest_hook(edge):
             convoy.host_send_ptt(edge == "down")
     if (cfg.get("guest") or {}).get("enabled"):
-        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log)
+        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log, cfg=cfg)
     if "--guest-host" in argv:            # приёмка этапа 1: принимать гостя без правки config
-        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log)
+        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log, cfg=cfg)
     GUEST_HOOK = guest_hook               # PTT зовёт это на нажатие/отпускание (только когда хозяин принимает гостя)
     w_acc, w_saved = 0.0, time.monotonic()
     job_t = 0.0
