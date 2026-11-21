@@ -1,5 +1,5 @@
-cb_radio.py:3284:5: 'subprocess' imported but unused
-cb_radio.py:3377:5: `global OVERLAY` is unused: name is never assigned in scope
-cb_radio.py:3435:5: local variable '_lock' is assigned to but never used
-tools/setup_app.py:564:9: 'pynput.keyboard.Key' imported but unused
+cb_radio.py:3288:5: 'subprocess' imported but unused
+cb_radio.py:3381:5: `global OVERLAY` is unused: name is never assigned in scope
+cb_radio.py:3444:5: local variable '_lock' is assigned to but never used
+tools/setup_app.py:594:9: 'pynput.keyboard.Key' imported but unused
 tools/uninstall_app.py:90:25: local variable 'why' is assigned to but never used
