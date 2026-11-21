@@ -124,10 +124,12 @@ def publish(variant, with_installer=False, installer_url=None):
     if with_installer:
         name = f"Kanal15-Setup{ {'kirill': '-Kirill', 'alive': '-Alexey'}.get(variant, '') }-v{ver['version']}.exe"
         inst = CB.parent / "release" / name
-        print("установщик:", inst.name, f"{inst.stat().st_size / 1e6:.0f} МБ")
-        s3_put(bucket, f"channels/{channel}/{name}", inst.read_bytes(), "application/vnd.microsoft.portable-executable",
+        data = inst.read_bytes()
+        print("установщик:", inst.name, f"{len(data) / 1e6:.0f} МБ")
+        s3_put(bucket, f"channels/{channel}/{name}", data, "application/vnd.microsoft.portable-executable",
                cache="public, max-age=86400")
         m["installer_url"] = f"{url}/channels/{channel}/{name}"
+        m["installer_sha256"] = hashlib.sha256(data).hexdigest()   # 21.11: доверенный хеш (манифест подписан)
     if installer_url:                         # an installer already in the bucket (an older version updates itself)
         m["installer_url"] = installer_url
     sent = sent_bytes = 0

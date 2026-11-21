@@ -132,6 +132,9 @@ class Updater:
         self.status = "ещё не проверяли"
         self.available = None                 # version waiting for the next start
         self.need_installer = False
+        self.installer_ver = None             # версия, для которой нужен полный установщик
+        self.installer_file = None            # Path: установщик скачан и сверен по sha256
+        self.installer_url = None             # фолбэк: открыть браузером
         self._lock = threading.Lock()
         self.enabled = bool(getattr(sys, "frozen", False) and self.url and PUBLIC_KEY)
 
@@ -174,6 +177,20 @@ class Updater:
             self._lock.release()
         return self.status
 
+    # ---------------------------------------------------------------- installer (a new base: exe/_internal changed)
+    def _stage_installer(self, ver, url, want_hash):
+        """Скачивание установщика целиком: сначала в .part, сверка sha256, потом rename (атомарно на одном диске)."""
+        dst = self.root / "update" / f"installer_v{ver}.exe"
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        part = dst.parent / (dst.name + ".part")
+        part.write_bytes(_get(url, timeout=600))
+        if sha256_file(part) != want_hash:
+            part.unlink()
+            raise ValueError("хеш установщика не сошёлся")
+        part.replace(dst)
+        self.installer_file = dst
+        self.log(f"обновления: установщик версии {ver} скачан и проверен ({dst.name})")
+
     # ---------------------------------------------------------------- inside
     def _check(self):
         base = f"{self.url}/channels/{self.channel}"
@@ -192,9 +209,18 @@ class Updater:
             return f"последняя версия ({self.version})"
         if m.get("base") and m["base"] != base_signature(self.root):
             self.need_installer = True
+            self.installer_ver = ver
+            self.installer_url = m.get("installer_url") or None
             self.log(f"обновления: версия {ver} требует нового установщика")
+            want_hash = m.get("installer_sha256")
+            if self.installer_url and want_hash and not self.installer_file:
+                try:
+                    self._stage_installer(ver, self.installer_url, want_hash)
+                except Exception as e:  # noqa: BLE001 — сеть/хеш: остаёмся на пункте-ссылке в меню
+                    self.installer_file = None
+                    self.log(f"обновления: установщик не скачался ({e!r})")
             if self.notify:
-                self.notify(f"Вышла версия {ver}. Её нужно поставить установщиком: {m.get('installer_url', '')}")
+                self.notify(f"Вышла версия {ver} — обновление в меню рации")
             return f"версия {ver}: нужен установщик"
         st = self.root / "update" / "staged"
         if (st / "READY").exists():

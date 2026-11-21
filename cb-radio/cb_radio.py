@@ -3758,10 +3758,39 @@ def main(argv):
                     CFG_FILE.write_text(json.dumps(cur, ensure_ascii=False, indent=4), encoding="utf-8")
                 except (OSError, ValueError):
                     pass
+
+            def upd_install_run():
+                # 21.11: «обновление в один клик» — установщик уже скачан и сверен по sha256 (updater.py)
+                path = getattr(upd, "installer_file", None)
+                if not path:
+                    return
+                log(f"обновления: запуск установщика {path.name}")
+                try:
+                    os.startfile(str(path))
+                except OSError:
+                    return
+                TRAY_STATE["quit"] = True                 # как «Выключить рацию»: мир сохранится и процесс уйдёт
+                QUIT_REQ["why"] = "установка обновления"
+                threading.Timer(4.0, os._exit, (0,)).start()
+
+            def upd_install_open():
+                url = getattr(upd, "installer_url", None)
+                if not url:
+                    return
+                try:
+                    import webbrowser
+                    webbrowser.open(url)
+                except Exception:
+                    pass
             tray.HOOKS.update(report=send_report)
             tray.HOOKS["log"] = log      # 19.11: трей пишет ошибки hook'ов в журнал рации
             tray.HOOKS.update(upd_status=lambda: upd.status, upd_check=upd_check, upd_auto=upd_auto,
                               upd_auto_on=lambda: upd.auto, upd_enabled=lambda: upd.enabled,
+                              upd_inst_ready=lambda: bool(getattr(upd, "installer_file", None)),
+                              upd_inst_ver=lambda: getattr(upd, "installer_ver", None) or "",
+                              upd_inst_dl=lambda: bool(getattr(upd, "need_installer", False))
+                              and not getattr(upd, "installer_file", None),
+                              upd_inst_run=upd_install_run, upd_inst_open=upd_install_open,
                               changelog=lambda: os.startfile(str(ROOT / "CHANGELOG.md")))
     except Exception as e:
         log(f"обновления не подключились: {e!r}")

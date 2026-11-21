@@ -155,6 +155,12 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
              visible=lambda i: bool(hook("overlay_on", False)())),
         Item("Обновления", Menu(
             Item(lambda i: str(hook("upd_status", "—")() or "—")[:60], None, enabled=False),
+            Item(lambda i: f"Установить обновление {hook('upd_inst_ver', '')() or '…'}…",
+                 lambda icon, item: hook("upd_inst_run")(),
+                 visible=lambda i: bool(hook("upd_inst_ready", False)())),
+            Item(lambda i: f"Скачать обновление {hook('upd_inst_ver', '')() or '…'}…",
+                 lambda icon, item: hook("upd_inst_open")(),
+                 visible=lambda i: bool(hook("upd_inst_dl", False)())),
             Item("Проверить сейчас", lambda icon, item: hook("upd_check")(), enabled=lambda i: bool(hook("upd_enabled", False)())),
             Item("Обновлять автоматически", lambda icon, item: hook("upd_auto")(),
                  checked=lambda i: bool(hook("upd_auto_on", True)())),
