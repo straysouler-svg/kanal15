@@ -84,9 +84,8 @@ def main():
             break
     if rel is None:
         ver = json.loads((Path(__file__).resolve().parents[1] / "version.json").read_text(encoding="utf-8"))
-        rel = api("POST", f"{base}/releases",
-                  {"tag_name": a.tag, "name": a.tag, "body": f"Канал 15, версия {ver['version']}. Подробности — в CHANGELOG.md."},
-                  token)
+        rel = api("POST", f"{base}/releases", token,
+                  {"tag_name": a.tag, "name": a.tag, "body": f"Канал 15, версия {ver['version']}. Подробности — в CHANGELOG.md."})
         print(f"создан релиз {a.tag}")
 
     assets = {x["name"]: x for x in rel["assets"]}
