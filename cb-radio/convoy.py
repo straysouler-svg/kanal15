@@ -134,10 +134,10 @@ def guest_skip(rel, actor, variant_of, log, verbose=False):
     return None
 
 
-def guest_main(radio, addr_port):
+def guest_main(radio, addr_port, pin=None):
     """Режим гостя: тонкий клиент эфира хозяина. radio — импортированный cb_radio
     (передаём параметром, чтобы не импортировать тяжёлый модуль на этапе проверки).
-    Вызывается из main() по --guest [addr:port] (без аргумента — convoy.host из config).
+    Вызывается из main() по --guest [addr:port] [--pin …] (без аргументов — convoy из config).
     Без игры, мира, дружбы. Этап 2: микрофон гостя распознаёт речь локально (whisper),
     в сеть уходит только текст said — звук гостя машину хозяина не покидает."""
     cfg = radio.load_cfg()
@@ -150,7 +150,7 @@ def guest_main(radio, addr_port):
     radio.PLAYER.cfg = cfg
     lock = radio.single_instance(cfg["lock_port"])          # noqa: F841 (держится за процесс)
     log = radio.log
-    pin = cc["pin"]                                          # pin — из config гостя, не из командной строки
+    pin = pin if pin is not None else cc["pin"]              # аргумент --pin перекрывает config
     log(f"конвой: режим ГОСТЯ, хозяин {host}:{port}" + (" (pin задан)" if pin else " (БЕЗ pin — хозяин локальный?)"))
 
     def link(on):

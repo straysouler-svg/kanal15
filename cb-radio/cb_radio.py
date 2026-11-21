@@ -3413,7 +3413,11 @@ def main(argv):
         i = argv.index("--guest")
         nxt = argv[i + 1] if i + 1 < len(argv) and not argv[i + 1].startswith("--") else None
         ap = nxt or (convoy.convoy_cfg(load_cfg()).get("host"))   # без аргумента — convoy.host из config (pin там же)
-        return convoy.guest_main(sys.modules[__name__], ap)
+        pin = None
+        if "--pin" in argv:                                       # --pin …: однокнопочный cmd гостя без правки config
+            j = argv.index("--pin")
+            pin = argv[j + 1] if j + 1 < len(argv) and not argv[j + 1].startswith("--") else ""
+        return convoy.guest_main(sys.modules[__name__], ap, pin=pin)
     if not all_phrases():
         sys.exit(f"нет фраз в {AUDIO} — сначала tools\\gen_eleven.py level3")
     if "--listen" in argv:
