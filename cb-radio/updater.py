@@ -75,6 +75,24 @@ def bad_manifest_paths(m):
     return bad
 
 
+def _ver_tuple(ver):
+    """Семантическая версия -> кортеж чисел для сравнения; нечисловые куски -> 0 (фолбэк, сравнение не падает)."""
+    parts = []
+    for chunk in str(ver).strip().split("."):
+        if chunk.isdigit():
+            parts.append(int(chunk))
+        else:
+            parts.append(0)
+    return tuple(parts)
+
+
+def _ver_leq(a, b):
+    """True, если версия a не новее b. Короткий кортеж дополняется нулями: '1.35' == '1.35.0'."""
+    ta, tb = _ver_tuple(a), _ver_tuple(b)
+    n = max(len(ta), len(tb))
+    return ta + (0,) * (n - len(ta)) <= tb + (0,) * (n - len(tb))
+
+
 def base_signature(root):
     """What only a full installer can change: the exe + the library folder (names and sizes)."""
     h = hashlib.sha256()
@@ -170,8 +188,8 @@ class Updater:
             self.log(f"обновления: ОТКАЗ — небезопасные пути в манифесте: {bad[:3]}")
             return "обновление отклонено: небезопасный путь в манифесте"
         ver = str(m.get("version"))
-        if ver == self.version:
-            return f"последняя версия ({ver})"
+        if _ver_leq(ver, self.version):
+            return f"последняя версия ({self.version})"
         if m.get("base") and m["base"] != base_signature(self.root):
             self.need_installer = True
             self.log(f"обновления: версия {ver} требует нового установщика")
