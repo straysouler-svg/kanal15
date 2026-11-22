@@ -709,6 +709,18 @@ class World:
         self._save_hazards()
         return h
 
+    def add_tip(self, dist_m=None):
+        """22.11 (стрим #13): игрок предупредил эфир «полиция впереди» — метка встаёт на народную карту
+        ВПЕРЕДИ по его курсу (1-3 км), экипаж «постоит и уедет»: TTL как у _maybe_post, на диск НЕ пишем
+        (только камеры с штрафов — в hazards.json). Встречные потом честно ответят police_yes/warn_police."""
+        if self.px is None:
+            return None
+        d = float(dist_m) if dist_m is not None else random.uniform(1000.0, 3000.0)
+        h = {"kind": "police", "x": self.px + self.hx * d, "z": self.pz + self.hz * d,
+             "until": self.game_min + random.uniform(60, 150), "src": "tip"}
+        self.hazards.append(h)
+        return h
+
     def knowledge(self, key):
         """What this driver can honestly tell you: 'camera'/'police' he has just passed that lies AHEAD of you
         (he comes from there), 'clear' if he comes from there and saw nothing, None if he can't know."""

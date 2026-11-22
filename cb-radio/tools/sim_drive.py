@@ -278,6 +278,7 @@ def main():
             self.last_said = None
             self.said, self.said_n = {}, 0
             self.spoke, self.voices = set(), 0
+            self.spoke_at = {}       # 22.11: паритет с Player.file (cb_radio) — без этого гейт свежего эфира в стенде молчал
             self.playing, self.speaker = False, None
             self.guest_dist = None
             self.cfg, self.game, self.world, self.ptt = cfg, game, world, None
@@ -314,6 +315,8 @@ def main():
                 self.spoke.add(actor)
             advance(dur)                               # виртуальные часы сдвигаются на длину реплики
             self.last_speaker, self.last_t = actor, _vnow()
+            if actor:
+                self.spoke_at[actor] = _vnow()
             return "ok"
 
         def idle(self, sec):
@@ -393,14 +396,16 @@ def main():
 
     corpus_bag = []
     corpus_done = [False]       # --corpus-all: мешок опустел -> корпус больше не звучит
+    corpus_filled = [False]     # 22.11: флаг «единственное наполнение выдано» (раньше done ставился ДО наполнения — корпус молчал всегда)
 
     def next_corpus():
         if not corpus_bag:
-            if args.corpus_all:
+            if corpus_filled[0] and args.corpus_all:   # единственный замес выдан — дальше молчим
                 corpus_done[0] = True
                 return None
-            corpus_bag.extend(corpus)
+            corpus_bag.extend(corpus)                  # без --corpus-all мешок бесконечный, как раньше
             random.shuffle(corpus_bag)
+            corpus_filled[0] = True
         text = corpus_bag.pop()
         # подстановка: ~60% — водитель из зоны, ~25% — отсутствующий, ~15% — имя убираем
         if _int.addressee(text):
@@ -643,6 +648,16 @@ def main():
                     log(f"[сим] banish {st['banish']}: увезён за 60 км")
                     if st.get("gone"):                  # 15.11 (разбор 2): «давно уехал» — стираем льготные 120 с
                         deck.left_at.pop(st["banish"], None)
+            if "place" in st:                         # 22.11: поставить водителя в метрах от игрока (впереди по курсу) — сцены гудка/дистанций
+                for k_, d_ in st["place"].items():
+                    d = world.drivers.get(k_)
+                    if d and world.px is not None:
+                        d.x, d.z = world.px + world.hx * d_, world.pz + world.hz * d_
+                        d.companion = True
+                world.update(game.x, game.z, 1.0, game.game_min)
+                deck.allowed = set(world.inside)
+                deck.allowed_far = set(world.far())
+                log(f"[сим] place {st['place']}: позиции выставлены")
             if "cfg" in st:                           # пилотные флаги для сценария (напр. stream_mode_pilot)
                 cb.PLAYER.cfg.update(st["cfg"])
                 log(f"[сим] cfg: {st['cfg']}")

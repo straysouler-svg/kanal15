@@ -150,6 +150,8 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
         Item("Тишина в эфире", toggle_mute, checked=lambda i: STATE["muted"]),
         Item("Оверлей для стрима", lambda icon, item: hook("overlay_toggle")(),
              checked=lambda i: bool(hook("overlay_on", False)())),
+        # 22.11 (стрим #13): полный журнал эфира (страница /journal оверлея) — отдельно от «Журнал эфира…» (лог-файл)
+        Item("Журнал эфира (веб)…", open_url("http://127.0.0.1:47823/journal")),
         Item("Онлайн-конвой (гость в эфире)", lambda icon, item: hook("guest_toggle")(),
              checked=lambda i: bool(hook("guest_on", False)())),
         Item(lambda i: "  OBS → Браузер: " + str(hook("overlay_url", "")() or ""), None, enabled=False,

@@ -17,7 +17,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 _lock = threading.Lock()
-STATE = {"inside": [], "lines": deque(maxlen=3), "phone": 0.0, "seq": 0, "status": ""}
+# 22.11 (разбор стрима #13): lines 3 -> 50 (журнал в трее был мелким и без истории);
+# history — полный журнал сессии для страницы /journal (включая sys-события)
+STATE = {"inside": [], "lines": deque(maxlen=50), "history": deque(maxlen=500),
+         "phone": 0.0, "seq": 0, "status": ""}
 _TEXT, _NAMES = {}, {}
 _TAGS = re.compile(r"\[[^\]]*\]\s*|\([^)]*\)\s*")
 
@@ -66,12 +69,16 @@ def add_texts(m):
 JOURNAL = [None]   # 2026-11-07: folder for the subtitle journal (subs/<date>.jsonl) - only the user's own radio
 
 
-def _push(who, text, kind, key=None, dur=None, t=None):
+def _push(who, text, kind, key=None, dur=None, t=None, journal=True, pending=False):
+    """Одна строка в lines и history (ОДИН dict — правка по id обновляет обе очереди сразу).
+    journal=False — pending-строка «Ты: …»: в subs/*.jsonl пишется только финальный текст (you_done)."""
     now = time.time()
     with _lock:
         STATE["seq"] += 1
-        STATE["lines"].append({"who": who, "text": text, "kind": kind, "t": now, "id": STATE["seq"]})
-    if JOURNAL[0]:
+        line = {"who": who, "text": text, "kind": kind, "t": now, "id": STATE["seq"], "pending": pending}
+        STATE["lines"].append(line)
+        STATE["history"].append(line)
+    if journal and JOURNAL[0]:
         # every line on air with its wall-clock time: promo/shorts/draft_clips.py turns an OBS clip into a
         # finished subtitle spec (who said what and when) without speech recognition
         try:
@@ -82,6 +89,7 @@ def _push(who, text, kind, key=None, dur=None, t=None):
                 f.write(json.dumps(rec, ensure_ascii=False) + "\n")
         except Exception:
             pass
+    return line
 
 
 def said(rel, actor, dur=None):
@@ -111,6 +119,36 @@ def you(text, t_end=None):
         _push("Ты", text, "you", "player", None, t_end)
 
 
+def you_pending(t_end=None):
+    """22.11 (стрим #13): нажатие тангенты ВИДНО СРАЗУ при отпускании, до распознавания — приглушённая
+    строка «Ты: …» (kind 'you' + pending). Возвращает id; you_done() заменяет её текст на месте."""
+    return _push("Ты", "…", "you", "player", None, t_end, journal=False, pending=True)["id"]
+
+
+def you_done(lid, text, t_end=None):
+    """22.11: распознавание вернулось (или таймаут) — та же строка заменяется на месте, новую не плодим.
+    Пустой text = таймаут whisper -> «(не расслышано)»."""
+    text = text or "(не расслышано)"
+    with _lock:
+        for l in STATE["lines"]:
+            if l["id"] == lid:
+                l["text"], l["pending"] = text, False
+                break
+    if JOURNAL[0]:
+        try:
+            rec = {"t": round(t_end or time.time(), 2), "who": "player", "name": "Ты", "text": text, "kind": "you"}
+            with (JOURNAL[0] / f"{time.strftime('%Y-%m-%d')}.jsonl").open("a", encoding="utf-8") as f:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+
+
+def sys(text):
+    """22.11 (стрим #13): системные события (заметка, штраф, режим стрима) — в /journal, НЕ в эфир OBS."""
+    if text:
+        _push("Канал 15", text, "sys", "sys")
+
+
 def inside(keys, chips=None):
     """Who is in radio range; chips = {key: "♥♥ 😄"} - friendship hearts + mood (bonds.py), shown after the name."""
     names = [{"n": _NAMES.get(k, k).split(" (")[0], "s": (chips or {}).get(k, "")} for k in sorted(keys)]
@@ -128,6 +166,12 @@ def snapshot():
     with _lock:
         return {"inside": list(STATE["inside"]), "lines": list(STATE["lines"]), "phone": STATE["phone"],
                 "now": time.time()}
+
+
+def journal_snapshot():
+    """22.11: полный журнал сессии для страницы /journal (air + you + sys)."""
+    with _lock:
+        return {"history": list(STATE["history"]), "now": time.time()}
 
 
 PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Канал 15 — оверлей</title>
@@ -158,6 +202,7 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transpa
 .line.bond{color:#ffd1dc}
 .chip .s{margin-left:8px;font-size:22px;opacity:.9}
 .line.old{opacity:.45;font-size:26px}
+.line.pending{opacity:.4;font-style:italic}   /* 22.11: «Ты: …» до распознавания — приглушённо */
 #phone{position:absolute;right:56px;bottom:160px;background:var(--bar);border:2px solid #7ee08a;border-radius:18px;
  padding:16px 26px;font-size:28px;display:none;align-items:center;gap:14px}
 #phone.on{display:flex;animation:ring .5s ease-in-out 4}
@@ -195,22 +240,22 @@ let NOSUBS=false;
   if(C.brand===false&&C.zone===false)v(top,false);
  }
 })();
-let last=-1, talker=null;
+let last=-1, lasttxt="", talker=null;
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
 async function tick(){
  try{
   const s=await (await fetch('/state',{cache:'no-store'})).json();
-  const lines=s.lines.filter(l=>s.now-l.t<45);
+  const lines=s.lines.filter(l=>l.kind!=='sys'&&s.now-l.t<45);   /* 22.11: sys — только в /journal, не в эфир */
   const cur=lines.length?lines[lines.length-1]:null;
   talker=(cur&&cur.kind==='radio'&&s.now-cur.t<8)?cur.who:null;
   const z=document.getElementById('zone');
   z.innerHTML=s.inside.length?'в зоне рации:'+s.inside.map(c=>'<span class="chip'+(c.n===talker?' talk':'')+'">'+esc(c.n)+(c.s?'<span class="s">'+esc(c.s)+'</span>':'')+'</span>').join('')
                             :'<span class="quiet">в зоне рации никого</span>';
-  const id=cur?cur.id:-1;
-  if(id!==last){
-   last=id;
+  const id=cur?cur.id:-1, txt=cur?cur.text:'';
+  if(id!==last||txt!==lasttxt){   /* 22.11: pending-строка меняет текст на месте — перерисовываем и тогда */
+   last=id; lasttxt=txt;
    const b=document.getElementById('bottom');
-   b.innerHTML=NOSUBS?'':(lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
+   b.innerHTML=NOSUBS?'':(lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(l.pending?' pending':'')+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
                            :'<div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div>');
   }
   document.getElementById('phone').classList.toggle('on',s.now-s.phone<9&&!NOSUBS);
@@ -246,6 +291,7 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transpa
 .line.you .who{color:var(--you)} .line.phone .who{color:#7ee08a} .line.bond .who{color:#ff8fb1} .line.bond{color:#ffd1dc}
 .line.foreign .who{color:#c8c8c8}
 .line.old{opacity:.45;font-size:28px;-webkit-line-clamp:1}
+.line.pending{opacity:.4;font-style:italic}   /* 22.11: «Ты: …» до распознавания — приглушённо */
 .quiet{font-size:28px;color:var(--muted)}
 #phone{position:absolute;right:34px;top:1180px;background:var(--bar);border:2px solid #7ee08a;border-radius:16px;padding:10px 20px;
  font-size:26px;display:none;align-items:center;gap:10px}
@@ -256,25 +302,72 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transpa
 <div id="phone">📱 <span>Бухгалтерия — голосовое</span></div>
 <div id="subs"><div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div></div>
 <script>
-let last=-1, talker=null;
+let last=-1, lasttxt="", talker=null;
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
 async function tick(){
  try{
   const s=await (await fetch('/state',{cache:'no-store'})).json();
-  const lines=s.lines.filter(l=>s.now-l.t<45);
+  const lines=s.lines.filter(l=>l.kind!=='sys'&&s.now-l.t<45);   /* 22.11: sys — только в /journal, не в эфир */
   const cur=lines.length?lines[lines.length-1]:null;
   talker=(cur&&cur.kind==='radio'&&s.now-cur.t<8)?cur.who:null;
   document.getElementById('zone').innerHTML=s.inside.length?s.inside.map(c=>'<span class="chip'+(c.n===talker?' talk':'')+'">'+esc(c.n)+(c.s?'<span class="s">'+esc(c.s)+'</span>':'')+'</span>').join('')
                             :'<span class="quiet">в зоне рации никого</span>';
-  const id=cur?cur.id:-1;
-  if(id!==last){
-   last=id;
-   document.getElementById('subs').innerHTML=lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
+  const id=cur?cur.id:-1, txt=cur?cur.text:'';
+  if(id!==last||txt!==lasttxt){
+   last=id; lasttxt=txt;
+   document.getElementById('subs').innerHTML=lines.length?lines.slice(-2).map((l,i,a)=>'<div class="line '+l.kind+(l.pending?' pending':'')+(i<a.length-1?' old':'')+'"><span class="who">'+esc(l.who)+':</span>'+esc(l.text)+'</div>').join('')
                            :'<div class="quiet">Эфир на 15-м канале. Слышно только тех, кто рядом.</div>';
   }
   document.getElementById('phone').classList.toggle('on',s.now-s.phone<9);
  }catch(e){}
  setTimeout(tick,300);
+}
+tick();
+</script></body></html>"""
+
+
+# Страница /journal (22.11, стрим #13): полный журнал сессии — эфир + «Ты: …» + системные события.
+# Открывается из трея («Журнал эфира (веб)…»); автообновление 500 мс, автоскролл вниз.
+PAGE_JOURNAL = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Канал 15 — журнал эфира</title>
+<style>
+:root{--gold:#f2c14e;--bar:rgba(10,12,18,.93);--text:#f2f2f2;--muted:#9aa3b2;--you:#8fd3ff}
+html,body{margin:0;background:#0a0c12;color:var(--text);height:100%;
+ font-family:"Segoe UI","Montserrat",Arial,sans-serif}
+#wrap{max-width:1100px;margin:0 auto;padding:20px 28px 60px}
+h1{font-size:26px;color:var(--gold);letter-spacing:1px;margin:14px 0 4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+#log{display:flex;flex-direction:column;gap:6px;font-size:19px;line-height:1.4}
+.row{display:flex;gap:14px;padding:7px 14px;border-radius:10px;background:rgba(255,255,255,.04)}
+.row .tm{color:var(--muted);font-variant-numeric:tabular-nowrap;white-space:nowrap;font-size:16px;padding-top:2px}
+.row .who{font-weight:700;color:var(--gold);white-space:nowrap}
+.row.you .who{color:var(--you)}
+.row.sys{background:transparent;border:1px dashed rgba(154,163,178,.35);color:var(--muted);font-size:16px}
+.row.sys .who{color:var(--muted)}
+.row.pending{opacity:.45;font-style:italic}
+.empty{color:var(--muted);padding:20px 0}
+</style></head><body>
+<div id="wrap"><h1>КАНАЛ 15 — журнал эфира</h1>
+<div class="sub">всё, что прозвучало в эфире, твои передачи и служебные события сессии</div>
+<div id="log"><div class="empty">журнал пуст — пока тишина на 15-м канале</div></div></div>
+<script>
+let lastN=-1;
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function tm(t){const d=new Date(t*1000);const p=n=>String(n).padStart(2,'0');
+ return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())}
+async function tick(){
+ try{
+  const s=await (await fetch('/journal_state',{cache:'no-store'})).json();
+  const h=s.history;
+  if(h.length!==lastN){          /* перерисовка только при изменении числа строк; скролл вниз — всегда */
+   lastN=h.length;
+   const el=document.getElementById('log');
+   el.innerHTML=h.length?h.map(l=>'<div class="row '+l.kind+(l.pending?' pending':'')+'"><span class="tm">'+tm(l.t)+
+    '</span><span class="who">'+esc(l.who)+':</span><span>'+esc(l.text)+'</span></div>').join('')
+    :'<div class="empty">журнал пуст — пока тишина на 15-м канале</div>';
+  }
+  window.scrollTo(0,document.body.scrollHeight);
+ }catch(e){}
+ setTimeout(tick,500);
 }
 tick();
 </script></body></html>"""
@@ -384,6 +477,10 @@ class _H(BaseHTTPRequestHandler):
         u = urlsplit(self.path)
         if u.path == "/state":
             body, ctype = json.dumps(snapshot(), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8"
+        elif u.path == "/journal_state":                       # 22.11: полный журнал сессии для /journal
+            body, ctype = json.dumps(journal_snapshot(), ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8"
+        elif u.path == "/journal":                             # 22.11: страница журнала эфира (из трея)
+            body, ctype = PAGE_JOURNAL.encode("utf-8"), "text/html; charset=utf-8"
         elif u.path.rstrip("/") == "/v":
             body, ctype = PAGE_V.encode("utf-8"), "text/html; charset=utf-8"
         elif u.path == "/setup":

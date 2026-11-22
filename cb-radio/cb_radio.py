@@ -1506,11 +1506,11 @@ class Ears:
                         self.last_info = f"тишина ({db:.0f} дБ) — микрофон живой, говорите громче/ближе"
                 if peak > 0.002:                            # the fifine is quiet (~-45 dB peaks): normalise
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
-                    segs, _ = self.model.transcribe(y, beam_size=5, vad_filter=True,
-                                                    initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
+                    segs, info = self.model.transcribe(y, beam_size=5, vad_filter=True,
+                                                       initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
                     segs = list(segs)                       # 21.11: transcribe отдаёт ГЕНЕРАТОР — segs[0] ниже
                     text = " ".join(s.text for s in segs).strip()          # ронял всё TypeError'ом ×52 за стрим #12
-                    self.langs[job] = (segs[0].language if segs else "ru")   # для тёплого ответа иностранцу (foreign_warm)
+                    self.langs[job] = info.language or "ru"   # язык живёт в info, у Segment его нет (AttributeError 22.11)
                     if any(h in text.lower() for h in self.HALLUCINATIONS):
                         text = ""
                     self.last_info = (f"«{text[:40]}»" if text else "звук есть, слов не разобрал") + f" ({db:.0f} дБ)"
@@ -1534,7 +1534,7 @@ class Operator:
         self.last_talk = -1e9
         self.repeat_until = 0.0      # someone asked "повтори" -> next press gets an answer
         self.pending = None          # (time, group, kind, prefer, addressee)
-        self.waiting = None          # (job, release time, interrupted, prefer)
+        self.waiting = None          # (job, release time, interrupted, prefer, overlay_line_id)
         self.last_file = None
         self.rollcalled = {}         # actor -> time until which he ignores another "кто в эфире?"
         self.repeats = {}            # line number (Player.said) -> times repeated; 2 max, then silence
@@ -1556,7 +1556,10 @@ class Operator:
         self.stale = now - self.last_talk > self.REGREET_S   # long silence -> they greet you again
         self.last_talk = now
         if job is not None:                              # wait for the words
-            self.waiting = (job, now, interrupted, prefer)
+            # 22.11 (стрим #13): нажатие видно СРАЗУ при отпускании — приглушённая «Ты: …» в журнале/оверлее;
+            # you_done() в poll_ears заменит её на распознанный текст (или «(не расслышано)» при таймауте)
+            lid = OVERLAY.you_pending() if OVERLAY else None
+            self.waiting = (job, now, interrupted, prefer, lid)
             self.pending = None
             return
         self._decide("", interrupted, prefer, now, heard=False)
@@ -1564,17 +1567,27 @@ class Operator:
     def poll_ears(self):
         if not self.waiting:
             return
-        job, t_rel, interrupted, prefer = self.waiting
+        job, t_rel, interrupted, prefer, lid = self.waiting
         if job in self.ears.results:
             self.waiting = None
             self._decide(self.ears.results.pop(job), interrupted, prefer, t_rel, heard=True,
-                     lang=getattr(self.ears, "langs", {}).pop(job, None))
+                     lang=getattr(self.ears, "langs", {}).pop(job, None), lid=lid)
         elif time.monotonic() - t_rel > self.STT_WAIT_S:
             self.waiting = None
             log("распознавание не успело — отвечаю как без микрофона")
+            # 22.11: нажатие остаётся в журнале — строка честно меняется на «(не расслышано)»
+            if OVERLAY and lid is not None:
+                OVERLAY.you_done(lid, "", time.time() - (time.monotonic() - t_rel))
             self._decide("", interrupted, prefer, t_rel, heard=False)
 
-    def _decide(self, text, interrupted, prefer, t_rel, heard, lang=None):
+    def _you_final(self, lid, text, t_rel):
+        """22.11: финальный текст нажатия — в pending-строку (не новую), fallback без оверлея/без pending."""
+        if OVERLAY and lid is not None:
+            OVERLAY.you_done(lid, text, time.time() - (time.monotonic() - t_rel))
+        elif OVERLAY:
+            OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
+
+    def _decide(self, text, interrupted, prefer, t_rel, heard, lang=None, lid=None):
         import intents
         now = time.monotonic()
         self.heard_text = text
@@ -1589,7 +1602,8 @@ class Operator:
                 pass
             log(f"заметка записана (не в эфир): «{note}»")
             if OVERLAY:
-                OVERLAY.you(text, time.time() - (now - t_rel))
+                OVERLAY.sys(f"заметка записана: «{note}»")     # 22.11: системное событие — в /journal
+                self._you_final(lid, text, t_rel)
             self.multi = False
             self.support = False
             return
@@ -1640,7 +1654,7 @@ class Operator:
             right_after = t_rel - ft < FOREIGN_HEARS_S and PLAYER.last_t < ft and intent in FOREIGN_SMALLTALK
             if fl and fn < FOREIGN_MAX_REPLIES and (right_after or (fw and t_rel - ft < FOREIGN_WORD_S)):
                 if OVERLAY:
-                    OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
+                    self._you_final(lid, text, t_rel)
                 log(f"тангента: «{text}» -> проезжему иностранцу ({fl})")
                 self.multi = False             # отвечает иностранец — отбивку «по одному» не играем
                 # 20.11 (drafts_stream11): ответил на ЕГО языке -> тёплый пул foreign_warm/<lang>, не отбивка
@@ -1651,7 +1665,7 @@ class Operator:
                 return
             if fw:
                 if OVERLAY:
-                    OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
+                    self._you_final(lid, text, t_rel)
                 log(f"тангента: «{text}» -> иностранное слово, иностранца рядом нет — наши молчат")
                 self.multi = False
                 self.pending = None
@@ -1779,7 +1793,7 @@ class Operator:
         if who:
             prefer = who
         if OVERLAY and heard:
-            OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
+            self._you_final(lid, text, t_rel)
         log(f"тангента: «{text}» -> {intent or '?'}{' для ' + who if who else ''}{' (ответ ему)' if reply else ''}"
             f"{' про ' + about if about else ''}"
             f"{' (вопрос)' if question else ''} => {group}/{kind or 'тишина'}"
@@ -1890,6 +1904,39 @@ class Operator:
             heard(pick[1])
             return pick
         return None
+
+    def _police_ack(self, who, prefer):
+        """22.11 (стрим #13): игрок ПРЕДУПРЕДИЛ эфир про полицию (утверждение, не вопрос) — ближний подтверждает
+        приём и предупреждение уходит на народную карту (world.add_tip): встречные потом честно ответят
+        police_yes / warn_police. Реплики: пул intent/police_ack («принял, спасибо»); пока его нет на диске —
+        грейсфул-деградация на player/ack, тишины в ответ на предупреждение нет."""
+        w = getattr(self, "world", None)
+        if w and getattr(w, "px", None) is not None:
+            try:
+                import math
+                h = w.add_tip()
+                log(f"народная карта: предупреждение о полиции принято (пост в {h and round(math.hypot(h['x'] - w.px, h['z'] - w.pz))} м впереди)")
+            except Exception as e:
+                log(f"народная карта: не записал предупреждение: {e!r}")
+        if self.deck.allowed is None:
+            return True
+        here = [a for a in self.deck.allowed if not self.deck.offline(a)]
+        pool = [x for x in reaction_pool("intent", "police_ack") if x[0] in here]
+        if not pool:
+            pool = [x for x in reaction_pool("player", "ack") if x[0] in here]
+        if who:
+            mine = [x for x in pool if x[0] == who]
+            pool = mine or pool                     # предупредил по имени — подтверждает он сам
+        pick = self.deck.choose(pool, prefer=prefer) if pool else None
+        if not pick:
+            log("ответ: предупреждение о полиции приняли молча (некому подтвердить)")
+            return True
+        log(f"ответ: предупреждение о полиции принято ({pick[0]})")
+        if PLAYER.file(pick[1], pick[0]) == "ok":
+            bond_add(pick[0], 2 if who == pick[0] else 1, "предупреждение о полиции")
+            self.deck.on_air.add(pick[0])
+            self.on_air = True
+        return True
 
     def rollcall(self):
         """"Кто в эфире?" - everybody in range answers with his handle, one after another; whoever answered
@@ -2276,6 +2323,7 @@ class Operator:
             log(f"проезжий иностранец ({lang}) уехал дальше")
 
     def answer(self):
+        import intents
         _, group, kind, prefer, who = self.pending
         self.pending = None
         multi, self.multi = self.multi, False     # отбивку играем один раз и только вместе с реальным ответом
@@ -2326,6 +2374,13 @@ class Operator:
             return
         if group == "intent" and kind == "where" and self._lane_answer(who, prefer):
             return
+        if group == "intent" and kind == "police":
+            # 22.11 (стрим #13): «полиция впереди» без маркера вопроса — ПРЕДУПРЕЖДЕНИЕ, не вопрос:
+            # эфир подтверждает приём, метка встаёт на народную карту. Маркер вопроса у police — «?»:
+            # вопросные слова без «?» вопросом не считаем, иначе честное предупреждение
+            # «Полиция там, где я еду» получало противоречащий police_no (эпохи корпуса 22.11)
+            if "?" not in (self.heard_text or ""):
+                return self._police_ack(who, prefer)
         if group == "intent" and kind in ("police", "weather", "road"):
             pick = self._honest(kind, who)
             if pick:
@@ -2438,6 +2493,18 @@ class Operator:
                                                   or time.monotonic() - self.deck.left_at.get(who, -1e9) < 120):
             self.deck.grace = who
         try:
+            if kind == "greet":
+                # 22.11 (стрим #13, «как два разных человека»): личное «привет» не играем актёру, который
+                # только что звучал в эфире (стримерский бантер/приветствие зрителей) — берём другого;
+                # если поздороваться некому без повтора — честная тишина. Фильтр ЗДЕСЬ, а не у пула выше:
+                # блок «у адресата нет реплики» иначе восстанавливал свежего актёра как «без реплики».
+                stale = [x[0] for x in pool if _greet_recent(x[0])]
+                if stale:
+                    log(f"  привет: {stale} недавно в эфире — без личного приветствия")
+                    pool = [x for x in pool if x[0] not in stale]
+                if not pool:
+                    log("  привет: некому без повтора — молчим")
+                    return
             pick = self.deck.choose(pool, prefer=prefer, avoid=self.last_file)
         finally:
             self.deck.grace = None
@@ -2611,6 +2678,8 @@ class Operator:
             return
         STREAM_ON[0] = on
         log(f"режим стрима: {'вкл' if on else 'выкл'}")
+        if OVERLAY:                                     # 22.11: системное событие — в /journal
+            OVERLAY.sys(f"режим стрима: {'вкл' if on else 'выкл'}")
         if on:
             # 20.11 (стрим #11): при stream_greet_pilot зрителей приветствует голосовое бухгалтерии
             # (buh/stream_greet через 1-2 мин) — актёрское приветствие тут давало двойное
@@ -2683,9 +2752,14 @@ def weather_kind(game, world):
 # мёртвы, файлы остались на диске архивом. Мигание дальним и кнопка гудка упразднены. Под флагом
 # cfg["horn_pilot"] (ключ не переименовываем — обратная совместимость).
 # Работает для всех водителей колоды (решение 11.11 «гудок всем 18»); ритм без индивидуальной записи —
-# HORN_RHYTHMS["default"]. Честность: порог 150-1500 м — ближе «рядом где-то» обычным ответом,
-# дальше «не услышишь»; никаких «в правом ряду».
-HORN_NEAR_M, HORN_FAR_M = 150.0, 1500.0
+# HORN_RHYTHMS["default"]. Честность (22.11, стрим #13, решение пользователя): РАДИОГУДОК звучит на всю зону
+# радиосвязи (в зоне и не offline — отвечает и гудит «в микрофон» через радиофильтр); УЛИЧНЫЙ слой (без
+# фильтра, с задержкой м÷340) — только в окне 150-2500 м. «Не услышишь» (horn/far) — только когда адресат
+# по имени вообще не на связи (нет в зоне / offline), а не «дальше порога».
+HORN_NEAR_M, HORN_FAR_M = 150.0, 2500.0
+# 22.11: потолок деградации радиогудка, метры — чтобы на 8-10 км не уходил в тишину/клип:
+# гудок слышен уверенно, но «далеко»
+HORN_RADIO_DEGRADE_M = 4000.0
 ROLLCALL_GRACE_S = 4.0        # настоящие секунды: PTT в первые 4 с после «кто в эфире?» не рвёт перекличку
 HORN_DONE = {}            # actor -> monotonic: гудок уже был за эту встречу (для строки-повтора и invite-гейтинга;
                           # прямую голосовую просьбу НЕ блокирует — решение 16.11)
@@ -2758,7 +2832,8 @@ def donations_poll(log):
 
 
 def _horn_pick(mouth, who, ignore_done=False):
-    """Актёр в пороге 150-1500 м. ignore_done=True (прямая просьба): повтор разрешён (16.11)."""
+    """22.11: адресат = ближайший НА СВЯЗИ (в зоне рации, не offline); прямой адресат по имени — первым.
+    Дистанционное окно тут не режем: радиогудок звучит на всю зону, уличный слой отсечён в horn_scene."""
     w = getattr(mouth, "world", None)
     if not w or mouth.deck.allowed is None:
         return None
@@ -2769,11 +2844,11 @@ def _horn_pick(mouth, who, ignore_done=False):
     order = ([who] if who in here else []) + here    # прямой адресат первым, дальше вся колода в зоне
     best = None
     for a in dict.fromkeys(order):
-        if a not in here or mouth.deck.offline(a) or (a in HORN_DONE and not ignore_done):
+        if a not in here or (a in HORN_DONE and not ignore_done):
             continue
         dd = w.distance(a)
         m = None if dd is None else dd * w.range
-        if m is not None and HORN_NEAR_M <= m <= HORN_FAR_M and (best is None or m < best[1]):
+        if m is not None and (best is None or m < best[1]):
             best = (a, m)
     return best
 
@@ -2784,6 +2859,18 @@ def _stream_gap(cfg):
     return g * STREAM_GAP_K if STREAM_ON[0] else g
 
 
+def _air_recent_s():
+    """22.11 (стрим #13, «как два разных человека»): окно «актор недавно говорил в эфир» — личное
+    приветствие ему после стримерской реплики (и наоборот) не играем. В режиме стрима окно шире:
+    бантер/приветствие зрителей смотрятся одним выступлением ~2.5 мин, а не 45 с."""
+    return 150.0 if STREAM_ON[0] else 45.0
+
+
+def _greet_recent(actor):
+    """True — актор недавно звучал в эфире (spoke_at): его личное приветствие/бантер сейчас = «второй раз»."""
+    return (time.monotonic() - getattr(PLAYER, "spoke_at", {}).get(actor, -1e9)) < _air_recent_s()
+
+
 def _stream_banter(world, deck):
     """Режим стрима: водитель в зоне обращается к стримеру (вопрос/подкол, пул stream_banter/<actor>).
     Кулдаун на актёра — stream_banter_cool_s (дефолт 180-360 с); пустые пулы = молчание. True — сыграло,
@@ -2792,7 +2879,10 @@ def _stream_banter(world, deck):
         return False
     now = time.monotonic()
     fresh = [a for a in deck.allowed
-             if not deck.offline(a) and now >= STREAM_BANTER_COOL.get(a, 0.0)]
+             if not deck.offline(a) and now >= STREAM_BANTER_COOL.get(a, 0.0)
+             # 22.11 (стрим #13): бантер НЕ начинается «с нуля здороваясь» сразу после его же личной
+             # реплики (ответа/приветствия игроку) — только что говорил, ищем другого
+             and not _greet_recent(a)]
     random.shuffle(fresh)
     for a in fresh:
         p = line_of("stream_banter", a, a)
@@ -2808,9 +2898,11 @@ def _stream_banter(world, deck):
 
 def horn_scene(mouth, who, direct=False):
     """Сцена гудка (16.11, упрощение вечера): ТОЛЬКО голосовой триггер — интент horn
-    («бибикни/крякни/дунь в дудку/погуди/посигналь»). Водитель в пороге 150-1500 м отвечает
-    строкой (seen — первый раз, again — повтор; HORN_DONE их только разделяет, сброс при уходе
-    из зоны) и гудит сразу. Дальше 1500 м — честный horn/far «не услышишь».
+    («бибикни/крякни/дунь в дудку/погуди/посигналь»). 22.11 (стрим #13): водитель в зоне рации отвечает
+    строкой (seen — первый раз, again — повтор; HORN_DONE их только разделяет, сброс при уходе из зоны)
+    и гудит «в микрофон» через радиофильтр на ЛЮБОЙ дистанции в зоне; настоящий гудок с дороги
+    (без фильтра, задержка м÷340) — только в окне 150-2500 м. Адресат по имени не на связи (нет в зоне /
+    offline) — честный horn/far «не услышишь».
     direct=False (ответ на dist) — сцена не играет: приглашения упразднены (решение 16.11),
     пулы ask_day/ask_night остались на диске архивом.
     True — сцена сыграна (обычный ответ не нужен).
@@ -2824,21 +2916,20 @@ def horn_scene(mouth, who, direct=False):
     w = getattr(mouth, "world", None)
     pick = _horn_pick(mouth, who, ignore_done=True)
     if pick is None:
-        # адресат по имени и на связи, но дальше порога — честное «не услышишь» вместо обычного dist_far
+        # 22.11: «не услышишь» — только когда адресат по имени ВООБЩЕ не на связи (нет в зоне / offline);
+        # если он в зоне, _horn_pick бы его нашёл и ответил радиогудком
         if (who and w and mouth.deck.allowed is not None
-                and who in mouth.deck.allowed and not mouth.deck.offline(who)):
-            dd = w.distance(who)
-            m = None if dd is None else dd * w.range
-            if m is not None and m > HORN_FAR_M and who not in HORN_DONE:
-                p = line_of("horn", "far", who)
-                if p and PLAYER.file(p[1], who) == "ok":
-                    mouth.deck.on_air.add(who)
-                    mouth.on_air = True
-                    bond_add(who, 2 if who else 1, "далеко — не услышишь")
-                    # 15.11 (стрим): «не услышишь» НЕ закрывает сцену (HORN_DONE не ставим): гудка же не было,
-                    # и когда он подъедет в порог 150-1500 м, «бибикни» должен сыграть сцену, а не dist/already
-                    log(f"бибикни-гудок: {who} в {m:.0f} м — дальше порога, «не услышишь»")
-                    return True
+                and (who not in mouth.deck.allowed or mouth.deck.offline(who))
+                and who not in HORN_DONE):
+            p = line_of("horn", "far", who)
+            if p and PLAYER.file(p[1], who) == "ok":
+                mouth.deck.on_air.add(who)
+                mouth.on_air = True
+                bond_add(who, 2 if who else 1, "далеко — не услышишь")
+                # 15.11 (стрим): «не услышишь» НЕ закрывает сцену (HORN_DONE не ставим): гудка же не было,
+                # и когда он подъедет в зону, «бибикни» должен сыграть сцену, а не dist/already
+                log(f"бибикни-гудок: {who} не на связи — «не услышишь»")
+                return True
         return False
     import horn as horn_mod
     actor, meters = pick
@@ -2860,10 +2951,20 @@ def horn_scene(mouth, who, direct=False):
     # двойной гудок (одобрено 11.11): водитель держит тангенту — сначала сжатый в рации,
     # через расстояние ÷ 340 м/с — настоящий, с дороги, без радиофильтра
     timbre, pat = horn_mod.HORN_RHYTHMS.get(actor, horn_mod.HORN_RHYTHMS["default"])
-    buf = horn_mod.horn_buffer(timbre, meters, side="left" if oncoming else "center", pattern=pat)
-    PLAYER.street(degrade(buf, horn_mod.SR_DEFAULT, w.distance(actor)), horn_mod.SR_DEFAULT)   # по рации
-    if PLAYER.idle(min(meters / horn_mod.C_AIR, 5.0)):
-        PLAYER.street(buf, horn_mod.SR_DEFAULT)                                               # с дороги
+    # 22.11: в микрофон по рации — на любой дистанции в зоне. horn_buffer гаснет за ~2 км (AUDIBILITY_FLOOR),
+    # поэтому для радиослоя дистанция синтеза ограничена ~1 км (гудок у микрофона громкий), а «далёкость»
+    # даёт degrade с потолком HORN_RADIO_DEGRADE_M — на 8-10 км слышно уверенно, но далеко
+    radio_m = min(meters, 1000.0)
+    buf = horn_mod.horn_buffer(timbre, radio_m, side="left" if oncoming else "center", pattern=pat)
+    dd = w.distance(actor)
+    dd = min(dd, HORN_RADIO_DEGRADE_M / w.range) if dd is not None else None
+    PLAYER.street(degrade(buf, horn_mod.SR_DEFAULT, dd), horn_mod.SR_DEFAULT)   # по рации
+    if HORN_NEAR_M <= meters <= HORN_FAR_M and PLAYER.idle(min(meters / horn_mod.C_AIR, 5.0)):
+        # уличный слой — только в окне 150-2500 м; задержка от РЕАЛЬНЫХ метров, синтез с потолком 1.5 км
+        # (иначе на верхней границе окна amp < AUDIBILITY_FLOOR — тишина вместо гудка)
+        street_buf = horn_mod.horn_buffer(timbre, min(meters, 1500.0),
+                                          side="left" if oncoming else "center", pattern=pat)
+        PLAYER.street(street_buf, horn_mod.SR_DEFAULT)                             # с дороги
         log(f"бибикни-гудок: гудок {actor}{' (повтор)' if again else ''} с задержкой {meters / horn_mod.C_AIR:.1f} с")
     return True
 
@@ -4163,6 +4264,9 @@ def main(argv):
                                 ERRAND_Q.append((time.monotonic() + random.uniform(4, 12), k, "ask", b_))
                                 log(f"поручение: {k} просит передать {b_}")
                             if (world.met_before(k) and now_ - MEET_STAMP.get(k, -1e9) > 1200
+                                    # 22.11 (стрим #13): «опять пересеклись!» не играет, если он только что
+                                    # обращался к стримеру/здоровался — иначе «два разных человека» подряд
+                                    and not _greet_recent(k)
                                     and line_of("world", "meet_again", k)):
                                 MEET_STAMP[k] = now_
                                 wq.append(("world", "meet_again", k, now_))     # "опять пересеклись!"
@@ -4196,6 +4300,9 @@ def main(argv):
                             # 1.33 холодный старт: незнакомец выходит в эфир как незнакомец —
                             # first_air вместо личного приветствия (lv0, первая встреча)
                             if (BONDS and BONDS.level(k) == 0 and not world.met.get(k, {}).get("count")
+                                    # 22.11: first_air — тоже «первое приветствие»: не накладываем на свежую
+                                    # стримерскую реплику того же актёра
+                                    and not _greet_recent(k)
                                     and reaction_pool("first_air", k)):
                                 pick = line_of("first_air", k, k)
                                 if pick:
@@ -4245,6 +4352,8 @@ def main(argv):
                         if off:
                             h = world.add_fine(off, p_[0], p_[1])
                             log(f"штраф: {off} -> на карту: {h['kind']}")
+                            if OVERLAY:                                   # 22.11: системное событие — в /journal
+                                OVERLAY.sys(f"штраф: {off} ({h['kind']})")
                             # the accountant finds out and records a voice message
                             day = int(p_[2] // 1440)
                             fines_day[day] = fines_day.get(day, 0) + 1
