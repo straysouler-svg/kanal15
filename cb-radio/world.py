@@ -17,6 +17,7 @@ import json
 import math
 import random
 import sys  # noqa: E402
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
@@ -170,10 +171,40 @@ class World:
             self._load()
 
     # ---------------------------------------------------------------- schedule (game time)
+    NIGHT_T = 0.5          # сумерки: ночь начинается на NIGHT_T ч после заката и кончается раньше рассвета
+    LAT_Z = ((82000.0, 38.0), (-121000.0, 66.0))   # z карты -> широта (юг Греции -> север Норвегии)
+
     @staticmethod
-    def is_night(game_min):
+    def _lat_of(z):
+        (z0, la0), (z1, la1) = World.LAT_Z
+        return la0 + (z - z0) * (la1 - la0) / (z1 - z0)
+
+    @staticmethod
+    def _sun_hours(lat, day_of_year):
+        """(рассвет, закат) в игровых часах по широте и дню года — часовой угол солнца."""
+        decl = math.radians(23.44) * math.sin(math.radians(360.0 / 365.0 * (284 + day_of_year)))
+        c = -math.tan(math.radians(lat)) * math.tan(decl)
+        c = max(-1.0, min(1.0, c))
+        half = math.degrees(math.acos(c)) / 15.0      # половина светового дня, ч
+        return 12.0 - half, 12.0 + half
+
+    @classmethod
+    def night_at(cls, game_min, z=None):
+        """Ночь по игровым часам. Без z — старые пороги 21.5-6; с z (позиция на карте ETS2) —
+        рассвет/закат по широте и реальной дате: зимой на севере (Исландия, Скандинавия) светлого
+        часа мало, летом — белые ночи. Инцидент 22.11: «как погода?» в 8:00 в Исландии в ноябре
+        отвечало «солнышко», хотя за окном темно."""
         h = (game_min % 1440) / 60
-        return h >= 21.5 or h < 6
+        if z is None:
+            return h >= 21.5 or h < 6
+        rise, set_ = cls._sun_hours(cls._lat_of(z), datetime.now().timetuple().tm_yday)
+        return h >= set_ + cls.NIGHT_T or h < rise - cls.NIGHT_T
+
+    def night_now(self):
+        """Ночь именно здесь и сейчас (игровые часы + позиция игрока)."""
+        return self.night_at(self.game_min, self.pz)
+
+    is_night = night_at          # статик-вызовы World.is_night(game_min) сохраняют старый фолбэк
 
     @staticmethod
     def on_shift(schedule, hour):

@@ -613,7 +613,7 @@ def main():
         for k in world.left:
             deck.left_at[k] = _vnow()
             log(f"[сим] вышел из зоны: {k}")
-        bonds.set_world(world.game_min, world.is_night(world.game_min), False)
+        bonds.set_world(world.game_min, world.night_now(), False)
         if game.game_min - last_prog >= 60:
             last_prog = game.game_min
             log(f"[сим] игровой час {(int(game.game_min) % 1440) // 60:02d}:{int(game.game_min) % 60:02d}, "

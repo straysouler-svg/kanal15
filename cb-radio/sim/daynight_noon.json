@@ -1,0 +1,8 @@
+{
+ "_comment": "Пара к sim/daynight.json: полдень в Исландии (светло ~5 ч зимой) -> dry_day. Отдельный файл, чтобы избежать «уже говорил» при повторе темы тому же водителю.",
+ "steps": [
+  {"id": "island_12_day", "summon": "boroda", "who": "boroda", "q": true,
+   "set_min": 720, "expect_rel": "weather/dry_day",
+   "text": "Борода, как погода, что там на улице?"}
+ ]
+}

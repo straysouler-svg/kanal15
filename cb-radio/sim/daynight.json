@@ -1,0 +1,8 @@
+{
+ "_comment": "Инцидент 22.11: «как погода?» в 8:00 в Исландии в ноябре отвечало «солнышко» (dry_day), хотя на севере темно. Стенд: маршрут reykjavik:selfoss (север, z ~ -105000), реальная дата — ноябрь. Ожидаем: 8:00 -> dry_night. Полдень там же (dry_day) — в sim/daynight_noon.json; Испания зимой 8:00 = день — юнит-формулой World.night_at.",
+ "steps": [
+  {"id": "island_8_night", "summon": "boroda", "who": "boroda", "q": true,
+   "set_min": 480, "expect_rel": "weather/dry_night",
+   "text": "Борода, как погода, светло уже?"}
+ ]
+}

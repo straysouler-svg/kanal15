@@ -2670,10 +2670,11 @@ def line_of(group, kind, actor):
 
 
 def weather_kind(game, world):
-    """rain = your wipers are on (the drivers in range are in your area); else dry day / dry night."""
+    """rain = your wipers are on (the drivers in range are in your area); else dry day / dry night
+    (ночь — по позиции и дате, см. World.night_now; иначе в Исландии зимой в 8:00 «солнышко»)."""
     if game and game.wipers():
         return "rain"
-    return "dry_night" if world and world.is_night(world.game_min) else "dry_day"
+    return "dry_night" if world and world.night_now() else "dry_day"
 
 
 # ---------------------------------------------------------------- «бибикни — гудок» (16.11: только голосовой триггер)
@@ -2841,7 +2842,7 @@ def horn_scene(mouth, who, direct=False):
         return False
     import horn as horn_mod
     actor, meters = pick
-    night = w.is_night(w.game_min)
+    night = w.night_now()
     game = getattr(mouth, "game", None)
     rain = bool(game and game.wipers())
     hd = w.heading(w.drivers[actor])
@@ -3748,7 +3749,7 @@ def main(argv):
         BONDS = bonds_mod.Bonds(ROOT / "bonds.json", PHRASES_JSON, log)
         if world:
             BONDS.seed(world.met)
-            BONDS.set_world(world.game_min, world.is_night(world.game_min), False)
+            BONDS.set_world(world.game_min, world.night_now(), False)
         lv = [BONDS.level(k) for k in BONDS.st]
         log(f"дружба: водителей {len(lv)} — знакомых {lv.count(1)}, приятелей {lv.count(2)}, друзей {lv.count(3)}")
     except Exception as e:
@@ -4043,7 +4044,7 @@ def main(argv):
             if tray:
                 tray.set_state(st, inside=sorted(world.inside) if world else [])
             if BONDS and world:
-                BONDS.set_world(world.game_min, world.is_night(world.game_min), game.wipers())
+                BONDS.set_world(world.game_min, world.night_now(), game.wipers())
             if OVERLAY and world:
                 ins = [k for k in world.inside if not deck.offline(k)]   # offended / signed off: gone from the list
                 OVERLAY.inside(ins, {k: BONDS.chip(k) for k in ins} if BONDS else None)
@@ -4063,7 +4064,7 @@ def main(argv):
                         # «ты как, не спишь?» (3.1): игровая ночь, без остановки дольше порога,
                         # рядом друг (lv2+); не чаще раза за игровую ночь
                         gday = gmin // 1440
-                        if (st == "driving" and world and BONDS and world.is_night(gmin)
+                        if (st == "driving" and world and BONDS and world.night_now()
                                 and gmin - CARE_REST[0] >= CARE_NIGHT_MIN
                                 and QUEST_ST.get("care_day") != gday and not CARE_Q
                                 and not (CARE_WIN[0] > time.monotonic())):
