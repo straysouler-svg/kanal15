@@ -156,6 +156,7 @@ class World:
         self.quiet = 0.0
         self.game_min = 0.0
         self.met = {}                 # key -> {"count": encounters with you, "last": game minute}
+        self.arcs = {}                # 22.11: арки/поломки/новости (см. save/_load; пишет только код)
         try:
             self.hazards = [dict(h, until=None) for h in json.loads(HAZ.read_text(encoding="utf-8"))]
         except (OSError, ValueError):
@@ -809,6 +810,7 @@ class World:
                       "goal": d.goal, "goal_for": d.goal_for}
                   for k, d in self.drivers.items()}
             st["_met"] = self.met
+            st["_arcs"] = getattr(self, "arcs", {})   # 22.11: состояние арок/поломок/новостей (только код)
             json_store.save_json(STATE, st)
         except OSError:
             pass
@@ -817,6 +819,7 @@ class World:
         st = json_store.load_json(STATE)
         if not isinstance(st, dict):
             return
+        self.arcs = st.pop("_arcs", {}) or {}         # 22.11: терпимая загрузка (нет ключа — пусто, урок 8)
         self.met = st.pop("_met", {}) or {}
         for k, s in st.items():
             d = self.drivers.get(k)

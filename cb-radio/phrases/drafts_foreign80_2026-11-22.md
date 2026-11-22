@@ -1,0 +1,100 @@
+# Проезжие-европейцы: 80 фраз от Gemini (22.11)
+
+Источник: Gemini, подбор Дмитрия. Назначение: **филлеры** — проезжие голоса в эфире, проносятся мимо и исчезают (как голландец/норвежец/швед/турок). Из списка УБРАТЬ фразы, требующие ответа (вопросы к каналу, просьбы). Оставить: предупреждения, наблюдения, возмущения в адрес третьих лиц, жалобы-выпуски пара, благодарности, прощания, радиочеки.
+
+Оригиналы с переводом Дмитрия — ниже, нумерация исходная (1–80).
+
+## Дорожная обстановка, пробки, полиция и камеры
+
+1. [Польский] Mobilki, mobilki, jak tam dróżka na Berlin przed Świeckiem, czysto czy krokodyle trzepią? (Братишки, как там дорожка на Берлин перед Свебодзином, чисто или «крокодилы» шмонают?)
+2. [Немецкий] Kollegen auf der A2 Richtung Hannover, was ist denn da für eine Scheiße los, warum stehen wir hier komplett? (Коллеги на А2 в сторону Ганновера, что там за пиздец творится, почему мы наглухо встали?)
+3. [Английский] Eastbound on the M25, any eyes on that bloody smokey hiding under the bridge before Junction 15? (Кто на восток по М25 идёт, видел копа под мостом перед 15-й развязкой?)
+4. [Французский] Les collègues sur l’A7 vers Lyon, putain, ça roule ou c’est encore le bordel monstre au péage? (Коллеги на А7 в сторону Лиона, едет хоть что-то или на пункте оплаты опять лютый бардак?)
+5. [Испанский] Colegas en la AP-7 dirección Barcelona, ¿están los verdes con el radar móvil detrás de la curva o está limpio? (Братишки на АР-7 в сторону Барселоны, «зелёные» с радаром за поворотом стоят или чисто?)
+6. [Итальянский] Colleghi sulla A1 verso Bologna, ma che cazzo è successo là davanti, c’è una coda della madonna? (Коллеги на А1 в сторону Болоньи, что там впереди случилось, пробка нереальная?)
+7. [Румынский] Colegii pe A1 spre Nădlac, băga-mi-aș pula, cât e coada la vamă, stăm până mâine? (Братишки на А1 в сторону Надлака, какая очередь на границе, до завтра стоять будем?)
+8. [Чешский] Kolegové na D1 směr Praha, kurva, zase tam nějaký debil rozházel náklad, dá se to objet pravým? (Коллеги на D1 в сторону Праги, опять там какой-то дебил груз рассыпал, по правому ряду объехать можно?)
+9. [Польский] Koledzy z przeciwka, na obwodnicy Poznania misiaczki suszą czy można lecieć ile fabryka dała? (Ребята со встречки, на объездной Познани «мишки» с феном стоят или можно лететь?)
+10. [Немецкий] Achtung Gegenverkehr auf der A8, am Irschenberg ist Blitzeis, fahrt vorsichtig, sonst landet ihr im Graben, verdammt! (Внимание встречке на А8, на подъёме Иршенберг чёрный лёд, езжайте аккуратно, иначе в кювет!)
+11. [Английский] Breaker one-nine, anyone coming off the Dover ferry, how bad is the queue at customs today? (Эй в канале, кто с парома в Дувре сходит, какая очередь на таможне?)
+12. [Французский] Attention les gars sur l’A10, il y a un con qui a perdu un pneu au milieu de la voie de droite, ouvrez l’œil! (Внимание, парни на А10, какой-то болван потерял колесо посреди правой полосы, глядите в оба!)
+13. [Испанский] ¡Ojo colegas! En la subida del puerto está cayendo una nevada de cojones, ¿hace falta poner cadenas ya? (Осторожно, коллеги! На подъёме в перевал снег валит страшный, цепи накидывать?)
+14. [Итальянский] Ragazzi in direzione Brennero, ci sono i controlli dei tedeschi al confine o si passa liscio? (Парни в сторону Бреннера, немцы на границе шмонают или пролетаем?)
+15. [Польский] Ja pierdolę, znowu zwężka przed Wrocławiem, ile minut w plecy tam wyjdzie, kto już przeleciał? (Ёлки, опять сужение перед Вроцлавом, сколько минут там потеряем, кто уже проскочил?)
+16. [Немецкий] Kollegen, auf der A3 bei Würzburg steht die BAG auf dem Parkplatz und zieht alles raus, was nach Ostblock aussieht! (Коллеги, на А3 возле Вюрцбурга транспортники на парковке выдёргивают всех, кто похож на Восточную Европу!)
+
+## Стоянки, пауза и харчевни
+
+17. [Польский] Mobilki, gdzie tu na A4 w Niemczech znajdę jeszcze wolne miejsce na pauzę, bo zaraz mi tacho wyjebie?! (Братишки, где тут на А4 в Германии найду свободное место на отстой, а то тахограф рванёт?!)
+18. [Немецкий] Kollegen, weiß einer, ob auf dem Autohof da vorne noch ein Platz für einen Sattelzug frei ist oder ist alles dicht? (Коллеги, знает кто, на автохофе впереди ещё есть место под фуру или всё забито?)
+19. [Французский] Les gars, il est comment le routier à la sortie 12, on y bouffe bien ou c’est de la merde surgelée? (Парни, как там кафешка на 12-м съезде, нормально кормят или заморозку дают?)
+20. [Английский] Any driver got a copy at Leicester Forest services — is the truck park full up or can I squeeze in for my 45? (Есть кто на стоянке Лестер-Форест — парковка забита или втиснусь на 45 минут?)
+21. [Испанский] Colegas, ¿en qué área de servicio por aquí te dejan ducharte gratis echando gasoil, que huelo a perro muerto? (Коллеги, на какой заправке тут душ бесплатный при заправке, а то воняю дохлой собакой?)
+22. [Итальянский] Colleghi, all’Autogrill prima di Milano si può dormire tranquilli o ti tagliano il telone e ti fregano il gasolio? (Коллеги, на заправке перед Миланом можно спокойно спать или тент порежут и соляру сольют?)
+23. [Польский] Koledzy, na tym dzikim parkingu pod Paryżem bezpiecznie stanąć na noc, czy ciapaci zaraz się wpierdolą na pakę? (Ребята, на этой дикой парковке под Парижем безопасно на ночь встать или мигранты в прицеп залезут?)
+24. [Чешский] Kolegové, kde se dá tady před Rozvadovem normálně najíst za koruny, abych nemusel platit ty jejich zkurvený eura? (Коллеги, где тут перед Розвадовом можно нормально пожрать за кроны, чтобы не платить их евро?)
+25. [Немецкий] Scheiße, meine Karte wird an der Tanke hier nicht akzeptiert, hat jemand Bargeld dabei, ich überweise es sofort per PayPal! (Бля, карту на этой заправке не принимают, есть у кого наличка, я сразу по PayPal переведу!)
+26. [Румынский] Colegii din parcare, are cineva o butelie de gaz de rezervă, că mi s-a terminat și mor de foame, futu-i mama mă-sii? (Братишки на парковке, есть у кого запасной газовый баллон, а то у меня кончился и я с голоду подыхаю?)
+27. [Французский] Putain, encore un connard qui s’est garé en travers et qui bloque trois places, bouge ton cul, mec! (Блин, опять какой-то мудак встал поперёк и три места занял, убери свою жопу, мужик!)
+28. [Английский] Drivers at the Dover services, is the café still open or have those lazy bastards shut the kitchen already? (Водилы на стоянке в Дувре, кафешка ещё открыта или уже закрыли кухню?)
+29. [Испанский] Colegas, ¿dónde hay por aquí un lavado de camiones que no te cobren un ojo de la cara, que llevo el frigo hecho un asco? (Коллеги, где тут грузовая мойка, чтоб не содрали втридорога, а то реф как кусок дерьма?)
+30. [Итальянский] Ragazzi, chi è fermo al parcheggio dopo Firenze, ci sono ancora le mignotte che bussano in cabina tutta la notte? (Парни, кто стоит на парковке после Флоренции, там всё ещё «ночные бабочки» в кабину стучатся?)
+31. [Польский] Mobilki, podpowie ktoś gdzie w okolicy Antwerpii jest jakaś polska knajpa, bo od tych frytek już mi rzygać się chce? (Братишки, подскажет кто, где в районе Антверпена есть польская забегаловка, а то от фри уже тошнит?)
+32. [Немецкий] Kollegen, auf dem Parkplatz hier wird gerade wieder Diesel geklaut, passt auf eure Tanks auf, die Schweine sind unterwegs! (Коллеги, на этой стоянке прямо сейчас соляру сливают, следите за баками, эти свиньи вышли на охоту!)
+
+## Техника, поломки и связь
+
+33. [Польский] Próba radia, mobilki, jak mnie słychać, nie pierdzi mi grucha? (Проверка рации, братишки, как меня слышно, тангета не пердит?)
+34. [Немецкий] Kollegen, an dem weißen DAF vor mir qualmt es hinten rechts wie Sau, mach mal langsam, deine Bremse hängt fest! (Коллеги, у белого ДАФа передо мной сзади справа дымит как чёрт, притормози, тормоза заклинило!)
+35. [Английский] Radio check, breaker one-nine, how’s this rig getting out today, loud and proud or sounding like a wet fart? (Проверка связи, как меня слышно — громко и чётко или как мокрый пердёж?)
+36. [Французский] Eh le Scania bleu devant moi, t’as une sangle qui traîne par terre côté gauche, arrête-toi avant de tout arracher! (Эй, на синей «Скании» передо мной, у тебя ремень по земле волочится слева, тормози, пока всё не оторвало!)
+37. [Испанский] Colegas, se me ha reventado una rueda del remolque en el kilómetro 40, ¿alguien sabe de un taller móvil 24 horas que no tarde tres siglos? (Коллеги, у меня колесо на прицепе рвануло на 40-м км, знает кто выездную шиномонтажку 24 часа?)
+38. [Итальянский] Porca puttana, mi è andato l’AdBlue in protezione e il camion non tira un cazzo, come si resetta sta merda sull’Iveco? (Ёб, у меня мочевина в аварию ушла и машина не тянет, как сбросить это на «Ивеко»?)
+39. [Польский] Koledzy, ma ktoś na parkingu kable rozruchowe, bo mi webasto przez noc wyjebało akumulatory do zera? (Ребята, есть у кого на парковке провода прикурить, а то автономка за ночь высадила аккумы в ноль?)
+40. [Немецкий] Hey Kollege mit dem polnischen Kennzeichen, deine hintere Tür vom Auflieger ist nur halb zu, gleich fliegt dir die ganze Ladung raus! (Эй, коллега с польскими номерами, у тебя задняя дверь прицепа наполовину открыта, сейчас весь груз вылетит!)
+41. [Чешский] Kolegové, nevíte někdo, kde tady v Německu koupím pojistku na návěs, nesvítí mi levá strana a policajti mě sežerou zaživa? (Коллеги, не знаете, где тут в Германии купить предохранитель на прицеп, не горит левая сторона?)
+42. [Английский] Mate in the red Volvo, your nearside trailer tyre is looking proper flat, pull over at the next lay-by before it blows! (Братан на красном «Вольво», у тебя левое колесо на прицепе спустило, сверни в карман, пока не рвануло!)
+43. [Французский] Putain de merde, j’ai une durite de turbo qui vient de péter en pleine côte, je me traîne à vingt à l’heure, désolé les gars! (Ёб, у меня патрубок турбины рванул прямо на подъёме, ползу двадцать в час, извините, парни!)
+44. [Румынский] Colegii, care se pricepe la Mercedes Actros, mi-a apărut o eroare roșie la cutia de viteze, pot să-i dau înainte sau crapă de tot? (Братишки, кто шарит в «Актросе», вылезла красная ошибка по коробке, можно дальше ехать или сдохнет?)
+45. [Испанский] ¡Joder! ¿Quién tiene el micro pisado en el canal 19? Llevamos diez minutos escuchando tu música de mierda! (Бля! У кого микрофон зажало в 19-м канале? Уже десять минут слушаем твою музыку!)
+46. [Итальянский] Colleghi, qualcuno ha un fusibile da 20 ampere da prestarmi al prossimo parcheggio, mi è partito il frigo e ho su carne fresca! (Коллеги, есть у кого предохранитель на 20 ампер одолжить, у меня реф вырубился, а внутри свежее мясо!)
+47. [Польский] Mobilki, jak wam ten nowy chińczyk się sprawuje w trasie, sypie się to gówno czy da się tym jeździć? (Братишки, как вам этот новый китаец в рейсе, сыпется это говно или можно ездить?)
+48. [Немецкий] Kollegen, meine Standheizung qualmt wie eine Dampflok und stinkt nach unverbranntem Diesel, fliegt mir die Scheiße gleich um die Ohren? (Коллеги, моя автономка дымит как паровоз и воняет солярой, эта херня мне не рванёт в уши?)
+
+## Работа, шефы, логисты и расценки
+
+49. [Польский] I co, mobilki, na weekend do domu zjeżdżacie czy znowu dziad kazał kręcić pauzę na dzikusie pod Brukselą? (Ну что, братишки, на выходные домой едете или опять «дед» приказал крутить паузу в диких кустах под Брюсселем?)
+50. [Немецкий] Kollegen, was zahlen eure Speditionen aktuell, bei uns wird wegen den Dieselpreisen wieder an jedem Cent geknausert, zum Kotzen! (Коллеги, сколько ваши фирмы сейчас платят, у нас из-за цен на соляру за каждый цент удавятся!)
+51. [Английский] Tell you what, mates, these office wankers have no clue — they gave me three drops in central London on a Friday afternoon! (Скажу я вам, парни, эти офисные придурки без мозгов — дали мне три выгрузки в центре Лондона в пятницу вечером!)
+52. [Французский] Les gars, ça fait trois semaines que je suis sur la route, j’en ai plein le cul, vivement vendredi que je rentre voir ma femme! (Парни, я уже три недели в рейсе, всё заебло, скорее бы пятница, домой к жене!)
+53. [Испанский] Colegas, ¿cómo están los portes de vuelta desde Francia, hay carga bien pagada o toca volver de vacío como siempre? (Коллеги, как там с обратками из Франции, есть нормальный груз или порожняком возвращаться?)
+54. [Итальянский] Ragazzi, ma anche i vostri spedizionieri sono dei coglioni che ti mandano a scaricare in posti dove non passa neanche una Panda? (Парни, у вас логисты тоже мудаки, отправляют выгружаться туда, где даже «Панда» не проедет?)
+55. [Румынский] Colegii, cât mai luați pe comunitate acum, merită să stai două luni plecat de acasă pe banii ăștia de căcat? (Братишки, сколько сейчас платят на каботаже, стоит два месяца вдали от дома за эти копейки?)
+56. [Польский] Kurwa mać, stoję na rozładunku pod Lidlem już szóstą godzinę, te niemieckie magazyny to jest jakiś pierdolony żart! (Курва мать, стою на выгрузке под «Лидлом» шестой час, эти немецкие склады — ёбаный цирк!)
+57. [Немецкий] Kollegen, wer fährt hier für Amazon, stimmt es, dass die dich für jede Minute Verspätung wie einen Schwerverbrecher behandeln? (Коллеги, кто на «Амазон» работает, правда, что за каждую минуту опоздания — как к преступнику?)
+58. [Чешский] Kolegové, nevíte o nějaké slušné firmě, kde neojebávají na dietách, protože ten můj šéf je zloděj první třídy? (Коллеги, не знаете нормальную фирму, где не наёбывают на командировочных, а то мой шеф — вор?)
+59. [Английский] Honestly lads, if they bring in any more of this self-driving bollocks, I’m hanging up my keys and opening a pub! (Честно, парни, если введут ещё больше этой беспилотной хуйни, вешаю ключи на гвоздь и открываю паб!)
+60. [Французский] Putain, j’ai plus que dix minutes de conduite et le client veut pas me laisser dormir dans sa cour, quel bande d’enfoirés! (Бля, у меня десять минут вождения осталось, а клиент не пускает переночевать на территории, ублюдки!)
+61. [Испанский] Colegas, ¿alguien sabe si en Mercamadrid hay mucho follón hoy para descargar fruta o va rápido la cosa? (Коллеги, знает кто, на Меркамадрид сегодня бардак с выгрузкой фруктов или быстро?)
+62. [Итальянский] Colleghi, con questo nuovo tachigrafo intelligente ci hanno proprio rotto i coglioni, non si può neanche più fare un metro per cercare parcheggio! (Коллеги, с этим новым умным тахографом яйца открутили, даже метр нельзя проехать парковку искать!)
+63. [Польский] Brawo dla mojego spedytora, kurwa, wysłał mnie z ładunkiem ADR przez tunel pod Mont Blanc, geniusz pierdolony! (Браво моему логисту, курва, отправил меня с опасным грузом через тоннель под Монбланом, гений!)
+64. [Немецкий] Kollegen, wie viele Jahre macht ihr den Zirkus hier noch mit, ich hab die Schnauze gestrichen voll von den ganzen Vorschriften! (Коллеги, сколько лет вы ещё будете в этом цирке участвовать, я по горло сыт этими правилами!)
+
+## Перепалки, «маленькие» и трассовый фольклор
+
+65. [Польский] Ej, baranie w osobówce, gdzie się kurwa wpierdalasz przed czterdzieści ton, życia nie szanujesz?! (Эй, баран на легковушке, куда ты лезешь перед сорока тоннами, жизнь не ценишь?!)
+66. [Немецкий] Sag mal, du Arschloch im BMW, hast du deine Blinker beim Kauf nicht mitbezahlt oder bist du einfach nur zu blöd zum Fahren?! (Скажи-ка, мудак на БМВ, ты поворотники не оплатил или просто тупой?!)
+67. [Английский] OI! You absolute wanker in the Audi, stop brake-checking me before I turn your boot into your glovebox! (Эй! Конченый придурок на «Ауди», хватит оттормаживаться передо мной!)
+68. [Французский] Eh le connard en camionnette blanche, décale-toi ou accélère, ça fait trois kilomètres que tu me bloques dans la côte, putain! (Эй, мудак на белом фургоне, сдвинься или газу дай, три километра на подъёме меня держишь!)
+69. [Испанский] ¡Me cago en la leche! ¿Pero qué hace ese gilipollas adelantando por el arcén con la que está cayendo?! (Ёб твою! Что творит этот придурок, обгоняя по обочине в такой ливень?!)
+70. [Итальянский] Ma vaffanculo va, pezzo di merda, ti butti dentro senza guardare gli specchietti, la patente l’hai trovata nelle patatine?! (Да пошёл ты, кусок говна, перестраиваешься не глядя, права в чипсах нашёл?!)
+71. [Польский] Koledzy na dużych, po chuj się wyprzedzacie pod górkę przez pięć kilometrów, zróbcie trochę miejsca bo nas wszystkich szlag trafi! (Ребята на фурах, нахрена вы обгоняетесь в горку пять километров, дайте места, а то нас всех кондратий хватит!)
+72. [Немецкий] Danke dir Kollege fürs Reinlassen und Blinken, komm gut nach Hause und lass dich nicht ärgern! (Спасибо тебе, коллега, что пустил и мигнул, доберись хорошо до дома!)
+73. [Чешский] Ty vole, kdo tam zase chrápe do toho mikrofonu, probuďte toho medvěda, nedá se to poslouchat! (Ёб твою, кто там опять храпит в микрофон, разбудите этого медведя, слушать невозможно!)
+74. [Английский] Cheers mate, appreciate the flash, keep the shiny side up and the greasy side down, catch you on the flip-flop! (От души, братан, спасибо что моргнул, держи крышу сверху, а колёса снизу, услышимся!)
+75. [Французский] Les gars, y a un touriste en camping-car qui roule à soixante sur l’autoroute, on dirait qu’il cherche des champignons! (Парни, тут турист на автодоме едет шестьдесят по автобану, будто грибы ищет!)
+76. [Румынский] Băi colegule cu numărul de Bulgaria, dă-i bice la cotețul ăla că ne-ai adormit pe toți în spatele tău! (Эй, коллега с болгарскими номерами, поддай газку своей колымаге, а то мы все за тобой уснули!)
+77. [Испанский] ¡Oye! Que alguien le diga al del camión azul que lleva las luces largas puestas y nos está dejando ciegos a todos, hostia! (Эй! Пусть кто-нибудь скажет тому на синем грузовике, что он с дальним едет и всех слепит!)
+78. [Итальянский] Ragazzi, io esco qui per fare la nanna, buonanotte a tutti i lupi della strada e occhi aperti che la notte è lunga! (Парни, я сворачиваю на боковую, спокойной ночи всем волкам дороги, глядите в оба!)
+79. [Немецкий] So Kollegen, ich mach jetzt Feierabend für heute, wünsche euch allen eine schrott- und gebührenfreie Fahrt, haut rein! (Ну всё, коллеги, я на сегодня завязываю, желаю всем дороги без аварий и штрафов, бывайте!)
+80. [Польский] Dobra mobilki, ja zjeżdżam na bazę, szerokości i przyczepności wszystkim, do następnego na kanale! (Ладно, братишки, я сворачиваю на базу, всем шершавенькой и сцепления, до следующего в канале!)

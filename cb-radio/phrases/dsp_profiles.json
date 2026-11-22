@@ -1,0 +1,21 @@
+{
+ "_comment": "DSP-профили проезжих для voicedsp.py (22.11, ТЗ Дмитрия). НЕ config.json — параметры эфира, не пользователя. Пилотный флаг voicedsp_pilot (в DEFAULT_CFG cb_radio.py, дефолт false) — включает Дмитрий. rate = магнитофонная лента (без компенсации питча); reson_* = плавающий резонанс тангетки (Q=4); pregain_db + tanh-клиппинг; preset near/far/flyby (дистанция и огибающая); bg = фон кабины [kind, исходный уровень дБ]; vox_p = вероятность VOX-обрезки. ±10% рандома внутри профиля, сид — от события (воспроизводимо в стенде). Веса w: батя .2 / нервный .2 / простуженный .2 / хорошая станция .2 / встречка .2.",
+ "archetypes": [
+  {"name": "batya", "w": 0.2, "rate": 0.94, "hp": 300, "lp": 2600,
+   "reson_hz": 700, "reson_db": 7.0, "pregain_db": 4.0, "preset": "near",
+   "bg": [["engine", -16]], "vox_p": 0.1},
+  {"name": "nervous", "w": 0.2, "rate": 1.06, "hp": 400, "lp": 3200,
+   "reson_hz": 2100, "reson_db": 8.0, "pregain_db": 10.0, "preset": "near",
+   "bg": [["blinker", -12]], "vox_p": 0.7},
+  {"name": "prostudlenny", "w": 0.2, "rate": 0.98, "hp": 250, "lp": 2200,
+   "reson_hz": 350, "reson_db": 6.0, "pregain_db": 3.0, "preset": "near",
+   "bg": [["blinker", -12]], "vox_p": 0.2},
+  {"name": "good_rig", "w": 0.2, "rate": 1.0, "hp": 250, "lp": 3500,
+   "reson_hz": 1400, "reson_db": 2.0, "pregain_db": 2.0, "preset": "near",
+   "bg": [["engine", -20]], "vox_p": 0.1},
+  {"name": "far_meet", "w": 0.2, "rate": 1.0, "hp": 450, "lp": 1900,
+   "reson_hz": 900, "reson_db": 6.0, "pregain_db": 2.0, "preset": "flyby",
+   "bg": [["wind", -20]], "vox_p": 0.1}
+ ],
+ "actor_states": {}
+}

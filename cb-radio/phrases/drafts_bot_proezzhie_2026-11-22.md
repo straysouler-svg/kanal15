@@ -1,0 +1,54 @@
+# Бот-проезжие (самоирония AI-трафика) — пак от Дмитрия, 2026-11-22
+
+Идея Дмитрия: русские реплики — в «режим стримера», иностранные — просто
+проезжим. Тон: боты трафика ETS2 ломают четвёртую стену — признаются, что
+живут по скрипту, лагают, деспавнятся, жгут FPS. Мат присутствует.
+
+## Русские (15 шт) → режим стримера
+
+1. Мужики, я сейчас перед какой-нибудь фурой на съезде с автобана резко заторможу с восьмидесяти до двадцати — извиняйте, так в моём коде прописано, ничего личного!
+2. Парни, мне-то вообще похуй, если меня в бок протаранят на кольце — я через триста метров деспавнюсь, а вот кому-то придётся жать F7 и Enter!
+3. Мужики, кто в курсе, куда ведут эти жёлтые летающие крестики на съезде в Париже? Вчера один туда сунулся — об невидимую стену ебанулся так, что прицеп в космос улетел!
+4. Парни, прикиньте, я специально перестраиваюсь без поворотника прямо в бок соседней фуре, чтобы кто-то свой бонус за доставку «Без повреждений» проебал, ха-ха!
+5. Мужики, у кого-нибудь ещё такое было: едешь себе спокойно по Германии, а тут хуяк — и тебя посреди Исландии заспавнили?!
+6. Парни, кто знает, почему у нас в трафике соляра никогда не кончается, а бедолаги на тягачах каждые пятьсот вёрст по три тыщи евро на заправках оставляют?
+7. Мужики, вон заправка впереди — надо бы нажать клавишу «Е» и поспать восемь часов за три секунды, а то уже зевота на весь экран накрывает!
+8. Парни, нахуя столько лампочек и висюлек в кабину вешать, у меня аж видеокарта от чужих отражений плавится и FPS до двадцати просел!
+9. Мужики, обожаю, когда кто-то включает поворотник, а перестраиваться передумывает — я всё равно встану колом посреди трассы, чисто на всякий случай!
+10. Парни, по ходу кто-то шлагбаум на пункте оплаты бампером задел — теперь эта хуйня вообще не откроется, пока назад не сдашь!
+11. Мужики, слышали новость? На трассу выехал тягач с модом на тысячу лошадей — сейчас в горку под сто сорок попрёт и движок вскипятит!
+12. Парни, кто радио в канале вырубил и врубил свой шансон в браузере? Нам тоже скучно в полной тишине по автобану катить!
+13. Мужики, смех смехом, а я сейчас прямо из воздуха материализуюсь за поворотом перед самым чьим-то капотом, держитесь!
+14. Парни, вот бы в реале так: разбил фуру в хлам об отбойник, нажал две кнопки — и ты уже новенький на сервисе в соседнем городе стоишь!
+15. Мужики, кто в курсе, в следующем обновлении нам хоть научат уступать дорогу при сужении полосы, или так и будем в бочину перестраиваться?
+
+## Иностранные (15 шт) → обычные проезжие (с субтитрами ru)
+
+1. **[Польский]** Mobilki, uważajcie przed Berlinem, zaraz włączy się autozapis i cały ruch na dwie sekundy zlaguje w chuj! (Братишки, осторожнее перед Берлином, сейчас сработает автосохранение и весь трафик на две секунды залагает к хуям!)
+2. **[Немецкий]** Kollegen, passt auf der Strecke Calais–Duisburg auf, da fliegen wieder irgendwelche Idioten in Skodas ohne Bremsen in die Stratosphäre! (Коллеги, осторожнее на дороге Кале — Дуйсбург, там опять какие-то идиоты на «Шкодах» без тормозов в стратосферу улетают!)
+3. **[Английский]** Lads, I’d love to let someone out at the junction, honest to God, but the devs at SCS forgot to give me a brain in the last patch! (Парни, я бы рад пропустить кого-нибудь на перекрёстке, честное слово, но разрабы из SCS забыли завезти мне мозги в последнем патче!)
+4. **[Французский]** Les gars, chez moi même les polygones de l’intérieur n’existent pas, je suis juste une putain de texture vide sur quatre roues! (Парни, у меня даже полигонов в салоне нет, я просто ёбаная пустая текстура на четырёх колёсах!)
+5. **[Испанский]** Colegas, me voy a quedar en el carril izquierdo a sesenta y cinco hasta Milán, ¡a ver quién tiene cojones de adelantarme! (Коллеги, я сейчас встану в левом ряду на шестидесяти пяти до самого Милана — посмотрим, у кого хватит яиц меня обогнать!)
+6. **[Итальянский]** Ragazzi, qualcuno ha visto la fine di questa autostrada? Sono otto anni che giro in tondo tra Berlino e Praga senza mai scendere dal camion! (Парни, кто-нибудь видел конец этого автобана? Я уже восемь лет по кругу между Берлином и Прагой езжу, ни разу из грузовика не выходил!)
+7. **[Чешский]** Kolegové, bacha na tu kameru vepředu, za vteřinu zase vtipně cvakne foťák a někomu zmizí prachy z účtu ze vzduchu! (Коллеги, осторожнее с камерой впереди, через секунду опять смешно щёлкнет фотик и у кого-то бабки со счёта из воздуха спишутся!)
+8. **[Румынский]** Colegii, eu sunt un bot simplu: dacă mă lovești, mi se rupe pula, dar ție îți vine imediat amendă de patru sute de euro pentru accident! (Братишки, я бот простой: если меня заденешь, мне похуй, а вот тебе сразу штраф четыреста евро за ДТП прилетит!)
+9. **[Польский]** Ja pierdolę, w tych wąskich uliczkach we Włoszech jakiś geniusz będzie teraz dziesięć minut cofał pod rampę i zablokuje cały nasz ruch! (Я пердоле, на этих узких улочках в Италии какой-то гений сейчас будет десять минут задом под рампу сдавать и заблокирует весь наш трафик!)
+10. **[Немецкий]** Kollegen, ich bin auf der Tankstellenausfahrt einfach reingefahren — in meinem Skript steht „Vorfahrt ignorieren“, ich kann nichts dafür! (Коллеги, я на выезде с заправки тупо в бок въехал — у меня в скрипте написано «игнорировать приоритет», я тут ни при чём!)
+11. **[Английский]** Mates, running a red light when there are no cops around is brilliant — until a bloody fine still pops up out of thin air! (Парни, пролетать на красный, когда копов нет рядом, просто гениально — пока ёбаный штраф всё равно не прилетит из воздуха!)
+12. **[Французский]** Putain, j’ai l’impression que le terrain vient d’être acheté avec un nouveau volant à retour de force, ça va secouer sévère sur les bosses! (Блядь, такое чувство, что кто-то новый руль с обратной связью прикупил, сейчас на кочках руки выкручивать будет жёстко!)
+13. **[Испанский]** ¡Hostia! Que alguien mire si tiene el limitador a noventa activado en los ajustes, porque aquí no tira ni para atrás! (Блядь! Пусть кто-нибудь проверит, не включён ли ограничитель на девяносто в настройках, а то вообще не тянет!)
+14. **[Итальянский]** Ragazzi, mi sa che qualcuno ha appena cliccato „Carica salvataggio“ nel menu principale — tra un secondo veniamo tutti cancellati da questa realtà! (Парни, походу кто-то только что нажал «Загрузить сохранение» в главном меню — через секунду нас всех сотрёт из этой реальности!)
+15. **[Польский]** Dobra mobilki, jak ktoś zaraz wyłączy grę i pójdzie spać, to pamiętajcie — jutro prawdziwa robota, a my tu dalej w kółko będziemy zapierdalać! (Ладно, братишки, если кто сейчас выключит игру и пойдёт спать, помните — завтра настоящая работа, а мы тут дальше по кругу хуярить останемся!)
+
+## Финские (10 шт) — «подарочек Фину», проезжие fi с субтитрами ru
+
+1. **[Финский]** Äijät, kuka helvetti laittoi taas näkymättömän seinän liittymän eteen? Joku lensi just perävaunun kanssa kiertoradalle! (Мужики, какой чёрт опять поставил невидимую стену перед съездом? Кто-то только что с прицепом на орбиту улетел!)
+2. **[Финский]** Sori kaverit, mun on pakko lyödä liinat kiinni tässä keskellä tyhjää moottoritietä — se lukee mun koodissa, perkele! (Извините, парни, мне придётся резко ударить по тормозам прямо посреди пустого автобана — так в моём коде прописано, чёрт побери!)
+3. **[Финский]** Vittuako sillä on väliä, vaikka joku ajaisi kylkeen, mä katoan kumminkin kolmensadan metrin päässä ilmaan! (Какая нахуй разница, даже если кто-то в бок въедет, я всё равно через триста метров в воздухе растворюсь!)
+4. **[Финский]** Äijät, jollain on taas miljoona lisävaloa ja heiluvaa koiraa hytissä, mun näytönohjain sulaa ja FPS tippui kymmeneen! (Мужики, у кого-то опять миллион допфар и качающихся собачек в кабине, у меня видеокарта плавится и FPS упал до десяти!)
+5. **[Финский]** Kuulemma SCS:n koodarit unohti taas päivityksessä laittaa tekoälylle vilkut ja aivot, joten varokaa kaistanvaihtoja, saatana! (Говорят, разрабы из SCS в обновлении опять забыли завезти искусственному интеллекту поворотники и мозги, так что берегитесь при перестроениях, сатана!)
+6. **[Финский]** On se kumma, kun täällä Suomessa voi ajaa satasta lumimyrskyssä kesärenkailla, eikä pito lähde mihinkään! (Удивительное дело: тут в Финляндии можно лететь сотку в метель на летней резине, и сцепление с дорогой никуда не пропадает!)
+7. **[Финский]** Taas joku sankari jäi jumiin tietullin puomiin — ei muuta kuin F7 ja Enter, niin pääsee suoraan korjaamolle! (Опять какой-то герой застрял в шлагбауме на пункте оплаты — ничего не остаётся, кроме как F7 и Enter, и сразу на сервис!)
+8. **[Финский]** Kaverit, onneksi meidän liikenneautojen ei tartte ikinä tankata, muuten menis konkurssiin näillä polttoaineen hinnoilla! (Парни, хорошо, что нам в трафике никогда не надо заправляться, иначе обанкротились бы с такими ценами на топливо!)
+9. **[Финский]** Huoltoasema edessä, äijät — nyt nopeasti E-nappia pohjaan ja kahdeksan tunnin unet kolmessa sekunnissa! (Заправка впереди, мужики — сейчас быстренько жмём клавишу E и спим восемь часов за три секунды!)
+10. **[Финский]** No niin jätkät, joku painoi just päävalikosta «Lataa tallennus» — sekunnin päästä meidät kaikki pyyhitään pois tästä maailmasta! (Ну всё, пацаны, кто-то только что нажал в главном меню «Загрузить сохранение» — через секунду нас всех сотрут из этого мира!)

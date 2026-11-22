@@ -303,6 +303,7 @@ def main():
             played.append({
                 "t": round(_vnow(), 1), "actor": actor, "rel": rel, "replay": bool(replay),
                 "text": text_of.get(rel, ""), "dur": round(dur, 2), "lvl": lvl,
+                "existed": existed, "gm": round(game.game_min, 1),   # 22.11: метрики стенда
                 "allowed": sorted(deck.allowed) if deck.allowed is not None else None,
                 "far": sorted(deck.allowed_far),
                 "d_zone": sorted(_decide_zone[0]) if _decide_zone[0] is not None else None,
@@ -339,6 +340,28 @@ def main():
     if not script_path.is_absolute():
         script_path = ROOT / script_path
     steps = json.loads(script_path.read_text(encoding="utf-8"))["steps"] if script_path.exists() else []
+    # 22.11: мини-экзамен в КАЖДОМ прогоне — репрезентативные вопросы по основным (озвученным) интентам
+    # должны получать ответ из своего пула, а не «не знаю». Шаги идут ДО сценария, адресат вызывается summon.
+    MINI_EXAM = [
+        {"id": "mini_road", "summon": "boroda", "text": "Борода, как там дорога впереди, что слышно?",
+         "expect_rel": "reactions/intent/road"},
+        {"id": "mini_family", "text": "Мужики, как семья, все здоровы?",
+         "expect_rel": "reactions/intent/family"},
+        {"id": "mini_food", "text": "Мужики, где тут поесть нормально можно?",
+         "expect_rel": "reactions/intent/food"},
+        {"id": "mini_radio", "text": "Как меня слышно, эфир?",
+         "expect_rel": "reactions/intent/radio_check"},
+        {"id": "mini_news", "text": "Какие новости, мужики, что слышно?",
+         "expect_rel": "reactions/player/news"},
+        {"id": "mini_truck", "text": "Парни, а на чем вы там едете, какая машина?",
+         "expect_rel": "reactions/intent/truck"},
+        {"id": "mini_weather", "text": "Мужики, как погода впереди?",
+         "expect_rel": "reactions/weather/"},
+        {"id": "mini_police", "text": "Парни, полиция впереди стоит или чисто?",
+         "expect_rel": "reactions/intent/police"},
+    ]
+    if not os.environ.get("K15_NO_MINI"):
+        steps = MINI_EXAM + steps
     corpus_path = Path(args.corpus)
     if not corpus_path.is_absolute():
         corpus_path = ROOT / corpus_path
@@ -631,6 +654,9 @@ def main():
             if "set_min" in st:                       # скачок игровых часов (смены, ночь)
                 game.game_min = st["set_min"]
                 log(f"[сим] игровое время -> {st['set_min'] / 60:.1f} ч")
+            if "wait_s" in st:                        # 22.11: прокрутка виртуальных секунд (очереди с задержками)
+                advance(float(st["wait_s"]))
+                log(f"[сим] wait_s {st['wait_s']}: часы +{st['wait_s']} с")
             if "bond" in st:                          # выставить очки дружбы (уровни 0/1/2, ревью 15.11)
                 for a_, p_ in st["bond"].items():
                     bonds._rec(a_)["p"] = p_
@@ -696,6 +722,42 @@ def main():
             next_corpus_t = _vnow() + random.uniform(args.corpus_every * 0.6, args.corpus_every * 1.6)
         advance(dt)
 
+    # ---------- [метрики стенда] 22.11: какофония/файлы/плотность/живость ----------
+    overlaps, miss_files = 0, set()
+    by_actor = {}
+    prev = None
+    for r in played:
+        ov_s = (prev["t"] + prev.get("dur", 2.0)) - r["t"] if prev else 0.0
+        if ov_s > 0.3:                     # реальное наложение: следующая началась ДО конца прежней
+            overlaps += 1
+            log(f"  [метрики] наложение {ov_s:.1f}с: {prev['rel']} -> {r['rel']}")
+        prev = r
+        if r["rel"] not in (None, "street") and not r.get("existed", True):
+            miss_files.add(r["rel"])
+        if r["actor"]:
+            by_actor[r["actor"]] = by_actor.get(r["actor"], 0) + 1
+    f_gm = [r["gm"] for r in played if r["rel"] and r["rel"].startswith("reactions/foreign/")]
+    our_gm = sorted(r["gm"] for r in played
+                    if r["rel"] and not r["rel"].startswith(("reactions/foreign/", "reactions/foreign_reply",
+                                                            "reactions/foreign_warm", "reactions/streambot/",
+                                                            "reactions/night_mystic/")))
+    close_foreign = 0
+    for gm in f_gm:
+        near = [g for g in our_gm if 0 <= gm - g < 2.0]
+        if near and not any(r["rel"] and r["rel"].startswith("reactions/foreign/") and abs(r["gm"] - gm) < 2.0
+                            and r["gm"] < gm for r in played):
+            close_foreign += 1
+    dens = len(f_gm) / max(0.5, args.minutes / 60.0)
+    quiet_actors = sorted(a for a, n in by_actor.items() if n < 2)
+    log(f"[метрики стенда] наложений реплик: {overlaps} | реплик без файла: {len(miss_files)} | "
+        f"проезжих: {len(f_gm)} (плотность {dens:.1f}/игр.ч) | ближе 2 игр.мин после наших: {close_foreign} | "
+        f"актёров звучало: {len(by_actor)} (из них <2 реплик: {quiet_actors or 'нет'})")
+    if overlaps:
+        fail(15, f"наложения реплик друг на друга: {overlaps}")
+    if miss_files:
+        fail(14, f"реплик без файла на диске: {sorted(miss_files)[:6]}")
+    # плотность/какофония проезжих в прогоне не измеряются: тик проезжих живёт в главном цикле
+    # main() (вне стенда) — их контроль: мок-прогон build/check_foreign_valve.py
     # ---------- сводка ----------
     fails = [v for v in viol if v["level"] == "FAIL"]
     groups = {}

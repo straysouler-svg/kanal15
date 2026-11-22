@@ -58,5 +58,16 @@
   "stream_greet_pilot": true,
   "stream_news_pilot": true,
   "stream_viewers_pilot": true,
-  "stream_donate_pitch_pilot": true
+  "stream_donate_pitch_pilot": true,
+  "stream_banter_min_s": 90,
+  "stream_banter_max_s": 150,
+  "stream_banter_cool_s": [
+    120,
+    240
+  ],
+  "convoy": {
+    "bind": "0.0.0.0",
+    "pin": "radio15",
+    "host": "127.0.0.1:47821"
+  }
 }

@@ -45,6 +45,7 @@ import soundfile as sf  # noqa: E402
 
 from report_log import pick_log_fragment  # noqa: E402  # P0-3 (19.11): фрагмент журнала для отчёта — чистый модуль
 import streampeek  # noqa: E402  # 19.11 (stream_viewers_pilot): счётчик зрителей YouTube — модуль, в рации только узкий вызов (урок 9)
+import voicedsp  # noqa: E402  # 22.11: DSP-модуль голосов проезжих (только foreign.*/streambot/night_mystic, пилот voicedsp_pilot)
 
 ROOT = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent   # next to CB-Radio.exe when frozen
 CFG_FILE = ROOT / "config.json"
@@ -165,6 +166,10 @@ DEFAULT_CFG = {
     "greet_reply_chance": 0.85,    # someone answers an actor's hello
     "horn_pilot": False,           # «бибикни — гудок», пилот 11.11: триггер ТОЛЬКО голосовой просьба (16.11)
     "hooks_pilot": False,          # зацепки из библии (reactions/hooks/<actor>) после личного вопроса, пилот 15.11
+    "arcs_pilot": False,           # 22.11: арка «Ковбой->Сова на кофе», поломки по времени, news_followup, «Кто такая Муся»
+    "voicedsp_pilot": False,       # 22.11: DSP-модуль голосов проезжих (voicedsp.py, dsp_profiles.json) — только foreign.*/streambot/night_mystic
+    "streambot_pilot": False,      # 22.11: проезжий x_ru (streambot/ru) частично заменяет бантер в режиме стрима
+    "foreign_per_hour": 9.0,       # 22.11: целевая плотность проезжих за игровой час (вентиль, регулируется на стриме)
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
     "donation_pilot": False,       # 19.11: донаты DonationAlerts -> голосовое бухгалтерии (пул buh/donation)
     "stream_greet_pilot": False,   # 19.11: при включении режима стрима — голосовое buh/stream_greet через 1-2 мин
@@ -789,14 +794,110 @@ _FOREIGN_WORDS = re.compile(
 
 def foreign_word(text):
     return bool(_FOREIGN_WORDS.search((text or "").lower().replace("ё", "е")))
+
+# 22.11 (foreign80): наши отвечают проезжим, если знают язык и сейчас в зоне. Кулдаун и шанс —
+# не болтать непрерывно: проезжий проносится мимо, отклик — редкость, которую ждут.
+LANG_SPEAKERS = {"pl": ("yanek",), "en": ("yanek", "professor"), "de": ("professor",),
+                 "fr": ("sova",), "tr": ("rustam", "bahti")}
+FOREIGN_ANS_TYPES = ("warn", "radio", "thanks", "bye", "rant", "steam")
+FOREIGN_ANS = [0.0, None]        # [последний ответ monotonic, (due monotonic, lang, тип филлера|None)]
+FOREIGN_ANS_P = 0.4              # шанс отклика после филлера
+FOREIGN_ANS_COOLDOWN = 480       # не чаще раза в 8 минут
+_FOREIGN_T = None                # {(lang, номер строки): тип} из json — лениво
+
+
+def foreign_type(lang, wav):
+    """Тип филлера («t» в json) по имени его файла: NN.wav -> строка NN пула foreign/<lang>."""
+    global _FOREIGN_T
+    if _FOREIGN_T is None:
+        _FOREIGN_T = {}
+        for lg, lines in (load_phrases()["reactions"].get("foreign") or {}).items():
+            if isinstance(lines, list):
+                for i, e in enumerate(lines, 1):
+                    if isinstance(e, dict):
+                        _FOREIGN_T[(lg, i)] = e.get("t")
+    n = Path(wav).stem
+    return _FOREIGN_T.get((lang, int(n))) if str(n).isdigit() else None
 BUH_KIND = {"speeding": "speeding", "speeding_camera": "speeding", "red_signal": "red_signal", "crash": "crash",
             "no_lights": "no_lights", "avoid_sleeping": "avoid_sleeping", "wrong_way": "wrong_way"}
 COUNTRY_LANG = {"germany": "de", "austria": "de", "switzerland": "de", "poland": "pl", "france": "fr",
                 "belgium": "fr", "luxembourg": "fr", "spain": "es", "italy": "it", "netherlands": "nl",
-                "czech": "cs", "slovakia": "cs"}
+                "czech": "cs", "slovakia": "cs",
+                "norway": "no", "sweden": "sv", "finland": "fi",   # 22.11: скандинавская четвёрка
+                "uk": "en", "romania": "ro", "turkey": "tr",   # 22.11: foreign80 (brit/roum/turk)
+                "russia": "ru"}                                 # 22.11: русский проезжий на карте (foreign/ru)
 COUNTRY_RU = {"germany": "Германия", "austria": "Австрия", "switzerland": "Швейцария", "poland": "Польша",
               "france": "Франция", "belgium": "Бельгия", "luxembourg": "Люксембург", "spain": "Испания",
-              "italy": "Италия", "netherlands": "Нидерланды", "czech": "Чехия", "slovakia": "Словакия"}
+              "italy": "Италия", "netherlands": "Нидерланды", "czech": "Чехия", "slovakia": "Словакия",
+              "norway": "Норвегия", "sweden": "Швеция", "finland": "Финляндия",
+              "uk": "Великобритания", "romania": "Румыния", "turkey": "Турция",
+              "russia": "Россия"}
+
+# ---------------- 22.11: плавающий вентиль проезжих (ТЗ Дмитрия) ----------------
+# Целевая плотность — foreign_per_hour в DEFAULT_CFG (проезжих за игровой час; Дмитрий
+# регулирует на стриме без пересборки). Распределение плавающее, не ровный таймер:
+# насыщение (после проезжего следующий временно реже; при молчании плавно растёт),
+# анти-какофония (не ближе 2 игровых минут после наших голосов и не поверх ответа),
+# разнообразие (недавний язык — с понижающим весом), ночью (23–05) реже.
+foreign_valve = {"heat": 0.0, "last_game_min": 0.0, "last_our_game_min": 1e9,
+                 "last_lang": None, "game_prev": None, "force": False}
+FV_IDLE_MAX = 1.0        # предел «роста при молчании» (+60% к шансу)
+FV_HEAT_TAU_GM = 120.0   # спад насыщения, игровые минуты (~2 ч на e^-1)
+FV_OUR_GAP_GM = 2.0      # анти-какофония: пауза после наших, игровые минуты
+_fv_rng = None           # ленивый rng вентиля (numpy — нужен выбор с весами)
+
+
+def _fv_random():
+    global _fv_rng
+    if _fv_rng is None:
+        _fv_rng = np.random.default_rng()
+    return _fv_rng
+
+
+def foreign_valve_tick(fv, cfg, game_min, rng):
+    """Один шаг вентиля. -> (p, ok_to_play). Чистая функция — стенд и моки гоняют её сами;
+    главный цикл только бросает rng.random() < p. dgame — игровые минуты с прошлого тика.
+
+    Модель: пуассоновская интенсивность rate (foreign_per_hour) x рефрактерность (после проезжего
+    шанс следующего падает до 0.25 и линейно восстанавливается за 15 игровых минут; 1.35
+    компенсирует среднее ~0.74, чтобы стационарная плотность держалась у константы) x рост
+    при молчании (до +60% за час тишины). Анти-какофония — ok_to_play (2 игровых минуты
+    после наших голосов)."""
+    if fv["game_prev"] is None:
+        fv["game_prev"] = game_min
+    dgame = max(0.0, game_min - fv["game_prev"])
+    fv["game_prev"] = game_min
+    if dgame <= 0 and not fv["force"]:
+        return 0.0, False
+    rate = float(cfg.get("foreign_per_hour", 9.0))
+    hour = (game_min % 1440) / 60.0
+    if hour >= 23.0 or hour < 5.0:
+        rate *= 0.5                                   # ночью реже (00–04 — окно night_mystic)
+    since_last = max(0.0, game_min - fv["last_game_min"])
+    refractory = 0.25 + 0.75 * min(1.0, since_last / 15.0)
+    idle = min(FV_IDLE_MAX, since_last / 60.0)
+    lam = rate / 60.0 * dgame * (1.0 + 0.6 * idle) * refractory * 2.1
+    p = 1.0 - pow(2.718281828, -lam)
+    ok_gap = (game_min - fv["last_our_game_min"]) >= FV_OUR_GAP_GM
+    return min(0.95, p), bool(ok_gap or fv["force"])
+
+
+def foreign_valve_note_play(fv, game_min, lang):
+    fv["last_game_min"] = game_min
+    fv["last_lang"] = lang
+    fv["force"] = False
+
+
+def foreign_lang_choice(home, rng):
+    """Дома 80% (вес максимальный; в России домашний = ru), 20% — гость: равномерно из любого
+    озвученного пула FOREIGN минус домашний; недавний язык — с понижающим весом 0.35."""
+    if home and rng.random() < 0.8:
+        return home
+    cands = sorted(FOREIGN - {home}) if home else sorted(FOREIGN)
+    if not cands:
+        return home
+    weights = [0.35 if c == foreign_valve["last_lang"] else 1.0 for c in cands]
+    return cands[rng.choice(len(cands), p=[w / sum(weights) for w in weights])]
 
 
 try:                                       # secrets (2026-11-06, tainik.py): the kinds are known only from the tainik
@@ -1033,7 +1134,7 @@ class Deck:
 # ---------------------------------------------------------------- friendship & mood (bonds.py, 2026-11-06)
 BONDS = None
 FEMALE = {"petrovna", "lastochka", "lisa", "sova", "vera", "soroka"}
-PERSONAL_KINDS = ("family", "salary", "health")     # на lv0–1 эфир уходит в уклончивые (reactions/bond/evade)
+PERSONAL_KINDS = ("family", "family_edge", "salary", "health")   # на lv0–1 эфир уходит в уклончивые (reactions/bond/evade)
 BOND_UP = []          # (время озвучить, поставлено, актёр, новый уровень) — переходы дружбы вслух
 MARK_Q = []           # (actor, mood) — маркеры настроения вслух (смена настроения, 2026-11-09)
 QUIET_UNTIL = {}      # actor -> monotonic: «успокойся» (да) — 10–15 мин тише и реже (1.33)
@@ -1284,6 +1385,11 @@ class Player:
                 if STATIC_NOW["k"] <= 0:                 # «Помехи: без помех» - no clicks / crackles at all
                     return "ok"
                 data = data * STATIC_NOW["k"] ** 0.5     # half the static = a bit quieter clicks, not silent
+            # 22.11: DSP-модуль голосов проезжих (voicedsp, ТЗ Дмитрия): только пулы проезжих,
+            # только под пилотом voicedsp_pilot (дефолт выкл). Наши актёры через модуль НЕ проходят.
+            rel0 = _rel(path)
+            if voicedsp.wants(rel0, self.cfg):
+                data = voicedsp.process(data, sr, rel0)
             vol = 0.0 if TRAY_STATE.get("muted") else float(self.cfg["volume"])     # «Тишина в эфире» (tray)
             sd.play(data * vol, sr, device=self.cfg["device"])
             if OVERLAY:                       # stream overlay: subtitles of what is said (overlay.py)
@@ -1608,6 +1714,8 @@ class Operator:
             self.support = False
             return
         intent, who = intents.understand(text) if text else (None, None)
+        self.reply_attached = False     # 22.11 (решение Дмитрия, экзамен-2): True — адресат приклеен
+                                        # по «ответ ему» (последний говоривший), а НЕ распознан в тексте
         # 2026-11-11: несколько вопросов одной репликой («как дела, куда едешь, как погода?») — отвечаем
         # на ПЕРВЫЙ сказанный, остальные отбиваем (раньше срабатывал приоритетный интент, не первый).
         # Грубость в связке не переупорядочиваем: обида важнее порядка.
@@ -1624,6 +1732,10 @@ class Operator:
                         multi.remove("bye")
                 if multi[0] != intent:
                     intent = multi[0]
+                if "musya" in multi and "handle" in multi:
+                    # 22.11: «Борода, кто такая Муся?» — handle («кто такая») матчится раньше по позиции,
+                    # но рассказ о кошке (закрытая тема) важнее истории позывного
+                    intent = "musya"
                 if intent == "greet" and len(multi) > 1:
                     # 15.11 (стрим): «привет + вопрос» — отвечаем на вопрос, приветствие уже в самом ответе
                     # («Привет, Тень. Как дела?» -> greet, вопрос съеден; «Привет, кто в эфире?» -> greet, переклички нет)
@@ -1697,6 +1809,7 @@ class Operator:
             a = PLAYER.last_speaker
             if not self.deck.offline(a) and (self.deck.allowed is None or a in self.deck.allowed):
                 who, reply = a, True
+                self.reply_attached = True   # 22.11: адресат приклеен, не распознан в тексте (экзамен-2)
         question = intents.is_question(text) if text else False
         if intent == "repeat":
             group, kind = "special", "repeat"             # he says his last line again (or keeps quiet)
@@ -1741,6 +1854,10 @@ class Operator:
             group, kind = "graf", intent[5:]              # the dog: only Vera answers (who = vera)
         elif intent in ("stream_on", "stream_off"):
             group, kind = "intent", intent                # пасхалка «мы на стриме» (16.11) — обработка в answer()
+        elif intent == "musya":
+            # 22.11 (drafts_arcs_forward §5): «кто такая Муся» — рассказ Бороды (story/musya);
+            # пула intent/musya НАМЕРЕННО нет — обработка в answer() -> _musya_answer
+            group, kind = "intent", intent
         elif intent and intent != "greet" and reaction_pool("intent", intent):
             group, kind = "intent", intent                # a clear question gets a real answer, even first
         elif intent == "football":
@@ -1773,7 +1890,8 @@ class Operator:
             else:
                 kind = "ack" if r < 0.7 else "not_heard" if r < 0.9 else None
         if group == "intent" and who and kind not in ("thanks", "bye", "radio_check", "help", "repeat", "praise", "rude",
-                                                       "mock", "bot", "support", "stream_on", "stream_off"):
+                                                       "mock", "bot", "support", "stream_on", "stream_off", "musya",
+                                                       "flare"):
             # step 2 of «вариативность» (2026-11-05): asked him the same within 10 min -> he notices
             # 17.11 (стрим #8): stream_on/stream_off — НЕ повтор: повторная фраза сама по себе значима
             # (stream_ack «уже вкл» / тихое выключение), ремап «stream»->«stream_on» сюда попадать не должен
@@ -1937,6 +2055,100 @@ class Operator:
             self.deck.on_air.add(pick[0])
             self.on_air = True
         return True
+
+    # ---------------- 22.11: пакет «арки вперёд» ----------------
+
+    def _kofe_on_support(self):
+        """Арка «Ковбой зовёт Сову на кофе» (drafts_arcs_forward §1): каждый intent support, пока арка
+        открыта, копит счётчик; 1–4 = kofe_support[N] сразу после обычного ответа; на 4-й — сцена
+        (однократно, окно 22:00–01:00, оба в эфире; иначе ждёт — счётчик не сгорает)."""
+        w = self.world
+        arcs = _arcs(w)
+        k = arcs.setdefault("kofe", {"n": 0, "scene": False, "after_day": -1, "after_done": False})
+        if k.get("scene"):
+            return
+        k["n"] = min(int(k.get("n", 0)) + 1, 4)
+        _arcs_save(w)
+        i = k["n"] - 1
+        if reaction_pool("quest", "kofe_support") and i < 4:
+            KOFE_Q.append((time.monotonic() + random.uniform(2.0, 4.0), "bahti", "kofe_support", i))
+            log(f"арка кофе: поддержка {k['n']}/4")
+        if k["n"] >= 4:
+            self._kofe_try_scene()
+
+    def _kofe_try_scene(self):
+        w = self.world
+        k = (_arcs(w).get("kofe") or {})
+        if k.get("scene") or w is None or self.deck.allowed is None:
+            return
+        here = {a for a in self.deck.allowed if not self.deck.offline(a)}
+        if not {"bahti", "sova"} <= here:
+            log("арка кофе: сцена ждёт — не оба в эфире")
+            return
+        hour = (w.game_min % 1440) / 60
+        if not (hour >= 22.0 or hour < 1.0):
+            log("арка кофе: сцена ждёт — не ночное окно 22:00–01:00")
+            return
+        pool = reaction_pool("quest", "kofe_scene")
+        if len(pool) < 4:
+            return
+        t = time.monotonic() + random.uniform(2.0, 4.0)
+        for i, (a, _) in enumerate(pool[:4]):
+            KOFE_Q.append((t, a, "kofe_scene", i))
+            t += 4.5
+        _arcs(w)["kofe"]["scene"] = True
+        _arcs(w)["kofe"]["after_day"] = int(w.game_min // 1440)
+        _arcs_save(w)
+        self.deck.on_air.update(("bahti", "sova"))
+        self.on_air = True
+        log("арка кофе: СЦЕНА «зовёт Сову на кофе»")
+
+    def _musya_answer(self, who):
+        """«Кто такая Муся» (drafts_arcs_forward §5): рассказывает ТОЛЬКО Борода, и только когда в эфире
+        (иначе честная тишина, рассказ НЕ флагуется). Варианты 1–3 без повторов до исчерпания; повторный
+        вопрос в той же сессии → добивки по порядку; обе сыграны — обычный путь (не «уже говорил»)."""
+        if who and who != "boroda":
+            return False          # спросили не у Бороды — честный dunno дальше по коду
+        if self.deck.allowed is None or "boroda" not in self.deck.allowed or self.deck.offline("boroda"):
+            log("Муся: Бороды нет в эфире — рассказ не флаговать")
+            return True           # молчим, но рассказ остаётся «не рассказанным»
+        arcs = _arcs(self.world)
+        if not arcs.get("musya_told"):
+            pool = reaction_pool("story", "musya")
+            used = arcs.setdefault("musya_used", [])
+            avail = [i for i in range(len(pool)) if i not in used]
+            if not avail:                      # исчерпаны — новый круг ротации
+                used.clear()
+                avail = list(range(len(pool)))
+            i = random.choice(avail)
+            used.append(i)
+            arcs["musya_told"] = True
+            _arcs_save(self.world)
+            log(f"ответ: Борода рассказывает про Мусю (вариант {i + 1})")
+            if _pool_say("story", "musya", idx=i):
+                self.deck.on_air.add("boroda")
+                self.on_air = True
+            return True
+        more = reaction_pool("story", "musya_more")
+        n = int(arcs.get("musya_more_n", 0))
+        if n >= len(more):
+            return False           # добивки кончились — обычный ответ пулами
+        arcs["musya_more_n"] = n + 1
+        _arcs_save(self.world)
+        log(f"ответ: Борода про Мусю — добивка {n + 1}")
+        if _pool_say("story", "musya_more", idx=n):
+            self.deck.on_air.add("boroda")
+            self.on_air = True
+        return True
+
+    def _news_heard(self, actor):
+        """Новость актёра прозвучала (ответ на «какие новости») — день для news_followup (drafts §3)."""
+        w = self.world
+        if not w:
+            return
+        arcs = _arcs(w)
+        arcs.setdefault("news_day", {})[actor] = int(w.game_min // 1440)
+        _arcs_save(w)
 
     def rollcall(self):
         """"Кто в эфире?" - everybody in range answers with his handle, one after another; whoever answered
@@ -2326,6 +2538,12 @@ class Operator:
         import intents
         _, group, kind, prefer, who = self.pending
         self.pending = None
+        if kind == "swear" or (kind in ("rude", "mock") and getattr(self, "reply_attached", False)):
+            # 22.11 (решение Дмитрия, экзамен-2 «Мат/дружба»): брань/мат БЕЗ распознанного адресата —
+            # это крик в эфир, не персональное оскорбление: дружбу не трогаем, ответа нет, тихий игнор.
+            # Адресная брань (позывной в тексте, reply_attached=False) и flare-перепалки не меняются.
+            log("брань без адресата — тихий игнор (решение 22.11)")
+            return
         multi, self.multi = self.multi, False     # отбивку играем один раз и только вместе с реальным ответом
         if group == "foreign_reply":
             warm = getattr(self, "pending_warm", False)
@@ -2374,6 +2592,15 @@ class Operator:
             return
         if group == "intent" and kind == "where" and self._lane_answer(who, prefer):
             return
+        if group == "intent" and kind == "musya":
+            return self._musya_answer(who)
+        if group == "intent" and kind == "flare":
+            # 22.11 (драфт §7.7): игрок может душить эфир руганью про третьих лиц — эфир отвечает
+            # подколом раз и тема схлопывается; чаще 1 раза в 10 мин не разводим
+            if time.monotonic() - FLARE_COOL[0] < float((PLAYER.cfg or {}).get("flare_cooldown_s", 600.0)):
+                log("flare: меньше 10 минут с прошлой перепалки — эфир не разводит")
+                return True
+            FLARE_COOL[0] = time.monotonic()
         if group == "intent" and kind == "police":
             # 22.11 (стрим #13): «полиция впереди» без маркера вопроса — ПРЕДУПРЕЖДЕНИЕ, не вопрос:
             # эфир подтверждает приём, метка встаёт на народную карту. Маркер вопроса у police — «?»:
@@ -2482,9 +2709,11 @@ class Operator:
                     log(f"у {who} нет ответа на {group}/{kind} — молчит")
                     return
         mine = (lambda lst: [x for x in lst if x[0] == who]) if who else (lambda lst: lst)
-        if who:
+        if who and kind not in ("flare", "radio_tech"):
             # asked BY NAME: only he answers (user 2026-11-04: «Борода, как дела?» was answered by Ласточка
             # because Борода had just left the range) - near, or through the noise if he's just out; else silence
+            # 22.11: flare исключение — перепалка про ТРЕТЬИХ лиц, ругань не на адресата: подколоть может любой;
+            # radio_tech исключение — технику отвечает тот, кто шарит (Профессор/Рустам), а не последний говоривший
             pool = mine(pool) or pool
         # 2026-11-05 (Zhenya): Самарканд said «всё, на ночёвку», the player said «давай, пока» 10 s later -> silence.
         # Somebody who has just signed off still answers a goodbye / thanks addressed to him.
@@ -2619,10 +2848,16 @@ class Operator:
                 return
             if group in ("intent", "player", "graf") and kind not in ("not_heard", "interrupt", "click", "already", "swear"):
                 bond_add(actor, 3 if kind in ("thanks", "praise") else 2 if who == actor else 1, kind)
-            if group == "intent" and kind in ("thanks", "praise", "joke", "song", "support"):
+            if group == "intent" and (kind in ("thanks", "praise", "joke", "song", "support")
+                                      or getattr(self, "support", False)):
+                # support без пула уходит в praise (вид _decide) — считаем поддержку по флагу, не по kind
                 sup = getattr(self, "support", False)
                 low = BONDS and BONDS.mood(actor) in ("tired", "grumpy")
                 mood_nudge(actor, 2 if sup and low else 1, "поддержка" if sup else kind)
+                if sup:
+                    self._kofe_on_support()          # 22.11: счётчик поддержки арки «кофе»
+            if group == "player" and kind == "news":
+                self._news_heard(actor)              # 22.11: день новости для news_followup
             self._maybe_cross(actor, group)
             self._maybe_hook(actor, group, kind, who, evaded)
 
@@ -2773,6 +3008,176 @@ STREAM_GAP_K = 0.55       # «эфир живее»: паузы болтовни
 STREAM_NEWS_USED = set()  # 19.11 (stream_news_pilot): wav реплик stream_news, звучавших за сессию (каждая — раз)
 
 
+# ---------------- 22.11: пакет «арки вперёд» (drafts_arcs_forward_2026-11-22.md, одобрено Дмитрием) ----------------
+# Состояние арок/поломок/новостей живёт в world.arcs -> world_state.json («_arcs», пишет только код);
+# здесь — сессионные таймеры (monotonic). Всё под флагом cfg["arcs_pilot"] (по умолчанию выключен).
+KOFE_Q = []                  # [(monotonic, actor, kind, idx)] — сцена «кофе» и ответы на поддержку по очереди
+_kofe_hook_at = [0.0]        # следующий крючок-рыба Ковбоя (не чаще 1 раза в ~40 мин)
+_kofe_after_at = [0.0]       # кулдаун продолжения «было кофе»
+BREAKDOWN = {}               # actor -> {"phase": 0..3, "until": monotonic} — активный цикл поломки
+_next_break = {}             # actor -> monotonic: следующая попытка старта цикла
+BREAK_ACTORS = ("mihalych", "boroda", "professor", "vitek", "yanek", "petrovna")
+BREAK_PHASE_S = (1200.0, 2400.0)     # 20–40 минут на фазу (настоящие секунды, черновик 2.0)
+# дефекты для чередования по циклам (черновик 2.7): Витьку — только «страшные», печку ему не даём
+BREAK_DEFECTS = ("печка", "рессора", "свечи", "аккум", "резина")
+BREAK_DEFECTS_VITEK = ("аккум", "свечи")
+FLARE_COOL = [0.0]        # 22.11 (драфт §7.7): перепалки flare — не чаще 1 ответа в 10 мин
+_next_mystic = [0.0]      # 22.11: следующая попытка ночного мистика (night_mystic/ru, окно 00-04 игр.)
+_next_followup = [0.0]       # не чаще одного продолжения новости за раз
+
+
+def _arcs(world):
+    """Состояние арок из world_state (терпимая загрузка: нет ключа — пустой dict)."""
+    if world is None:
+        return {}
+    a = getattr(world, "arcs", None)
+    if not isinstance(a, dict):
+        a = world.arcs = {}
+    return a
+
+
+def _arcs_save(world):
+    try:
+        world.save()      # arcs редкие (поддержки/сцены/новости) — полный сейв мира тут приемлем
+    except Exception as e:
+        log(f"арки: не сохранилось состояние: {e!r}")
+
+
+def _pool_say(group, kind, idx=None, actor=None):
+    """Одна реплика из пула arcs-пакета по индексу (без индекса — случайная, подходящего актёра).
+    True — прозвучала («ok»)."""
+    pool = reaction_pool(group, kind)
+    if idx is not None:
+        pool = [pool[idx]] if idx < len(pool) else []
+    if actor:
+        pool = [x for x in pool if x[0] == actor] or pool
+    if not pool:
+        return False
+    a, wav = random.choice(pool)
+    return PLAYER.file(wav, a) == "ok"
+
+
+def arcs_tick(cfg, world, deck, op, st, hush, driving_s, next_at):
+    """22.11: один проход фоновой механики пакета «арки вперёд» из главного цикла (в стенд не входит —
+    как и прочая болтовня из main(); answer()-часть проверяется сценариями, это — мок-тестом).
+    Возвращает next_at."""
+    if not (cfg.get("arcs_pilot") and world and st in ("driving", "engine_off") and not hush):
+        return next_at
+    now_ = time.monotonic()
+    arcs = _arcs(world)
+    # очередь сцены/ответов Ковбоя: играем, когда эфир свободен; актёр ушел — отложить
+    if KOFE_Q and not op.pending and not op.waiting:
+        t0, a_, kind, idx = KOFE_Q[0]
+        if now_ >= t0:
+            if a_ in (deck.allowed or ()) and not deck.offline(a_):
+                KOFE_Q.pop(0)
+                if _pool_say("quest", kind, idx=idx):
+                    deck.on_air.add(a_)
+                    log(f"арка кофе: {kind}[{idx + 1}] ({a_})")
+                    next_at = max(next_at, driving_s + random.uniform(15, 30))
+            else:
+                KOFE_Q[0] = (now_ + 30.0, a_, kind, idx)     # ждём, пока вернётся в эфир
+    # крючки-рыба: крутятся, пока поддержки не было (счётчик 0), не чаще 1 раза в ~40 мин
+    kk = arcs.get("kofe") or {}
+    if (not kk.get("scene") and int(kk.get("n", 0)) == 0 and not KOFE_Q
+            and now_ >= _kofe_hook_at[0] and not op.pending and not op.waiting
+            and deck.allowed is not None and "bahti" in deck.allowed
+            and not deck.offline("bahti")):
+        pool = reaction_pool("quest", "kofe_hook")
+        hook_i = int(arcs.setdefault("kofe", {}).get("hook_i", 0))
+        if pool and _pool_say("quest", "kofe_hook", idx=hook_i % len(pool), actor="bahti"):
+            arcs["kofe"]["hook_i"] = hook_i + 1
+            _arcs_save(world)
+            deck.on_air.add("bahti")
+            _kofe_hook_at[0] = now_ + random.uniform(2100, 3000)   # 35–50 мин
+            next_at = max(next_at, driving_s + random.uniform(15, 30))
+            log(f"арка кофе: крючок-рыба ({(hook_i % len(pool)) + 1}/{len(pool)})")
+    # «было кофе»: не раньше чем через игровую смену после сцены, дальше — по кулдауну часов
+    if (kk.get("scene") and not kk.get("after_done")
+            and int(world.game_min // 1440) >= int(kk.get("after_day", 0)) + 1
+            and now_ >= _kofe_after_at[0] and not KOFE_Q
+            and not op.pending and not op.waiting
+            and deck.allowed is not None):
+        pool = reaction_pool("quest", "kofe_after")
+        here = [a for a in deck.allowed if not deck.offline(a)]
+        pick = next((x for x in pool if x[0] in here), None)
+        if pick and PLAYER.idle(1.0):
+            if PLAYER.file(pick[1], pick[0]) == "ok":
+                deck.on_air.add(pick[0])
+                kk["after_done"] = True
+                _arcs_save(world)
+                _kofe_after_at[0] = now_ + 3600.0
+                log(f"арка кофе: «было кофе» ({pick[0]})")
+                next_at = max(next_at, driving_s + random.uniform(15, 30))
+                return next_at
+    # поломки по времени: 4 фазы knock->stretch->service->fixed, 20–40 мин на фазу
+    arcs_break = arcs.setdefault("breakdown", {})
+    for a_ in BREAK_ACTORS:
+        b_ = BREAKDOWN.get(a_)
+        if b_ is not None:
+            if now_ >= b_["until"]:
+                b_["phase"] += 1
+                if b_["phase"] > 3:
+                    BREAKDOWN.pop(a_, None)
+                    continue
+                b_["until"] = now_ + random.uniform(*BREAK_PHASE_S)
+                if (deck.allowed is not None and a_ in deck.allowed
+                        and not deck.offline(a_) and not op.pending and not op.waiting
+                        and _pool_say("breakdown", a_, idx=b_["phase"])):
+                    deck.on_air.add(a_)
+                    log(f"поломка: {a_} фаза {b_['phase'] + 1}/4")
+                    next_at = max(next_at, driving_s + random.uniform(10, 20))
+        elif deck.allowed is not None and a_ in deck.allowed and not deck.offline(a_):
+            if a_ == "boroda" and not arcs.get("boroda_musya_news"):
+                continue          # ГЕЙТ драфта §2.2: без сыгранной новости про Мусю поломки Бороды молчат
+            if now_ >= _next_break.get(a_, 0.0):
+                _next_break[a_] = now_ + random.uniform(1500.0, 2700.0)   # редкая попытка
+                if random.random() < 0.3:
+                    defect = random.choice(BREAK_DEFECTS_VITEK if a_ == "vitek" else BREAK_DEFECTS)
+                    # один дефект не два цикла подряд (черновик 2.7); текст фиксирован под актёра
+                    if defect != arcs_break.get(a_, {}).get("defect"):
+                        arcs_break[a_] = {"defect": defect}
+                        _arcs_save(world)
+                    BREAKDOWN[a_] = {"phase": 0, "until": now_ + random.uniform(*BREAK_PHASE_S)}
+                    if not op.pending and not op.waiting and _pool_say("breakdown", a_, idx=0):
+                        deck.on_air.add(a_)
+                        log(f"поломка: {a_} началась ({defect})")
+                        next_at = max(next_at, driving_s + random.uniform(10, 20))
+    # новости-продолжения: новость сыграна -> через смену-две актёр возвращается к ней
+    if now_ >= _next_followup[0] and not op.pending and not op.waiting and deck.allowed:
+        day_ = int(world.game_min // 1440)
+        done_ = arcs.setdefault("news_done", [])
+        played_nf = False
+        for a_, d_ in list((arcs.get("news_day") or {}).items()):
+            if played_nf or a_ in done_ or day_ < int(d_) + 1:
+                continue
+            here = [x for x in deck.allowed if not deck.offline(x)]
+            if a_ in here and random.random() < 0.5:
+                played_nf = _pool_say("news_followup", a_)
+                if played_nf:
+                    deck.on_air.add(a_)
+                    done_.append(a_)
+                    log(f"новости: продолжение ({a_})")
+                    if a_ == "boroda":
+                        # 22.11 (драфт §2.2, пометка «ГЕЙТ»): поломки Бороды открываются только после
+                        # его новости-продолжения про Мусю — его реплики поломок завязаны на кошку в кабине
+                        arcs["boroda_musya_news"] = True
+            elif a_ not in here and random.random() < 0.3:
+                pool = reaction_pool("news_followup", "general")
+                pick = next((x for x in pool if x[0] in here), None)
+                played_nf = bool(pick) and PLAYER.file(pick[1], pick[0]) == "ok"
+                if played_nf:
+                    deck.on_air.add(pick[0])
+                    done_.append(a_)
+                    log(f"новости: продолжение (универсальное, {pick[0]})")
+            if played_nf:
+                _arcs_save(world)
+                _next_followup[0] = now_ + 3600.0
+                next_at = max(next_at, driving_s + random.uniform(15, 30))
+                break
+    return next_at
+
+
 # --- Донаты DonationAlerts -> голосовое бухгалтерии (пилот 19.11, donation_pilot) ---
 DA_URL = "https://www.donationalerts.com/api/v1/alerts/donations"
 DONATIONS_STATE_F = ROOT / "donations_state.json"     # не в git, см. .gitignore (как state.json)
@@ -2869,6 +3274,20 @@ def _air_recent_s():
 def _greet_recent(actor):
     """True — актор недавно звучал в эфире (spoke_at): его личное приветствие/бантер сейчас = «второй раз»."""
     return (time.monotonic() - getattr(PLAYER, "spoke_at", {}).get(actor, -1e9)) < _air_recent_s()
+
+
+def _streambot_line():
+    """22.11: проезжий x_ru (пул streambot/ru) реагирует на зрителей стрима — по аналогии
+    со stream_banter, но голосом проезжего. Пул пуст/не вышло -> False (тик перепланируется)."""
+    pool = reaction_pool("streambot", "ru")
+    if not pool:
+        return False
+    pick = random.choice(fresh_first(pool))
+    heard(pick[1])
+    if PLAYER.file(pick[1]) == "ok":
+        log("режим стрима: проезжий комментирует зрителей (streambot/ru)")
+        return True
+    return False
 
 
 def _stream_banter(world, deck):
@@ -4012,7 +4431,7 @@ def main(argv):
     fines = Fines()
     wq = []                                  # (group, kind, actor, created) lines of the living highway
     murmur_acc, next_murmur = 0.0, random.uniform(60, 150)
-    foreign_acc, next_foreign = 0.0, random.uniform(180, 420)
+    foreign_valve["game_prev"] = None     # 22.11: вентиль сам подхватит текущее игровое время
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
     meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
     next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — первый тик бантера; дальше интервал из cfg
@@ -4436,6 +4855,8 @@ def main(argv):
                         deck.on_air.add(pick[0])
                         next_at = max(next_at, driving_s + random.uniform(15, 30))
                         continue
+            # 22.11: пакет «арки вперёд» (drafts_arcs_forward, флаг arcs_pilot)
+            next_at = arcs_tick(cfg, world, deck, op, st, hush, driving_s, next_at)
             # «ты как, не спишь?»: озвучка вопроса, открывается окно ответа 20 с (в тишине не играет)
             if CARE_Q and st in ("driving", "engine_off") and not op.pending and not hush:
                 t0, a_ = CARE_Q[0]
@@ -4523,7 +4944,10 @@ def main(argv):
             if (STREAM_ON[0] and cfg.get("stream_mode_pilot") and st == "driving" and not hush
                     and not op.pending and stream_acc >= next_stream_banter):
                 stream_acc = 0.0
-                if _stream_banter(world, deck):
+                # 22.11: под пилотом streambot часть обращений к стримеру звучит от проезжего x_ru
+                sb = (_streambot_line() if (cfg.get("streambot_pilot") and random.random() < 0.4)
+                      else _stream_banter(world, deck))
+                if sb:
                     next_stream_banter = random.uniform(float(cfg.get("stream_banter_min_s", 120)),
                                                         float(cfg.get("stream_banter_max_s", 240)))
                 else:
@@ -4715,6 +5139,8 @@ def main(argv):
             # silence guard: driving and nothing with a voice for max_silence -> pull somebody in
             if PLAYER.voices != seen_voices:
                 seen_voices, quiet_drive = PLAYER.voices, 0.0
+                if world:                                 # 22.11: метка «наши говорили» для вентиля проезжих
+                    foreign_valve["last_our_game_min"] = world.game_min
             quiet_drive += dt
             if quiet_drive > max_silence:
                 quiet_drive = max_silence - 75                   # look again in 75 s
@@ -4725,16 +5151,29 @@ def main(argv):
                     log("сторож тишины: никого рядом — зову встречного, пока эфир иностранцу")
                     if world:
                         world.quiet = world.quiet_s + 1          # a meeting on the next world step
-                    foreign_acc = next_foreign                   # and something on air right now
-            # a foreign driver passing by: one line in the language of the country you drive in
+                    foreign_valve["force"] = True                # and something on air right now
+            # 22.11: ночной мистик (x_ru_night, пул night_mystic/ru) — ТОЛЬКО в окне 00:00–04:00
+            # игрового времени; дневное расписание проезжих/филлеров не тронуто
+            if (world and not hush and st == "driving" and not op.pending and not op.waiting
+                    and world.game_min is not None
+                    and (world.game_min % 1440) < 4.0 * 60.0
+                    and time.monotonic() >= _next_mystic[0]):
+                pool = reaction_pool("night_mystic", "ru")
+                if pool:
+                    pick = random.choice(fresh_first(pool))
+                    heard(pick[1])
+                    if PLAYER.file(pick[1]) == "ok":
+                        _next_mystic[0] = time.monotonic() + random.uniform(300, 600)
+                        log("эфир: ночной голос в эфире (night_mystic/ru)")
+                        next_at = max(next_at, driving_s + random.uniform(15, 30))
+                        continue
+            # a foreign driver passing by — 22.11: плавающий вентиль (foreign_per_hour, насыщение,
+            # анти-какофония 2 игровых минуты после наших, разнообразие языков, ночью реже)
             if world and FOREIGN and not hush:
-                foreign_acc += dt
-                if foreign_acc >= next_foreign:
-                    foreign_acc, next_foreign = 0.0, random.uniform(240, 600)
+                p_fv, ok_gap = foreign_valve_tick(foreign_valve, cfg, world.game_min, _fv_random())
+                if ok_gap and not op.pending and not op.waiting and _fv_random().random() < p_fv:
                     country = world.cities[world.roads.nearest(world.px, world.pz)][1] if world.px is not None else ""
-                    lang = COUNTRY_LANG.get(country)
-                    if not lang or random.random() < 0.3:          # an international truck from elsewhere
-                        lang = random.choice(sorted(FOREIGN))
+                    lang = foreign_lang_choice(COUNTRY_LANG.get(country), _fv_random())
                     pool = reaction_pool("foreign", lang)
                     if pool:
                         actor, wav = random.choice(fresh_first(pool))
@@ -4746,11 +5185,39 @@ def main(argv):
                         if OVERLAY:
                             OVERLAY.foreign({"de": "по-немецки", "pl": "по-польски", "fr": "по-французски",
                                              "es": "по-испански", "it": "по-итальянски", "nl": "по-голландски",
-                                             "cs": "по-чешски"}.get(lang, "не по-нашему"))
+                                             "cs": "по-чешски", "fi": "по-фински", "no": "по-норвежски",
+                                             "sv": "по-шведски", "tr": "по-турецки", "en": "по-английски",
+                                             "ro": "по-румынски", "ru": "по-русски"}.get(lang, "не по-нашему"))
                         PLAYER.file(tmp)
                         FOREIGN_LAST[:] = [lang, time.monotonic(), 0]
+                        foreign_valve_note_play(foreign_valve, world.game_min, lang)
+                        # 22.11 (foreign80): с шансом наш водитель, знающий язык, откликнется на филлер
+                        if (random.random() < FOREIGN_ANS_P
+                                and time.monotonic() - FOREIGN_ANS[0] > FOREIGN_ANS_COOLDOWN
+                                and not FOREIGN_ANS[1]):
+                            FOREIGN_ANS[1] = (time.monotonic() + random.uniform(4.0, 9.0),
+                                              lang, foreign_type(lang, wav))
                         next_at = max(next_at, driving_s + 15)
                         continue
+            # 22.11 (foreign80): наш отвечает проезжему — знает язык, в зоне, кулдаун
+            if FOREIGN_ANS[1] and time.monotonic() >= FOREIGN_ANS[1][0] and world and not hush:
+                _, lang, ft = FOREIGN_ANS[1]
+                FOREIGN_ANS[1] = None
+                here = [a for a in LANG_SPEAKERS.get(lang, ()) if a in world.inside and not deck.offline(a)]
+                pool = reaction_pool("foreign_ans", f"{lang}__{ft}") if ft else []
+                if not pool:                       # филлер без типа (старые) — любой ответ на языке
+                    for t2 in FOREIGN_ANS_TYPES:
+                        pool += reaction_pool("foreign_ans", f"{lang}__{t2}")
+                pool = [p for p in pool if p[0] in here]
+                if pool:
+                    actor, wav = random.choice(fresh_first(pool))
+                    heard(wav)
+                    if PLAYER.file(wav, actor) == "ok":
+                        FOREIGN_ANS[0] = time.monotonic()
+                        log(f"эфир: {actor} отвечает проезжему ({lang}, тип {ft or 'любой'})")
+                        next_at = max(next_at, driving_s + 8)
+                        continue
+                log("эфир: проезжему ответить некому (языка не знает никто из зоны)")
             # far-away chatter near a big city when nobody is in range
             if world and not world.inside and not hush:
                 murmur_acc += dt

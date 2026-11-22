@@ -1,0 +1,25 @@
+{
+ "_comment": "Пакет «арки вперёд» 22.11 (drafts_arcs_forward, флаг arcs_pilot). Sim проверяет answer()-часть: Муся (первый вопрос -> story/musya, повтор -> story/musya_more), счётчик поддержек 1-4 (в логе «арка кофе: поддержка N/4», на 4-й — «СЦЕНА»). Фоновый тик arcs_tick (дренж сцены, крючки, «было кофе», поломки, news_followup) живёт в main() и в стенд не входит — покрыт мок-тестом tools/check_arcs22.py.",
+ "steps": [
+  {"id": "cfg_pilot", "cfg": {"arcs_pilot": true}},
+  {"id": "musya_first", "summon": "boroda", "who": "boroda",
+   "text": "Борода, кто такая Муся?",
+   "expect_rel": "story/musya"},
+  {"id": "musya_repeat", "who": "boroda",
+   "text": "Борода, а расскажи ещё про кошку",
+   "expect_rel": "story/musya_more"},
+  {"id": "night", "set_min": 1320},
+  {"id": "support_1", "summon": "bahti", "who": "bahti",
+   "text": "Ковбой, держись, всё будет хорошо!",
+   "expect_rel": "intent/praise"},
+  {"id": "support_2", "who": "bahti",
+   "text": "Ковбой, держись там, брат",
+   "expect_rel": "intent/praise"},
+  {"id": "support_3", "who": "bahti",
+   "text": "Ковбой, не переживай, ты справишься",
+   "expect_rel": "intent/praise"},
+  {"id": "support_4", "summon": "sova", "who": "bahti",
+   "text": "Ковбой, ты лучший, держись!",
+   "expect_rel": "intent/praise"}
+ ]
+}

@@ -1,0 +1,13 @@
+{"steps": [
+  {"id": "warmup", "summon": "mihalych", "who": "mihalych",
+   "text": "Михалыч, привет, как сам?", "expect_answer": true,
+   "_note": "Михалыч говорит -> следующая брань без имени приклеится к нему по «ответ ему»"},
+  {"id": "rude_noaddr", "text": "Пошёл ты нахуй, дятел!", "expect_silence": true},
+  {"id": "swear_noaddr", "text": "Ну и мудак сегодня в эфире, ёпт", "expect_silence": true},
+  {"id": "rude_named", "who": "mihalych", "q": true,
+   "text": "Михалыч, иди нахуй", "expect_answer": true,
+   "_note": "адресная брань — поведение НЕ меняется (ответ/обида)"},
+  {"id": "mat_question", "summon": "sova",
+   "text": "Мужики, как дорожка до Хельсинки, чисто или пиздец на подъёме?", "expect_rel": "intent/road_ask",
+   "_note": "мат, но по делу — маршрутизация в интенты не ломается"}
+]}

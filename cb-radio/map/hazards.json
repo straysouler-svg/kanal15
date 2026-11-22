@@ -1,1 +1,16 @@
-[]
+[
+ {
+  "kind": "camera",
+  "x": 29308.66015625,
+  "z": -97158.859375,
+  "until": null,
+  "src": "fine:speeding_camera"
+ },
+ {
+  "kind": "camera",
+  "x": 35131.76171875,
+  "z": -94084.703125,
+  "until": null,
+  "src": "fine:speeding_camera"
+ }
+]
