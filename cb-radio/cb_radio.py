@@ -170,6 +170,7 @@ DEFAULT_CFG = {
     "voicedsp_pilot": False,       # 22.11: DSP-модуль голосов проезжих (voicedsp.py, dsp_profiles.json) — только foreign.*/streambot/night_mystic
     "streambot_pilot": False,      # 22.11: проезжий x_ru (streambot/ru) частично заменяет бантер в режиме стрима
     "foreign_per_hour": 9.0,       # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме)
+    "bus_ids": ["vehicle.volvo.9700_23"],   # 23.11: паттерны vehicle id автобусов (RenCloud @2428); пополнять по мере выхода моделей DLC
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
     "donation_pilot": False,       # 19.11: донаты DonationAlerts -> голосовое бухгалтерии (пул buh/donation)
     "stream_greet_pilot": False,   # 19.11: при включении режима стрима — голосовое buh/stream_greet через 1-2 мин
@@ -432,6 +433,37 @@ class Fines:
             return offence
         self._last = sig
         return None
+
+
+def bus_match(vid, bus_ids):
+    """23.11: True, если vehicle id (vehicle.volvo.9700_23 и т.п.) содержит любой паттерн из bus_ids.
+    Чистая функция — стенд и моки гоняют без телеметрии."""
+    return any(p and p in vid for p in (bus_ids or ()))
+
+
+class Bus:
+    """23.11: детектор автобусного DLC ETS2. Vehicle id игрока — из RenCloud Local\\SCSTelemetry @2428
+    (64-байтовый null-terminated слот; замер вживую на Volvo 9700, разметка RenCloud не менялась).
+    is_bus(bus_ids) -> True, если игрок сейчас за рулём автобуса. Паттерны id — в cfg["bus_ids"]."""
+    def __init__(self):
+        self._p = None
+
+    def _attach(self):
+        if self._p:
+            return True
+        for name in ("Local\\SCSTelemetry", "Local\\SHSCSTelemetry"):   # тот же файл, что читает Fines
+            h = _k.OpenFileMappingW(4, False, name)
+            if h:
+                self._p = _k.MapViewOfFile(h, 4, 0, 0, 0)
+                log("автобусный DLC: читаю " + name.split(chr(92))[-1])
+                return True
+        return False
+
+    def is_bus(self, bus_ids):
+        if not self._attach():
+            return False
+        vid = ctypes.string_at(self._p + 2428, 64).split(b"\0")[0].decode("ascii", "replace")
+        return bus_match(vid, bus_ids)
 
 
 # ---------------------------------------------------------------- push-to-talk
@@ -2650,6 +2682,12 @@ class Operator:
             prefer = None                # not always the same person answering
         evaded = False               # ответ ушёл в уклончивую (bond/evade) — зацепку следом не запускать (ревью 15.11)
         pool = reaction_pool(group, kind)
+        if group == "intent" and kind == "bus":
+            # 23.11 (автобусный DLC): «как тебе мой автобус» — свой пул reactions/bus/ask_reply;
+            # пока его нет — обычный пустой пул и честное «не знаю», поведение фуры не меняется
+            bp = reaction_pool("bus", "ask_reply")
+            if bp:
+                pool = bp
         if kind == "swear" and not pool:
             # своих реплик на мат без адресата пока нет — добродушное «принял» (ревью Клода 15.11)
             pool = reaction_pool("player", "ack")
@@ -3033,6 +3071,10 @@ BREAK_DEFECTS = ("печка", "рессора", "свечи", "аккум", "р
 BREAK_DEFECTS_VITEK = ("аккум", "свечи")
 FLARE_COOL = [0.0]        # 22.11 (драфт §7.7): перепалки flare — не чаще 1 ответа в 10 мин
 _next_mystic = [0.0]      # 22.11: следующая попытка ночного мистика (night_mystic/ru, окно 00-04 игр.)
+# 23.11 (автобусный DLC): вентили пулов reactions/bus (настоящие секунды); tease 40-60 мин, respect 25-45 мин
+_next_bus_tease = [0.0]
+_next_bus_respect = [0.0]
+_next_bus_night = [0.0]   # bus/night — то же окно 00:00-04:00 игрового, что у night_mystic
 _next_followup = [0.0]       # не чаще одного продолжения новости за раз
 
 
@@ -4439,6 +4481,7 @@ def main(argv):
             op.answer()
 
     fines = Fines()
+    bus = Bus()                              # 23.11: автобусный DLC — детектор по vehicle id (RenCloud @2428)
     wq = []                                  # (group, kind, actor, created) lines of the living highway
     murmur_acc, next_murmur = 0.0, random.uniform(60, 150)
     foreign_valve.update({"prev_s": None, "force": False})   # 23.11: вентиль тикает по реальному времени — сброс якоря
@@ -5177,6 +5220,47 @@ def main(argv):
                         log("эфир: ночной голос в эфире (night_mystic/ru)")
                         next_at = max(next_at, driving_s + random.uniform(15, 30))
                         continue
+            # 23.11 (автобусный DLC): bus/tease и bus/respect — только когда игрок за рулём автобуса
+            # (vehicle id из RenCloud @2428, паттерны в cfg["bus_ids"]). Пула в данных ещё нет
+            # (tools/add_bus_lines.py, запускает оркестратор) — молча пропускаем, не дёргая чтение.
+            if world and not hush and st == "driving" and not op.pending and not op.waiting:
+                now_b = time.monotonic()
+                _bus_played = False
+                for _bk, _bnext, _bspan in (("tease", _next_bus_tease, (2400.0, 3600.0)),
+                                             ("respect", _next_bus_respect, (1500.0, 2700.0))):
+                    if now_b < _bnext[0]:
+                        continue
+                    if not bus.is_bus(cfg.get("bus_ids")):
+                        break                            # не автобус — таймеры не трогаем
+                    pool = reaction_pool("bus", _bk)
+                    if not pool:
+                        _bnext[0] = now_b + 300.0        # пула нет — переспросить через 5 минут
+                        continue
+                    pick = random.choice(fresh_first(pool))
+                    heard(pick[1])
+                    if PLAYER.file(pick[1], pick[0]) == "ok":
+                        _bnext[0] = now_b + random.uniform(*_bspan)
+                        log(f"эфир: автобусный пул (bus/{_bk})")
+                        next_at = max(next_at, driving_s + random.uniform(15, 30))
+                        _bus_played = True
+                        break
+                if _bus_played:
+                    continue
+                # bus/night — то же игровое окно 00:00–04:00, что у night_mystic, но только в автобусе
+                if (world.game_min is not None and now_b >= _next_bus_night[0]
+                        and (world.game_min % 1440) < 4.0 * 60.0
+                        and bus.is_bus(cfg.get("bus_ids"))):
+                    pool = reaction_pool("bus", "night")
+                    if pool:
+                        pick = random.choice(fresh_first(pool))
+                        heard(pick[1])
+                        if PLAYER.file(pick[1], pick[0]) == "ok":
+                            _next_bus_night[0] = now_b + random.uniform(600, 1200)
+                            log("эфир: ночной автобусный пул (bus/night)")
+                            next_at = max(next_at, driving_s + random.uniform(15, 30))
+                            continue
+                    else:
+                        _next_bus_night[0] = now_b + 300.0
             # a foreign driver passing by — 22.11: плавающий вентиль (foreign_per_hour за РЕАЛЬНЫЙ час,
             # насыщение, анти-какофония 60 реальных секунд после наших, разнообразие языков, ночью реже)
             if world and FOREIGN and not hush:
