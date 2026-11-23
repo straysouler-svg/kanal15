@@ -170,7 +170,7 @@ DEFAULT_CFG = {
     "voicedsp_pilot": False,       # 22.11: DSP-модуль голосов проезжих (voicedsp.py, dsp_profiles.json) — только foreign.*/streambot/night_mystic
     "streambot_pilot": False,      # 22.11: проезжий x_ru (streambot/ru) частично заменяет бантер в режиме стрима
     "foreign_per_hour": 9.0,       # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме)
-    "bus_ids": ["vehicle.volvo.9700_23"],   # 23.11: паттерны vehicle id автобусов (RenCloud @2428); пополнять по мере выхода моделей DLC
+    "bus_ids": ["vehicle.man.lions_24", "vehicle.scania.touring_23", "vehicle.volvo.9700_23"],   # 23.11: паттерны vehicle id автобусов (RenCloud @2428; полный список моделей из dlc_bus.scs: def/vehicle/bus/)
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
     "donation_pilot": False,       # 19.11: донаты DonationAlerts -> голосовое бухгалтерии (пул buh/donation)
     "stream_greet_pilot": False,   # 19.11: при включении режима стрима — голосовое buh/stream_greet через 1-2 мин
