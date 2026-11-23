@@ -169,7 +169,7 @@ DEFAULT_CFG = {
     "arcs_pilot": False,           # 22.11: арка «Ковбой->Сова на кофе», поломки по времени, news_followup, «Кто такая Муся»
     "voicedsp_pilot": False,       # 22.11: DSP-модуль голосов проезжих (voicedsp.py, dsp_profiles.json) — только foreign.*/streambot/night_mystic
     "streambot_pilot": False,      # 22.11: проезжий x_ru (streambot/ru) частично заменяет бантер в режиме стрима
-    "foreign_per_hour": 9.0,       # 22.11: целевая плотность проезжих за игровой час (вентиль, регулируется на стриме)
+    "foreign_per_hour": 9.0,       # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме)
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
     "donation_pilot": False,       # 19.11: донаты DonationAlerts -> голосовое бухгалтерии (пул buh/donation)
     "stream_greet_pilot": False,   # 19.11: при включении режима стрима — голосовое buh/stream_greet через 1-2 мин
@@ -834,16 +834,19 @@ COUNTRY_RU = {"germany": "Германия", "austria": "Австрия", "switz
               "russia": "Россия"}
 
 # ---------------- 22.11: плавающий вентиль проезжих (ТЗ Дмитрия) ----------------
-# Целевая плотность — foreign_per_hour в DEFAULT_CFG (проезжих за игровой час; Дмитрий
-# регулирует на стриме без пересборки). Распределение плавающее, не ровный таймер:
+# 23.11 (стрим #14, 42 проезжих за 50 минут): вентиль переведён с игрового времени
+# на РЕАЛЬНОЕ — time.monotonic(). Игровые минуты в ETS2 бегут ~19× быстрее, поэтому
+# «проезжих за игровой час» давало до ~170/реальный час. foreign_per_hour теперь —
+# проезжих за РЕАЛЬНЫЙ час. Распределение плавающее, не ровный таймер:
 # насыщение (после проезжего следующий временно реже; при молчании плавно растёт),
-# анти-какофония (не ближе 2 игровых минут после наших голосов и не поверх ответа),
-# разнообразие (недавний язык — с понижающим весом), ночью (23–05) реже.
-foreign_valve = {"heat": 0.0, "last_game_min": 0.0, "last_our_game_min": 1e9,
-                 "last_lang": None, "game_prev": None, "force": False}
+# анти-какофония (не ближе 60 реальных секунд после наших голосов и не поверх ответа),
+# разнообразие (недавний язык — с понижающим весом), ночью (23–05 игрового времени) реже.
+foreign_valve = {"heat": 0.0, "last_s": None, "last_our_s": -1e9,
+                 "last_lang": None, "prev_s": None, "force": False}
 FV_IDLE_MAX = 1.0        # предел «роста при молчании» (+60% к шансу)
-FV_HEAT_TAU_GM = 120.0   # спад насыщения, игровые минуты (~2 ч на e^-1)
-FV_OUR_GAP_GM = 2.0      # анти-какофония: пауза после наших, игровые минуты
+FV_REFRACT_S = 900.0     # рефрактерность: полное восстановление за 15 реальных минут
+FV_IDLE_TAU_S = 3600.0   # рост при молчании: +60% за час реальной тишины
+FV_OUR_GAP_S = 60.0      # анти-какофония: пауза после наших, реальные секунды
 _fv_rng = None           # ленивый rng вентиля (numpy — нужен выбор с весами)
 
 
@@ -854,36 +857,41 @@ def _fv_random():
     return _fv_rng
 
 
-def foreign_valve_tick(fv, cfg, game_min, rng):
+def foreign_valve_tick(fv, cfg, now, game_min, rng):
     """Один шаг вентиля. -> (p, ok_to_play). Чистая функция — стенд и моки гоняют её сами;
-    главный цикл только бросает rng.random() < p. dgame — игровые минуты с прошлого тика.
+    главный цикл только бросает rng.random() < p.
 
-    Модель: пуассоновская интенсивность rate (foreign_per_hour) x рефрактерность (после проезжего
-    шанс следующего падает до 0.25 и линейно восстанавливается за 15 игровых минут; 1.35
-    компенсирует среднее ~0.74, чтобы стационарная плотность держалась у константы) x рост
-    при молчании (до +60% за час тишины). Анти-какофония — ok_to_play (2 игровых минуты
+    now — НАСТОЯЩИЕ секунды (time.monotonic; в стенде подменены виртуальными), dnow —
+    реальные секунды с прошлого тика. game_min — игровые минуты, нужны ТОЛЬКО для часа
+    суток (ночное понижение 23–05 оценивается по игровому времени, как раньше).
+
+    Модель: пуассоновская интенсивность rate (foreign_per_hour — за РЕАЛЬНЫЙ час) x
+    рефрактерность (после проезжего шанс следующего падает до 0.25 и линейно
+    восстанавливается за 15 реальных минут; 1.9 компенсирует средний рефрактерный вес
+    ~0.5, чтобы стационарная плотность держалась у константы) x рост при молчании
+    (до +60% за час реальной тишины). Анти-какофония — ok_to_play (60 реальных секунд
     после наших голосов)."""
-    if fv["game_prev"] is None:
-        fv["game_prev"] = game_min
-    dgame = max(0.0, game_min - fv["game_prev"])
-    fv["game_prev"] = game_min
-    if dgame <= 0 and not fv["force"]:
+    if fv["prev_s"] is None:
+        fv["prev_s"] = now
+    dnow = max(0.0, now - fv["prev_s"])
+    fv["prev_s"] = now
+    if dnow <= 0 and not fv["force"]:
         return 0.0, False
-    rate = float(cfg.get("foreign_per_hour", 9.0))
+    rate = float(cfg.get("foreign_per_hour", 9.0))    # проезжих за РЕАЛЬНЫЙ час
     hour = (game_min % 1440) / 60.0
     if hour >= 23.0 or hour < 5.0:
-        rate *= 0.5                                   # ночью реже (00–04 — окно night_mystic)
-    since_last = max(0.0, game_min - fv["last_game_min"])
-    refractory = 0.25 + 0.75 * min(1.0, since_last / 15.0)
-    idle = min(FV_IDLE_MAX, since_last / 60.0)
-    lam = rate / 60.0 * dgame * (1.0 + 0.6 * idle) * refractory * 2.1
+        rate *= 0.5                    # ночью реже (00–04 — окно night_mystic), по ИГРОВОМУ часу
+    since_last = 1e9 if fv["last_s"] is None else max(0.0, now - fv["last_s"])
+    refractory = 0.25 + 0.75 * min(1.0, since_last / FV_REFRACT_S)
+    idle = min(FV_IDLE_MAX, since_last / FV_IDLE_TAU_S)
+    lam = rate / 3600.0 * dnow * (1.0 + 0.6 * idle) * refractory * 1.9
     p = 1.0 - pow(2.718281828, -lam)
-    ok_gap = (game_min - fv["last_our_game_min"]) >= FV_OUR_GAP_GM
+    ok_gap = (now - fv["last_our_s"]) >= FV_OUR_GAP_S
     return min(0.95, p), bool(ok_gap or fv["force"])
 
 
-def foreign_valve_note_play(fv, game_min, lang):
-    fv["last_game_min"] = game_min
+def foreign_valve_note_play(fv, now, lang):
+    fv["last_s"] = now
     fv["last_lang"] = lang
     fv["force"] = False
 
@@ -2722,11 +2730,13 @@ class Operator:
                                                   or time.monotonic() - self.deck.left_at.get(who, -1e9) < 120):
             self.deck.grace = who
         try:
-            if kind == "greet":
+            if kind == "greet" and not who:
                 # 22.11 (стрим #13, «как два разных человека»): личное «привет» не играем актёру, который
                 # только что звучал в эфире (стримерский бантер/приветствие зрителей) — берём другого;
                 # если поздороваться некому без повтора — честная тишина. Фильтр ЗДЕСЬ, а не у пула выше:
                 # блок «у адресата нет реплики» иначе восстанавливал свежего актёра как «без реплики».
+                # 23.11 (стрим #14): на ПРЯМОЕ обращение по имени («Привет, Сова») гейт НЕ действует —
+                # позвал конкретного — он и отвечает, даже если только что звучал в эфире.
                 stale = [x[0] for x in pool if _greet_recent(x[0])]
                 if stale:
                     log(f"  привет: {stale} недавно в эфире — без личного приветствия")
@@ -4431,7 +4441,7 @@ def main(argv):
     fines = Fines()
     wq = []                                  # (group, kind, actor, created) lines of the living highway
     murmur_acc, next_murmur = 0.0, random.uniform(60, 150)
-    foreign_valve["game_prev"] = None     # 22.11: вентиль сам подхватит текущее игровое время
+    foreign_valve.update({"prev_s": None, "force": False})   # 23.11: вентиль тикает по реальному времени — сброс якоря
     buh_q, fines_day = [], {}                # accountant's voice messages after your fines
     meme_acc, next_meme = 0.0, random.uniform(240, 480)   # 11.11: мемы — редкая болтовня, интервал по времени в пути
     next_stream_banter = 120.0   # 16.11: режим стрима (пилот) — первый тик бантера; дальше интервал из cfg
@@ -5139,8 +5149,8 @@ def main(argv):
             # silence guard: driving and nothing with a voice for max_silence -> pull somebody in
             if PLAYER.voices != seen_voices:
                 seen_voices, quiet_drive = PLAYER.voices, 0.0
-                if world:                                 # 22.11: метка «наши говорили» для вентиля проезжих
-                    foreign_valve["last_our_game_min"] = world.game_min
+                if world:                                 # 23.11: метка «наши говорили» для вентиля — РЕАЛЬНЫЕ секунды
+                    foreign_valve["last_our_s"] = time.monotonic()
             quiet_drive += dt
             if quiet_drive > max_silence:
                 quiet_drive = max_silence - 75                   # look again in 75 s
@@ -5167,10 +5177,10 @@ def main(argv):
                         log("эфир: ночной голос в эфире (night_mystic/ru)")
                         next_at = max(next_at, driving_s + random.uniform(15, 30))
                         continue
-            # a foreign driver passing by — 22.11: плавающий вентиль (foreign_per_hour, насыщение,
-            # анти-какофония 2 игровых минуты после наших, разнообразие языков, ночью реже)
+            # a foreign driver passing by — 22.11: плавающий вентиль (foreign_per_hour за РЕАЛЬНЫЙ час,
+            # насыщение, анти-какофония 60 реальных секунд после наших, разнообразие языков, ночью реже)
             if world and FOREIGN and not hush:
-                p_fv, ok_gap = foreign_valve_tick(foreign_valve, cfg, world.game_min, _fv_random())
+                p_fv, ok_gap = foreign_valve_tick(foreign_valve, cfg, time.monotonic(), world.game_min, _fv_random())
                 if ok_gap and not op.pending and not op.waiting and _fv_random().random() < p_fv:
                     country = world.cities[world.roads.nearest(world.px, world.pz)][1] if world.px is not None else ""
                     lang = foreign_lang_choice(COUNTRY_LANG.get(country), _fv_random())
@@ -5183,14 +5193,12 @@ def main(argv):
                         sf.write(tmp, degrade(x, sr, random.uniform(0.6, 1.2)), sr)
                         log(f"эфир: проезжий иностранец ({lang}, вы в стране {COUNTRY_RU.get(country, country or 'неизвестной')})")
                         if OVERLAY:
-                            OVERLAY.foreign({"de": "по-немецки", "pl": "по-польски", "fr": "по-французски",
-                                             "es": "по-испански", "it": "по-итальянски", "nl": "по-голландски",
-                                             "cs": "по-чешски", "fi": "по-фински", "no": "по-норвежски",
-                                             "sv": "по-шведски", "tr": "по-турецки", "en": "по-английски",
-                                             "ro": "по-румынски", "ru": "по-русски"}.get(lang, "не по-нашему"))
+                            # 23.11 (стрим #14): субтитр = русский перевод реплики (поле "ru"), как в foreign_reply,
+                            # а не безликое «говорит по-фински»; actor из пула foreign — x_<lang>
+                            OVERLAY.said(_rel(wav), actor)
                         PLAYER.file(tmp)
                         FOREIGN_LAST[:] = [lang, time.monotonic(), 0]
-                        foreign_valve_note_play(foreign_valve, world.game_min, lang)
+                        foreign_valve_note_play(foreign_valve, time.monotonic(), lang)
                         # 22.11 (foreign80): с шансом наш водитель, знающий язык, откликнется на филлер
                         if (random.random() < FOREIGN_ANS_P
                                 and time.monotonic() - FOREIGN_ANS[0] > FOREIGN_ANS_COOLDOWN

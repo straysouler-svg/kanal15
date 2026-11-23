@@ -487,7 +487,7 @@ class _H(BaseHTTPRequestHandler):
             body, ctype = PAGE_SETUP.encode("utf-8"), "text/html; charset=utf-8"
         else:
             cfg = json.dumps(_overlay_cfg(parse_qs(u.query)), separators=(",", ":"))
-            body, ctype = PAGE.replace("/*OVCFG*/", cfg).encode("utf-8"), "text/html; charset=utf-8"
+            body, ctype = PAGE.replace("/*OVCFG*/{}", cfg).encode("utf-8"), "text/html; charset=utf-8"
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Cache-Control", "no-store")

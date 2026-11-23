@@ -367,7 +367,8 @@ def main():
         corpus_path = ROOT / corpus_path
     corpus = []
     if corpus_path.exists():
-        corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+        corpus = [] if os.environ.get("K15_NO_CORPUS") \
+            else json.loads(corpus_path.read_text(encoding="utf-8"))
     elif (ROOT / "cb_radio.log").exists():
         # первый прогон: собрать корпус настоящих фраз игрока из журнала
         rx = re.compile(r"тангента: «(.+?)»")
@@ -687,12 +688,34 @@ def main():
             if "cfg" in st:                           # пилотные флаги для сценария (напр. stream_mode_pilot)
                 cb.PLAYER.cfg.update(st["cfg"])
                 log(f"[сим] cfg: {st['cfg']}")
+            if "valve" in st:                 # 23.11: прогон вентиля проезжих по ВИРТУАЛЬНЫМ реальным часам
+                vhours = float(st["valve"].get("hours", 1.0))
+                vcfg = dict(cb.PLAYER.cfg)
+                vcfg["foreign_per_hour"] = float(st["valve"].get("per_hour", 9.0))
+                vrng = cb.np.random.default_rng(args.seed * 1000 + 77)
+                vfv = {"last_s": None, "last_our_s": -1e9, "last_lang": None, "prev_s": None, "force": False}
+                v_plays, v_t0 = 0, _vnow()
+                while _vnow() < v_t0 + vhours * 3600.0:
+                    advance(5.0)
+                    if vrng.random() < 5.0 / 480.0:            # «наши» говорят ~раз в 8 реальных минут
+                        vfv["last_our_s"] = _vnow()
+                    p_v, ok_v = cb.foreign_valve_tick(vfv, vcfg, _vnow(), game.game_min, vrng)
+                    if ok_v and vrng.random() < p_v:
+                        v_plays += 1
+                        cb.foreign_valve_note_play(vfv, _vnow(), "de")
+                v_norm = vcfg["foreign_per_hour"] * vhours
+                log(f"[сим] вентиль: {v_plays} проезжих за {vhours:.1f} вирт.часа (норма ~{v_norm:.0f})")
+                if not (0.35 * v_norm <= v_plays <= 2.2 * v_norm):
+                    fail(16, f"вентиль: {v_plays} проезжих за {vhours} ч при норме ~{v_norm:.0f}")
+                step_i += 1
+                continue
             if "text" not in st:                      # служебный шаг (эффекты выше уже применены)
                 step_i += 1
                 continue
             need = st.get("when_inside") or st.get("summon")
-            if st.get("summon") and st["summon"] not in deck.allowed and not st.get("_summoned"):
-                st["_summoned"] = True                # один вызов на шаг, не спамить каждый тик
+            if st.get("summon") and st["summon"] not in deck.allowed \
+                    and _vnow() - st.get("_summon_t", -1e9) > 300:   # повтор раз в 300 вирт.с: смена могла не совпасть
+                st["_summon_t"] = _vnow()
                 got = world.summon(st["summon"])
                 log(f"[сим] summon {st['summon']}: {got or 'не вышел (не смена?)'}")
             if need is None or need in deck.allowed:
