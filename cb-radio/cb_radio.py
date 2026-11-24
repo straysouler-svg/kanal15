@@ -1601,36 +1601,23 @@ class Ears:
         self.jobs.put((job, audio))
         return job
 
-    IDLE_UNLOAD_S = 1800     # 24.11: было 240 с — выгрузка между редкими репликами в одной сессии добивала
-                             # таймаут (перезагрузка модели 1–10 с + whisper 6+ с); 30 мин тишины — уже не сессия
+    IDLE_UNLOAD_S = 240      # the model holds ~2.2 GB of commit: keep it only while you talk
 
     def _worker(self, model_name):
         import queue
-        # 24.11 (стрим #15: whisper стабильно не успевал за 9 с на ходу, хотя CPU был свободен): воркер
-        # создаёт пул потоков ctranslate2 — поднимаем приоритет СВОЕГО потока ДО создания модели, чтобы
-        # пул унаследовал его и не голодал рядом с игрой/OBS (Windows: HIGHEST=2, наследование у потоков)
-        try:
-            ctypes.windll.kernel32.SetThreadPriority(ctypes.windll.kernel32.GetCurrentThread(), 2)
-        except Exception:
-            pass
         local = ROOT / "models" / f"whisper-{model_name}"      # shipped with the installer: no download
         if (local / "model.bin").exists():
             model_name = str(local)
         try:
             from faster_whisper import WhisperModel
             from scipy.signal import resample_poly
-            t_ld = time.monotonic()
-            self.model = WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)
-            self.ready = True
-            log(f"распознавание речи готово (whisper {model_name}, пробная загрузка {time.monotonic() - t_ld:.1f} с)")
+            WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)   # check it loads at all
+            log(f"распознавание речи готово (whisper {model_name}, грузится на нажатие тангенты)")
         except Exception as e:
-            import traceback as _tb
-            log(f"распознавание речи не загрузилось: {e!r}", ch="ОШИБКА", tb=_tb.format_exc())
+            log(f"распознавание речи не загрузилось: {e!r}")
             self.ok = False
             return
-        # 24.11: пробная модель НЕ выбрасываем (было: грузились ДВА раза за сессию — проба + первая тангента).
-        # Держим её 60 с: успеет поговорить — останется (IDLE_UNLOAD_S); молчит — выгрузится сама.
-        last_use = time.monotonic() - self.IDLE_UNLOAD_S + 60
+        last_use = time.monotonic()
         while True:
             if self.want_model.is_set():
                 if self.model is None:
@@ -1640,19 +1627,12 @@ class Ears:
             try:
                 job, audio = self.jobs.get(timeout=0.1)
             except queue.Empty:
-                if len(self.results) > 40:               # 24.11: job, сорванные таймаутом Operator, тут висят вечно
-                    for k in list(self.results)[:-20]:
-                        self.results.pop(k, None)
-                        self.langs.pop(k, None)
                 if self.model is not None and not self.recording and time.monotonic() - last_use > self.IDLE_UNLOAD_S:
                     self.model = None            # frees the memory; next press loads it again
                 continue
             if self.model is None:
-                t_ld = time.monotonic()
                 self.model = WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)
-                log(f"  стт: модель загружена за {time.monotonic() - t_ld:.1f} с (холодный старт/после выгрузки)")
             last_use = time.monotonic()
-            t_job = time.monotonic()     # 24.11: замер фаз — почему whisper не укладывается в STT_WAIT_S на ходу
             text = ""
             try:
                 sf.write(ROOT / "last_ptt.wav", audio, self.sr)
@@ -1671,24 +1651,17 @@ class Ears:
                     else:
                         self.last_info = f"тишина ({db:.0f} дБ) — микрофон живой, говорите громче/ближе"
                 if peak > 0.002:                            # the fifine is quiet (~-45 dB peaks): normalise
-                    t_r0 = time.monotonic()
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
-                    t_r = time.monotonic() - t_r0
-                    t_t0 = time.monotonic()
                     segs, info = self.model.transcribe(y, beam_size=5, vad_filter=True,
                                                        initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
                     segs = list(segs)                       # 21.11: transcribe отдаёт ГЕНЕРАТОР — segs[0] ниже
-                    t_t = time.monotonic() - t_t0
-                    log(f"  стт: ресэмпл {t_r:.2f} с, whisper {t_t:.1f} с, всего с отпускания "
-                        f"{time.monotonic() - t_job:.1f} с")
                     text = " ".join(s.text for s in segs).strip()          # ронял всё TypeError'ом ×52 за стрим #12
                     self.langs[job] = info.language or "ru"   # язык живёт в info, у Segment его нет (AttributeError 22.11)
                     if any(h in text.lower() for h in self.HALLUCINATIONS):
                         text = ""
                     self.last_info = (f"«{text[:40]}»" if text else "звук есть, слов не разобрал") + f" ({db:.0f} дБ)"
             except Exception as e:
-                import traceback as _tb
-                log(f"распознавание: {e!r}", ch="ОШИБКА", tb=_tb.format_exc())
+                log(f"распознавание: {e!r}")
             self.results[job] = text
 
     langs = {}            # job -> язык распознанной фразы (20.11, foreign_warm)
@@ -1699,8 +1672,7 @@ class Operator:
     person answer with a pre-voiced line. Without a microphone it falls back to press length and timing."""
     CLICK_S = 0.6            # shorter press = just a click of the key
     REGREET_S = 30 * 60      # after this long without talking, people greet you again
-    STT_WAIT_S = 15.0        # 24.11: 9.0 не выдерживал стрим #15 — whisper small на этой машине берёт 4–8 с
-                             # за фразу + 1–2 с конкуренции с главным циклом; 15 с — запас, дальше уже не ждём
+    STT_WAIT_S = 9.0         # give up waiting for recognition after this (6 s ran out twice 2026-11-05: game + OBS)
 
     def __init__(self, deck, ears=None):
         self.deck, self.ears = deck, ears
