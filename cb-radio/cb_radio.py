@@ -169,7 +169,10 @@ DEFAULT_CFG = {
     "arcs_pilot": False,           # 22.11: арка «Ковбой->Сова на кофе», поломки по времени, news_followup, «Кто такая Муся»
     "voicedsp_pilot": False,       # 22.11: DSP-модуль голосов проезжих (voicedsp.py, dsp_profiles.json) — только foreign.*/streambot/night_mystic
     "streambot_pilot": False,      # 22.11: проезжий x_ru (streambot/ru) частично заменяет бантер в режиме стрима
-    "foreign_per_hour": 9.0,       # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме)
+    "foreign_per_hour": 9.45,      # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме);
+                                   # 24.11: 9.0 -> 9.45 — распоряжение Дмитрия, +5%
+    "foreign_night_factor": 0.85,  # 25.11: множитель вентиля в ночном окне 23–05 игр. (решение Дмитрия):
+                                   # ночь чуть спокойнее дня, но не мёртвая, как при старых 0.5
     "bus_ids": ["vehicle.man.lions_24", "vehicle.scania.touring_23", "vehicle.volvo.9700_23"],   # 23.11: паттерны vehicle id автобусов (RenCloud @2428; полный список моделей из dlc_bus.scs: def/vehicle/bus/)
     "stream_mode_pilot": False,    # «мы на стриме»: пасхалка для стримеров, вкл/выкл фразой, пилот 16.11
     "donation_pilot": False,       # 19.11: донаты DonationAlerts -> голосовое бухгалтерии (пул buh/donation)
@@ -188,6 +191,9 @@ DEFAULT_CFG = {
     # этап 2 (21.11, решение пользователя): bind — адрес приёма хозяина (0.0.0.0 = проброс порта на роутере),
     # pin — ОБЯЗАТЕЛЕН для внешних подключений (пустой = только localhost, как этап 1); host — адрес хозяина у гостя
     "update": {"url": "", "channel": "public", "auto": True},   # tools/pack_release.py fills url + channel per build
+    "gigaam_pilot": False,         # 24.11: GigaAM v3 — первый движок русского STT (A/B: build/gigaam_ab/report.md, ~25× быстрее);
+                                   # фолбэк в whisper только: латиница / пусто / обрывок <3 слов без интента. Вкл — по слову пользователя
+    "gigaam_model_dir": "",        # путь к модели GigaAM; пусто = искать cb-radio/models/gigaam-v3, затем build/sherpa-onnx-...
 }
 
 
@@ -910,9 +916,9 @@ def foreign_valve_tick(fv, cfg, now, game_min, rng):
     if dnow <= 0 and not fv["force"]:
         return 0.0, False
     rate = float(cfg.get("foreign_per_hour", 9.0))    # проезжих за РЕАЛЬНЫЙ час
-    hour = (game_min % 1440) / 60.0
-    if hour >= 23.0 or hour < 5.0:
-        rate *= 0.5                    # ночью реже (00–04 — окно night_mystic), по ИГРОВОМУ часу
+    hour = None if game_min is None else (game_min % 1440) / 60.0   # 25.11: None = день (без ночного понижения)
+    if hour is not None and (hour >= 23.0 or hour < 5.0):
+        rate *= float(cfg.get("foreign_night_factor", 0.85))   # 25.11: ночной множитель — см. DEFAULT_CFG
     since_last = 1e9 if fv["last_s"] is None else max(0.0, now - fv["last_s"])
     refractory = 0.25 + 0.75 * min(1.0, since_last / FV_REFRACT_S)
     idle = min(FV_IDLE_MAX, since_last / FV_IDLE_TAU_S)
@@ -1523,6 +1529,16 @@ class Ears:
     # a hint of the channel's words: without it whisper hears «кто в эфире» as «кто вы, Хире/Сири»
     PROMPT = ("Рация, канал дальнобойщиков. Кто в эфире? Повтори. Приём. Железяка. Михалыч, Стас, Янек, Ласточка, Борода, "
               "Сорока, Студент, Профессор, Петровна, Тень, Витёк, Сова, Палыч, Кардан, Лиса, Самарканд, Ковбой, Кинолог.")
+    _LATIN_RE = re.compile(r"[A-Za-z]")   # 24.11: латиница в выводе GigaAM = иностранная фраза -> фолбэк в whisper
+
+    @staticmethod
+    def _latin_dominant(text):
+        """True, если латинских букв ≥50% от всех букв или кириллицы нет совсем (Испытатель, 24.11):
+        «Thank you, stranger» — фолбэк; «про DLC в ETS2 расскажи» — нет."""
+        n_lat = len(Ears._LATIN_RE.findall(text))
+        n_cyr = len(re.findall("[А-Яа-яЁё]", text))
+        n_all = n_lat + n_cyr
+        return bool(n_all) and (n_lat >= 0.5 * n_all or n_cyr == 0)
 
     def __init__(self, cfg):
         import collections
@@ -1534,6 +1550,9 @@ class Ears:
         self.stream, self.dev_name, self.sr = None, "", 48000
         self.last_info = "ещё не нажимали"      # shown in the tray menu: what the radio heard last time
         self.on_silent = None                    # callback: pressed, but the microphone gave silence
+        # 24.11 (gigaam_pilot): GigaAM v3 первым движком; модель ищется лениво (первое нажатие), путь — из конфига
+        self.gigaam_pilot = bool(cfg.get("gigaam_pilot"))
+        self.gigaam_dir = cfg.get("gigaam_model_dir") or ""
         c = cfg.get("mic") or {}
         if not c.get("enabled", True):
             self.dev_name = "выключен в настройках"
@@ -1611,26 +1630,35 @@ class Ears:
         try:
             from faster_whisper import WhisperModel
             from scipy.signal import resample_poly
-            WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)   # check it loads at all
+            probe = WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)   # check it loads at all
             log(f"распознавание речи готово (whisper {model_name}, грузится на нажатие тангенты)")
+            self._whisper_name = model_name     # 24.11: для ленивой догрузки в _recognize (фолбэк под пилотом)
         except Exception as e:
             log(f"распознавание речи не загрузилось: {e!r}")
             self.ok = False
             return
+        if self.gigaam_pilot:
+            self._bench(probe)      # базовая линия скорости STT в логе по дням; при провале бенча пилот выключается
         last_use = time.monotonic()
         while True:
             if self.want_model.is_set():
-                if self.model is None:
+                # 24.11: под пилотом whisper НЕ прегружаем на нажатие — он ленивый, только для фолбэка
+                if self.model is None and not self.gigaam_pilot:
                     self.model = WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)
                 last_use = time.monotonic()
             self.want_model.clear()
             try:
                 job, audio = self.jobs.get(timeout=0.1)
             except queue.Empty:
-                if self.model is not None and not self.recording and time.monotonic() - last_use > self.IDLE_UNLOAD_S:
-                    self.model = None            # frees the memory; next press loads it again
+                # 24.11: выгрузка по простою — общий механизм для whisper и GigaAM (не свой таймер)
+                if not self.recording and time.monotonic() - last_use > self.IDLE_UNLOAD_S:
+                    if self.model is not None:
+                        self.model = None        # frees the memory; next press loads it again
+                    if self.gigaam_pilot:
+                        import asr_gigaam
+                        asr_gigaam.unload()
                 continue
-            if self.model is None:
+            if self.model is None and not self.gigaam_pilot:
                 self.model = WhisperModel(model_name, device="cpu", compute_type="int8", cpu_threads=4)
             last_use = time.monotonic()
             text = ""
@@ -1652,17 +1680,89 @@ class Ears:
                         self.last_info = f"тишина ({db:.0f} дБ) — микрофон живой, говорите громче/ближе"
                 if peak > 0.002:                            # the fifine is quiet (~-45 dB peaks): normalise
                     y = resample_poly(audio / peak * 0.9, 16000, self.sr).astype(np.float32)
-                    segs, info = self.model.transcribe(y, beam_size=5, vad_filter=True,
-                                                       initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
-                    segs = list(segs)                       # 21.11: transcribe отдаёт ГЕНЕРАТОР — segs[0] ниже
-                    text = " ".join(s.text for s in segs).strip()          # ронял всё TypeError'ом ×52 за стрим #12
-                    self.langs[job] = info.language or "ru"   # язык живёт в info, у Segment его нет (AttributeError 22.11)
+                    text, lang, _meta = self._recognize(y)
+                    self.langs[job] = lang   # язык живёт в info, у Segment его нет (AttributeError 22.11); gigaam всегда ru
                     if any(h in text.lower() for h in self.HALLUCINATIONS):
                         text = ""
                     self.last_info = (f"«{text[:40]}»" if text else "звук есть, слов не разобрал") + f" ({db:.0f} дБ)"
             except Exception as e:
                 log(f"распознавание: {e!r}")
             self.results[job] = text
+
+    def _bench(self, probe_wm):
+        """24.11 (gigaam_pilot): самопроверка при старте — эталонный клип через оба движка, строки
+        «бенч: gigaam X.XX с» / «бенч: whisper X.XX с» — базовая линия по дням в логе. GigaAM после
+        бенча выгружаем: штатная загрузка — ленивая, на первое нажатие тангенты."""
+        import asr_gigaam
+        clip = ROOT / "bench" / "stt_bench.wav"
+        if not clip.exists():
+            log("бенч: нет эталонного клипа cb-radio/bench/stt_bench.wav — пропускаю")
+            return
+        try:
+            y, sr = sf.read(clip, dtype="float32")
+            if y.ndim > 1:
+                y = y[:, 0]
+            if sr != 16000:
+                from scipy.signal import resample_poly
+                y = resample_poly(y, 16000, sr).astype(np.float32)
+            peak = float(np.max(np.abs(y))) if len(y) else 0.0
+            if peak > 0.002:
+                y = (y / peak * 0.9).astype(np.float32)
+            t0 = time.monotonic()
+            g_txt = " ".join(asr_gigaam.heard_text(y, self.gigaam_dir).split())
+            log(f"бенч: gigaam {time.monotonic() - t0:.2f} с «{g_txt[:40]}»")
+            asr_gigaam.unload()
+            t0 = time.monotonic()
+            segs, _ = probe_wm.transcribe(y, beam_size=5, vad_filter=True, initial_prompt=self.PROMPT)
+            w_txt = " ".join(s.text for s in segs).strip()
+            log(f"бенч: whisper {time.monotonic() - t0:.1f} с «{w_txt[:40]}»")
+        except Exception as e:
+            log(f"бенч: gigaam не поднялся ({e!r}) — пилот выключен, остаёмся на whisper")
+            self.gigaam_pilot = False
+
+    def _recognize(self, y):
+        """-> (text, lang). gigaam_pilot: сначала GigaAM; фолбэк в whisper ТОЛЬКО на латинице (иностранная
+        фраза), пустом выводе или обрывке <3 слов без интента. Длинная связная русская фраза без интента
+        в whisper НЕ уходит (правило Гемини: без холостого фолбэка) — дальше решает Operator как
+        «услышал, но не понял». Без флага — ровно старый путь whisper.
+        meta — для стенда/пилота: {"engine": "gigaam"|"whisper", "why": причина фолбэка|None}."""
+        meta = {"engine": "whisper", "why": None}
+        if self.gigaam_pilot:
+            import asr_gigaam
+            import intents
+            t0 = time.monotonic()
+            g_text = " ".join(asr_gigaam.heard_text(y, self.gigaam_dir).split())
+            t_g = time.monotonic() - t0
+            try:
+                g_intent, _ = intents.understand(g_text)
+            except Exception:
+                g_intent = None
+            why = None
+            # 24.11 (замечание Испытателя): фолбэк по латинице только когда она доминирует —
+            # «ETS2», «DLC» по-русски фолбэка не вызывают
+            if self._latin_dominant(g_text):
+                why = "латиница"
+            elif not g_text:
+                why = "пусто"
+            elif len(g_text.split()) < 3 and g_intent is None:
+                why = "обрывок без интента"
+            if why is None:
+                meta["engine"] = "gigaam"
+                log(f"тангента (стт): гигаам {t_g:.2f} с «{g_text[:50]}»" + (f" [{g_intent}]" if g_intent else ""),
+                    ch="тангента")
+                return g_text, "ru", meta
+            meta["why"] = why
+            log(f"тангента (стт): гигаам {t_g:.2f} с — фолбэк в whisper ({why}) «{g_text[:40]}»", ch="тангента")
+        if self.model is None:                  # 24.11: ленивая загрузка whisper (под пилотом — только для фолбэка)
+            from faster_whisper import WhisperModel
+            self.model = WhisperModel(self._whisper_name, device="cpu", compute_type="int8", cpu_threads=4)
+        segs, info = self.model.transcribe(y, beam_size=5, vad_filter=True,
+                                           initial_prompt=self.PROMPT)   # 20.11: язык детектится сам
+        segs = list(segs)                       # 21.11: transcribe отдаёт ГЕНЕРАТОР — segs[0] ниже
+        text = " ".join(s.text for s in segs).strip()          # ронял всё TypeError'ом ×52 за стрим #12
+        if self.gigaam_pilot:
+            log(f"тангента (стт): виспер-фолбэк «{text[:50]}»", ch="тангента")
+        return text, info.language or "ru", meta
 
     langs = {}            # job -> язык распознанной фразы (20.11, foreign_warm)
 
@@ -1678,6 +1778,7 @@ class Operator:
         self.deck, self.ears = deck, ears
         self.on_air = False
         self.last_talk = -1e9
+        self.last_answer_t = -1e9      # 24.11 (спека Дмитрия): момент последнего ответа игроку в эфир — для «человечной» паузы
         self.repeat_until = 0.0      # someone asked "повтори" -> next press gets an answer
         self.pending = None          # (time, group, kind, prefer, addressee)
         self.waiting = None          # (job, release time, interrupted, prefer, overlay_line_id)
@@ -1956,7 +2057,10 @@ class Operator:
             f"{' про ' + about if about else ''}"
             f"{' (вопрос)' if question else ''} => {group}/{kind or 'тишина'}"
             if heard else f"тангента{' (перебил)' if interrupted else ''} -> {kind or 'тишина'}")
-        delay = random.uniform(0.8, 2.2) if heard else random.uniform(1.2, 3.2)
+        # 24.11 (спека Дмитрия): пауза «как человек» — от момента последнего ответа, а не от распознавания.
+        # Давно молчали (>=10 с) — «потянулся, взял тангенту»; недавно отвечали — «тангента в руке».
+        # Обе ветки (heard и без микрофона) — это про хват, не про STT; max(now, t_rel + delay) не тронут.
+        delay = random.uniform(1.8, 2.2) if now - self.last_answer_t >= 10 else random.uniform(1.65, 1.95)
         if heard and text and intent != "hush" and time.monotonic() < HUSH_UNTIL[0]:
             HUSH_UNTIL[0] = 0.0                          # сам заговорил — тишина кончилась
             HUSH_BACK[0] = None                          # «кто возвращается первым» больше не играет
@@ -2125,6 +2229,9 @@ class Operator:
         if not {"bahti", "sova"} <= here:
             log("арка кофе: сцена ждёт — не оба в эфире")
             return
+        if w.game_min is None:                       # 25.11: время неизвестно — ночную сцену не ставим
+            log("арка кофе: сцена ждёт — игровое время ещё неизвестно")
+            return
         hour = (w.game_min % 1440) / 60
         if not (hour >= 22.0 or hour < 1.0):
             log("арка кофе: сцена ждёт — не ночное окно 22:00–01:00")
@@ -2184,7 +2291,7 @@ class Operator:
     def _news_heard(self, actor):
         """Новость актёра прозвучала (ответ на «какие новости») — день для news_followup (drafts §3)."""
         w = self.world
-        if not w:
+        if not w or w.game_min is None:   # 25.11: день для news_followup не фиксируем, пока время неизвестно
             return
         arcs = _arcs(w)
         arcs.setdefault("news_day", {})[actor] = int(w.game_min // 1440)
@@ -2584,6 +2691,7 @@ class Operator:
             # Адресная брань (позывной в тексте, reply_attached=False) и flare-перепалки не меняются.
             log("брань без адресата — тихий игнор (решение 22.11)")
             return
+        self.last_answer_t = time.monotonic()   # 24.11: pending сработал — ответ реально идёт в эфир
         multi, self.multi = self.multi, False     # отбивку играем один раз и только вместе с реальным ответом
         if group == "foreign_reply":
             warm = getattr(self, "pending_warm", False)
@@ -2948,11 +3056,12 @@ class Operator:
                 return None
         return None
 
-    def _stream_toggle(self, on, who=None):
+    def _stream_toggle(self, on, who=None, source="voice"):
         """Вкл/выкл режима стрима (пасхалка 16.11). Флаг сессионный (STREAM_ON), не сохраняется.
         Первое включение: приветствие зрителей из stream_greet/<actor>; повторное «мы на стриме»
         при включённом режиме — короткая отбивка stream_ack/<actor>, если есть реплика, иначе молчим.
-        Выключение — просто лог (прощальных строк нет, пул не требуется)."""
+        Выключение — просто лог (прощальных строк нет, пул не требуется).
+        source: «voice» (интенты) или «трей» (тумблер меню значка) — для пометки в журнале."""
         if on == STREAM_ON[0]:
             if on:
                 p = self._stream_line("stream_ack", who)
@@ -2960,9 +3069,10 @@ class Operator:
                     log(f"режим стрима: уже вкл — отбивка ({p[0]})")
             return
         STREAM_ON[0] = on
-        log(f"режим стрима: {'вкл' if on else 'выкл'}")
+        mark = " (меню трея)" if source == "трей" else ""
+        log(f"режим стрима: {'вкл' if on else 'выкл'}{mark}")
         if OVERLAY:                                     # 22.11: системное событие — в /journal
-            OVERLAY.sys(f"режим стрима: {'вкл' if on else 'выкл'}")
+            OVERLAY.sys(f"режим стрима: {'вкл' if on else 'выкл'}{mark}")
         if on:
             # 20.11 (стрим #11): при stream_greet_pilot зрителей приветствует голосовое бухгалтерии
             # (buh/stream_greet через 1-2 мин) — актёрское приветствие тут давало двойное
@@ -3051,6 +3161,17 @@ HORN_DONE = {}            # actor -> monotonic: гудок уже был за э
 # рации всегда выключен (решение пользователя), в state.json/bonds.json не сохраняется, сбрасывается
 # перезапуском. Включается/выключается только фразами интентов stream_on/stream_off.
 STREAM_ON = [False]
+STREAM_TRAY_REQ = [None]  # 24.11: тумблер меню трея кладёт сюда желаемое состояние; применяет ГЛАВНЫЙ ЦИКЛ
+                          # через op._stream_toggle(source="трей") — тред трея сам STREAM_ON не трогает (гонки)
+_STREAM_TRAY_LOCK = threading.Lock()   # честный тумблер: клик инвертирует неприменённую заявку атомарно
+
+
+def stream_tray_toggle():
+    """Тумблер «Режим стримера» меню значка (24.11): callback трея кладёт заявку, применяет главный цикл.
+    Честный тумблер (Испытатель): клик инвертирует ПОСЛЕДНЕЕ известное состояние — если заявка ещё лежит
+    неприменённой, инвертируем её, иначе STREAM_ON (двойной клик до применения = две заявки вкл/выкл)."""
+    with _STREAM_TRAY_LOCK:
+        STREAM_TRAY_REQ[0] = not (STREAM_TRAY_REQ[0] if STREAM_TRAY_REQ[0] is not None else STREAM_ON[0])
 STREAM_BANTER_COOL = {}   # actor -> monotonic: следующее обращение к стримеру не раньше этой метки (5-9 мин)
 STREAM_GAP_K = 0.55       # «эфир живее»: паузы болтовни короче (×0.55), пресет не меняем
 STREAM_NEWS_USED = set()  # 19.11 (stream_news_pilot): wav реплик stream_news, звучавших за сессию (каждая — раз)
@@ -3070,11 +3191,14 @@ BREAK_PHASE_S = (1200.0, 2400.0)     # 20–40 минут на фазу (нас�
 BREAK_DEFECTS = ("печка", "рессора", "свечи", "аккум", "резина")
 BREAK_DEFECTS_VITEK = ("аккум", "свечи")
 FLARE_COOL = [0.0]        # 22.11 (драфт §7.7): перепалки flare — не чаще 1 ответа в 10 мин
-_next_mystic = [0.0]      # 22.11: следующая попытка ночного мистика (night_mystic/ru, окно 00-04 игр.)
+_next_mystic = [time.monotonic() + random.uniform(300, 600)]
+# 25.11: первая попытка НЕ мгновенно при старте (game_min ещё None и окно 00:00 открывалось фальшиво) —
+# штатный кулдаун от старта процесса, дальше таймер перебивается обычным random.uniform(300, 600)
+# 22.11: следующая попытка ночного мистика (night_mystic/ru, окно 00-04 игр.)
 # 23.11 (автобусный DLC): вентили пулов reactions/bus (настоящие секунды); tease 40-60 мин, respect 25-45 мин
 _next_bus_tease = [0.0]
 _next_bus_respect = [0.0]
-_next_bus_night = [0.0]   # bus/night — то же окно 00:00-04:00 игрового, что у night_mystic
+_next_bus_night = [time.monotonic() + random.uniform(600, 1200)]   # 25.11: то же — стартовый кулдаун
 _next_followup = [0.0]       # не чаще одного продолжения новости за раз
 
 
@@ -3145,7 +3269,7 @@ def arcs_tick(cfg, world, deck, op, st, hush, driving_s, next_at):
             next_at = max(next_at, driving_s + random.uniform(15, 30))
             log(f"арка кофе: крючок-рыба ({(hook_i % len(pool)) + 1}/{len(pool)})")
     # «было кофе»: не раньше чем через игровую смену после сцены, дальше — по кулдауну часов
-    if (kk.get("scene") and not kk.get("after_done")
+    if (kk.get("scene") and not kk.get("after_done") and world.game_min is not None
             and int(world.game_min // 1440) >= int(kk.get("after_day", 0)) + 1
             and now_ >= _kofe_after_at[0] and not KOFE_Q
             and not op.pending and not op.waiting
@@ -3197,11 +3321,11 @@ def arcs_tick(cfg, world, deck, op, st, hush, driving_s, next_at):
                         next_at = max(next_at, driving_s + random.uniform(10, 20))
     # новости-продолжения: новость сыграна -> через смену-две актёр возвращается к ней
     if now_ >= _next_followup[0] and not op.pending and not op.waiting and deck.allowed:
-        day_ = int(world.game_min // 1440)
+        day_ = int(world.game_min // 1440) if world.game_min is not None else None
         done_ = arcs.setdefault("news_done", [])
         played_nf = False
         for a_, d_ in list((arcs.get("news_day") or {}).items()):
-            if played_nf or a_ in done_ or day_ < int(d_) + 1:
+            if played_nf or a_ in done_ or day_ is None or day_ < int(d_) + 1:
                 continue
             here = [x for x in deck.allowed if not deck.offline(x)]
             if a_ in here and random.random() < 0.5:
@@ -4450,6 +4574,9 @@ def main(argv):
             convoy.host_send_ptt(edge == "down")     # тангента хозяина глушит эфир у гостя
 
         tray.HOOKS.update(guest_on=convoy.host_on, guest_toggle=guest_toggle)
+        # 24.11: тумблер «Режим стримера» в меню значка — тот же сеттер, что голосовая команда, но через
+        # заявку в главный цикл (тред трея сам STREAM_ON не трогает, см. stream_tray_toggle)
+        tray.HOOKS.update(stream_on=lambda: STREAM_ON[0], stream_toggle=stream_tray_toggle)
     else:
         import convoy
 
@@ -4462,7 +4589,8 @@ def main(argv):
     GUEST_HOOK = guest_hook               # PTT зовёт это на нажатие/отпускание (только когда хозяин принимает гостя)
     w_acc, w_saved = 0.0, time.monotonic()
     job_t = 0.0
-    hired_seen = set()          # your hired drivers already noticed near you (once per session each)
+    hired_seen = set(deck.st.get("hired_seen") or [])   # твои водители, о которых уже докладывали;
+                                                        # запоминаются в state.json между сессиями (24.11)
     hq, last_hired = [], -1e9   # hired drivers to put on air: (due, id, "loaded"|"empty", noticed)
     deliv_pending, last_deliv = [], -1e9     # their deliveries -> the accountant's report (not more than 1 per 25 min)
     op.world, op.game = world, game
@@ -4662,6 +4790,15 @@ def main(argv):
                                     log("заказа нет: свободная езда")
                         if world.company:
                             world.company.poll()
+                            # 24.11: вычистить уволенных из доложенных (только при непустом roster —
+                            # пустой hired может быть сбоем парсинга сейва, а не «все уволены»)
+                            _roster = world.company.hired
+                            if _roster:
+                                _gone = {k for k in hired_seen if k not in _roster}
+                                if _gone:
+                                    hired_seen -= _gone
+                                    deck.st["hired_seen"] = sorted(hired_seen)
+                                    deck._save()
                             if world.company.cities and not getattr(world, "restricted", False):
                                 n0 = len(world.cities)
                                 if world.restrict_to(world.company.cities):
@@ -4669,7 +4806,14 @@ def main(argv):
                             for k, h, dist in world.hired_near(w_acc):
                                 if k not in hired_seen:
                                     hired_seen.add(k)
-                                    log(f"твой водитель рядом ({dist / 1000:.1f} км): {k} из гаража {h['hometown']}, "
+                                    deck.st["hired_seen"] = sorted(hired_seen)   # 24.11: персист между сессиями
+                                    deck._save()
+                                    # 24.11: позиция — оценка по доле маршрута, точные км врали —
+                                    # в логе качественное слово относительно зоны рации
+                                    _how = ("вплотную" if dist < world.range / 3
+                                            else "рядом по трассе" if dist < 2 * world.range / 3
+                                            else "на краю зоны")
+                                    log(f"твой водитель рядом ({_how}): {k} из гаража {h['hometown']}, "
                                         f"{h['src']} -> {h['dst']}, груз {h['cargo'] or 'порожняк'}")
                                     now_ = time.monotonic()
                                     hq.append((now_ + random.uniform(5, 25), k, "loaded" if h.get("cargo") else "empty",
@@ -4716,16 +4860,16 @@ def main(argv):
                                 bond_add(k, 1, "встреча на трассе")
                             # «передай» (11.11): приятель/друг просит передать пару слов тому,
                             # кого игрок встретит; одно поручение за раз, просьба — раз в игровой день
-                            gday = world.game_min // 1440
+                            gday = world.game_min // 1440 if world.game_min is not None else None
                             e_ = QUEST_ST.get("errand")
-                            if e_ and e_["from"] == k and gday > e_["day"] + ERRAND_DAYS:
+                            if e_ and e_["from"] == k and gday is not None and gday > e_["day"] + ERRAND_DAYS:
                                 if reaction_pool("errand", "late"):
                                     ERRAND_Q.append((time.monotonic() + random.uniform(4, 12), k, "late", e_["to"]))
                                     log(f"поручение: срок вышел ({k} -> {e_['to']}, день {e_['day']})")
                                 del QUEST_ST["errand"]
                                 quest_st_save()
                                 e_ = None
-                            if (not e_ and k in ERRAND_PAIRS and BONDS and BONDS.level(k) >= 1
+                            if (not e_ and gday is not None and k in ERRAND_PAIRS and BONDS and BONDS.level(k) >= 1
                                     and world.met_before(k)
                                     and QUEST_ST.get("errand_asked_day") != gday
                                     and reaction_pool("errand", f"ask__{k}__{ERRAND_PAIRS[k]}")):
@@ -5024,6 +5168,12 @@ def main(argv):
                     deck.on_air.add(mk[0])
                     next_at = max(next_at, driving_s + random.uniform(20, 40))
                     continue
+            # 24.11: заявка тумблера меню трея — применяем здесь, в главном потоке (тот же путь, что голосовая
+            # команда: op._stream_toggle; побочные эффекты режима ниже подхватывают фронт STREAM_ON сами)
+            with _STREAM_TRAY_LOCK:
+                req, STREAM_TRAY_REQ[0] = STREAM_TRAY_REQ[0], None
+            if req is not None:
+                op._stream_toggle(req, source="трей")
             # 19.11: фронт включения режима стрима — планируем голосовые бухгалтерии
             if STREAM_ON[0] != stream_was_on:
                 stream_was_on = STREAM_ON[0]
@@ -5217,7 +5367,9 @@ def main(argv):
                     heard(pick[1])
                     if PLAYER.file(pick[1]) == "ok":
                         _next_mystic[0] = time.monotonic() + random.uniform(300, 600)
-                        log("эфир: ночной голос в эфире (night_mystic/ru)")
+                        gm = world.game_min % 1440       # 24.11: диагностика игровых часов (заметка Дмитрия 15:43)
+                        log(f"эфир: ночной голос в эфире (night_mystic/ru), игровые часы "
+                            f"{int(gm) // 60:02d}:{int(gm) % 60:02d}")
                         next_at = max(next_at, driving_s + random.uniform(15, 30))
                         continue
             # 23.11 (автобусный DLC): bus/tease и bus/respect — только когда игрок за рулём автобуса
@@ -5256,7 +5408,9 @@ def main(argv):
                         heard(pick[1])
                         if PLAYER.file(pick[1], pick[0]) == "ok":
                             _next_bus_night[0] = now_b + random.uniform(600, 1200)
-                            log("эфир: ночной автобусный пул (bus/night)")
+                            gm = world.game_min % 1440   # 24.11: диагностика игровых часов
+                            log(f"эфир: ночной автобусный пул (bus/night), игровые часы "
+                                f"{int(gm) // 60:02d}:{int(gm) % 60:02d}")
                             next_at = max(next_at, driving_s + random.uniform(15, 30))
                             continue
                     else:

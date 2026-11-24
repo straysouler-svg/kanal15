@@ -15807,15 +15807,21 @@
    "de": [
     {
      "actor": "x_de",
-     "text": "Achtung, Kollegen, Polizei hinter der Brücke!"
+     "text": "Achtung, Kollegen, Polizei hinter der Brücke!",
+     "ru": "Внимание, коллеги, за мостом полиция!",
+     "t": "warn"
     },
     {
      "actor": "x_de",
-     "text": "Guten Abend, Kanal. Alles ruhig hier."
+     "text": "Guten Abend, Kanal. Alles ruhig hier.",
+     "ru": "Добрый вечер, канал. У меня всё тихо.",
+     "t": "radio"
     },
     {
      "actor": "x_de",
-     "text": "Schon wieder Stau. Na toll."
+     "text": "Schon wieder Stau. Na toll.",
+     "ru": "Опять пробка. Ну и отлично.",
+     "t": "steam"
     },
     {
      "actor": "x_de",
@@ -15893,27 +15899,39 @@
    "pl": [
     {
      "actor": "x_pl",
-     "text": "Dzień dobry, panowie, jak tam droga?"
+     "text": "Dzień dobry, panowie, jak tam droga?",
+     "ru": "Добрый день, мужики, как там дорога?",
+     "t": "radio"
     },
     {
      "actor": "x_pl",
-     "text": "Uwaga, policja na parkingu, z radarem!"
+     "text": "Uwaga, policja na parkingu, z radarem!",
+     "ru": "Внимание, на стоянке полиция, с радаром!",
+     "t": "warn"
     },
     {
      "actor": "x_pl",
-     "text": "Znowu korek. Szerokiej drogi, panowie!"
+     "text": "Znowu korek. Szerokiej drogi, panowie!",
+     "ru": "Опять пробка. Всем шершавой дороги, мужики!",
+     "t": "bye"
     },
     {
      "actor": "x_pl",
-     "text": "Siema, kanał! U mnie wszystko git, uważajcie na oblodzenie!"
+     "text": "Siema, kanał! U mnie wszystko git, uważajcie na oblodzenie!",
+     "ru": "Салют, канал! У меня всё чётко, осторожнее, где гололёд!",
+     "t": "warn"
     },
     {
      "actor": "x_pl",
-     "text": "Co za mróz! (laughs) W kabinie minus, a serce gorące. Szerokiej, bracia!"
+     "text": "Co za mróz! (laughs) W kabinie minus, a serce gorące. Szerokiej, bracia!",
+     "ru": "Что за мороз! (смеётся) В кабине минус, а сердце горячее. Всем шершавой, братья!",
+     "t": "steam"
     },
     {
      "actor": "x_pl",
-     "text": "Droga czysta aż po horyzont. Miłej jazdy, panowie!"
+     "text": "Droga czysta aż po horyzont. Miłej jazdy, panowie!",
+     "ru": "Дорога чистая до горизонта. Приятной езды, мужики!",
+     "t": "thanks"
     },
     {
      "actor": "x_pl",
@@ -15973,15 +15991,21 @@
    "fr": [
     {
      "actor": "x_fr",
-     "text": "Salut les routiers, ça roule?"
+     "text": "Salut les routiers, ça roule?",
+     "ru": "Салют, коллеги, как катится?",
+     "t": "radio"
     },
     {
      "actor": "x_fr",
-     "text": "Attention, contrôle de police après le pont!"
+     "text": "Attention, contrôle de police après le pont!",
+     "ru": "Внимание, после моста полицейский контроль!",
+     "t": "warn"
     },
     {
      "actor": "x_fr",
-     "text": "Bonne route, les gars!"
+     "text": "Bonne route, les gars!",
+     "ru": "Счастливого пути, ребята!",
+     "t": "bye"
     },
     {
      "actor": "x_fr",
@@ -16047,15 +16071,21 @@
    "es": [
     {
      "actor": "x_es",
-     "text": "Hola, compañeros, ¿qué tal la carretera?"
+     "text": "Hola, compañeros, ¿qué tal la carretera?",
+     "ru": "Привет, коллеги, как там трасса?",
+     "t": "radio"
     },
     {
      "actor": "x_es",
-     "text": "Cuidado, radar a la salida del pueblo."
+     "text": "Cuidado, radar a la salida del pueblo.",
+     "ru": "Осторожно, радар на выезде из посёлка.",
+     "t": "warn"
     },
     {
      "actor": "x_es",
-     "text": "Buen viaje, amigos."
+     "text": "Buen viaje, amigos.",
+     "ru": "Доброго пути, друзья!",
+     "t": "bye"
     },
     {
      "actor": "x_es",
@@ -16091,15 +16121,21 @@
    "it": [
     {
      "actor": "x_it",
-     "text": "Ciao ragazzi, tutto bene sulla strada?"
+     "text": "Ciao ragazzi, tutto bene sulla strada?",
+     "ru": "Чао, ребята, как там на дороге?",
+     "t": "radio"
     },
     {
      "actor": "x_it",
-     "text": "Attenzione, polizia dopo il ponte!"
+     "text": "Attenzione, polizia dopo il ponte!",
+     "ru": "Внимание, после моста полиция!",
+     "t": "warn"
     },
     {
      "actor": "x_it",
-     "text": "Buon viaggio a tutti!"
+     "text": "Buon viaggio a tutti!",
+     "ru": "Доброго пути всем!",
+     "t": "bye"
     },
     {
      "actor": "x_it",
@@ -16141,29 +16177,41 @@
    "nl": [
     {
      "actor": "x_nl",
-     "text": "Goedenavond, collega's. Rustig op de weg?"
+     "text": "Goedenavond, collega's. Rustig op de weg?",
+     "ru": "Добрый вечер, коллеги. На дороге тихо?",
+     "t": "radio"
     },
     {
      "actor": "x_nl",
-     "text": "Pas op, flitser na de brug!"
+     "text": "Pas op, flitser na de brug!",
+     "ru": "Осторожно, радар за мостом!",
+     "t": "warn"
     },
     {
      "actor": "x_nl",
-     "text": "Goede reis, jongens!"
+     "text": "Goede reis, jongens!",
+     "ru": "Доброго пути, парни!",
+     "t": "bye"
     }
    ],
    "cs": [
     {
      "actor": "x_cs",
-     "text": "Ahoj, kluci, jak je na silnici?"
+     "text": "Ahoj, kluci, jak je na silnici?",
+     "ru": "Агаё, парни, как там на дороге?",
+     "t": "radio"
     },
     {
      "actor": "x_cs",
-     "text": "Pozor, policie za mostem!"
+     "text": "Pozor, policie za mostem!",
+     "ru": "Осторожно, за мостом полиция!",
+     "t": "warn"
     },
     {
      "actor": "x_cs",
-     "text": "Šťastnou cestu!"
+     "text": "Šťastnou cestu!",
+     "ru": "Счастливого пути!",
+     "t": "bye"
     },
     {
      "actor": "x_cs",
@@ -16181,19 +16229,27 @@
    "fi": [
     {
      "actor": "x_fi",
-     "text": "Hyvää iltaa, kanava! Miten tie siellä?"
+     "text": "Hyvää iltaa, kanava! Miten tie siellä?",
+     "ru": "Добрый вечер, канал! Как там дорога?",
+     "t": "radio"
     },
     {
      "actor": "x_fi",
-     "text": "Varo! Poliisi sillan takana, tutka!"
+     "text": "Varo! Poliisi sillan takana, tutka!",
+     "ru": "Осторожно! За мостом полиция, радар!",
+     "t": "warn"
     },
     {
      "actor": "x_fi",
-     "text": "Täällä kaikki rauhallista. Hyvää matkaa, kaverit!"
+     "text": "Täällä kaikki rauhallista. Hyvää matkaa, kaverit!",
+     "ru": "Тут всё спокойно. Счастливого пути, парни!",
+     "t": "thanks"
     },
     {
      "actor": "x_fi",
-     "text": "Onpa pakkasta! Aja rauhallisesti, pitkät matkat."
+     "text": "Onpa pakkasta! Aja rauhallisesti, pitkät matkat.",
+     "ru": "Вот это мороз! Езжайте плавно, дорога длинная.",
+     "t": "steam"
     },
     {
      "actor": "x_fi",
@@ -16259,67 +16315,97 @@
    "no": [
     {
      "actor": "x_no",
-     "text": "God kveld, kanalen! Hvordan går det på veien?"
+     "text": "God kveld, kanalen! Hvordan går det på veien?",
+     "ru": "Добрый вечер, канал! Как там на дороге?",
+     "t": "radio"
     },
     {
      "actor": "x_no",
-     "text": "Pass deg! Politiet bak broa, de har radar."
+     "text": "Pass deg! Politiet bak broa, de har radar.",
+     "ru": "Осторожно! За мостом полиция, у них радар.",
+     "t": "warn"
     },
     {
      "actor": "x_no",
-     "text": "Her går alt fint, kjør rolig. Det er elg i skumringa."
+     "text": "Her går alt fint, kjør rolig. Det er elg i skumringa.",
+     "ru": "Тут всё гладко, езжайте спокойно. На закате лоси на дороге.",
+     "t": "warn"
     },
     {
      "actor": "x_no",
-     "text": "For en regn! (sighs) Men det er bare vær, det. Bra kjøring, folkens!"
+     "text": "For en regn! (sighs) Men det er bare vær, det. Bra kjøring, folkens!",
+     "ru": "Вот это ливень! (вздыхает) Да что ж, просто погода. Доброй дороги, народ!",
+     "t": "steam"
     },
     {
      "actor": "x_no",
-     "text": "Lange turer, stille radio. (chuckles) Det liker jeg. Ha det bra!"
+     "text": "Lange turer, stille radio. (chuckles) Det liker jeg. Ha det bra!",
+     "ru": "Длинная дорога, тихая рация. (хихикает) Мне так нравится. Бывайте!",
+     "t": "bye"
     }
    ],
    "sv": [
     {
      "actor": "x_sv",
-     "text": "God kväll, kanalen! Hur är väglaget där framme?"
+     "text": "God kväll, kanalen! Hur är väglaget där framme?",
+     "ru": "Добрый вечер, канал! Как там дорога впереди?",
+     "t": "radio"
     },
     {
      "actor": "x_sv",
-     "text": "Varning! Polis efter bron, de har laser."
+     "text": "Varning! Polis efter bron, de har laser.",
+     "ru": "Внимание! За мостом полиция, у них лазер.",
+     "t": "warn"
     },
     {
      "actor": "x_sv",
-     "text": "Allt lugnt här. Kör lagom, då kommer du fram."
+     "text": "Allt lugnt här. Kör lagom, då kommer du fram.",
+     "ru": "Тут всё тихо. Держи нормальный темп — и доедешь нормально.",
+     "t": "thanks"
     },
     {
      "actor": "x_sv",
-     "text": "(sighs) El-lastbilar överallt. De kör tyst och fort, det är farligt."
+     "text": "(sighs) El-lastbilar överallt. De kör tyst och fort, det är farligt.",
+     "ru": "(вздыхает) Электрофуры повсюду. Едут тихо и быстро — это опасно.",
+     "t": "rant"
     },
     {
      "actor": "x_sv",
-     "text": "Vilken kö! (sighs) Men jag har kaffe, så det går bra. Lycka till, grabbar!"
+     "text": "Vilken kö! (sighs) Men jag har kaffe, så det går bra. Lycka till, grabbar!",
+     "ru": "Вот это пробка! (вздыхает) Но у меня есть кофе, так что нормально. Удачи, парни!",
+     "t": "steam"
     }
    ],
    "tr": [
     {
      "actor": "x_tr",
-     "text": "İyi akşamlar, kanal! Yol nasıl gidiyor, kardeşim?"
+     "text": "İyi akşamlar, kanal! Yol nasıl gidiyor, kardeşim?",
+     "ru": "Добрый вечер, канал! Как дорога, брат?",
+     "t": "radio"
     },
     {
      "actor": "x_tr",
-     "text": "Dikkat! Köprünün arkasında polis var, radar çalışıyor!"
+     "text": "Dikkat! Köprünün arkasında polis var, radar çalışıyor!",
+     "ru": "Осторожно! За мостом полиция, радар работает!",
+     "t": "warn"
     },
     {
      "actor": "x_tr",
-     "text": "Yol burada açık, gönül ferah. (laughs) Siz de öyle, kardeşler!"
+     "text": "Yol burada açık, gönül ferah. (laughs) Siz de öyle, kardeşler!",
+     "ru": "Тут дорога свободная, душа разгулялась. (смеётся) Вам так же, братья!",
+     "t": "thanks"
     },
     {
      "actor": "x_tr",
-     "text": "Ne yağmur ama! (sighs) Çayım var, ben durmam. Hayırlı yolculuklar!"
+     "text": "Ne yağmur ama! (sighs) Çayım var, ben durmam. Hayırlı yolculuklar!",
+     "ru": "Вот это дождь! (вздыхает) Но у меня чай, я не останавливаюсь. Счастливого пути!",
+     "t": "steam"
     },
     {
      "actor": "x_tr",
-     "text": "Uzun yol, sıcak çay, iyi muhabbet. (laughs) Görüşürüz, dostum!"
+     "text": "Uzun yol, sıcak çay, iyi muhabbet. (laughs) Görüşürüz, dostum!",
+     "ru": "Длинная дорога, горячий чай, хорошая болтовня. (смеётся) До встречи, друг!",
+     "t": "bye"
     }
    ],
    "en": [
@@ -17495,6 +17581,10 @@
     {
      "actor": "buh",
      "text": "[tired] Шеф, Лиса с Ласточкой к актам пришли. По четырнадцать новых фраз каждая. [sighs] Фонд оплаты болтовни у нас растёт быстрее выручки, товарищ начальник. [pause] [stern] Я им фразы посчитаю. По словам. Проверьте меня."
+    },
+    {
+     "actor": "buh",
+     "text": "[amazed] Шеф, ваша статья на Пикабу в Горячее пробилась. Шестьдесят четыре плюса, четырнадцать комментариев — за ночь! [pause] [pleased] И знаете что, товарищ начальник? Скачивания — двести девять. Цель в двести закрыта. Цель закрыта ДО приказа, шеф. [sighs] Такое я в отчётах ещё не видела."
     }
    ]
   },
@@ -26636,4 +26726,4 @@
    }
   ]
  }
-}
+}

@@ -154,7 +154,9 @@ class World:
             self.drivers[key] = drv
         self.inside, self.entered, self.left = set(), [], []
         self.quiet = 0.0
-        self.game_min = 0.0
+        self.game_min = None      # 25.11: sentinel «время неизвестно» до первой телеметрии; 0.0 читалась как
+                                  # полночь и открывала гейт ночных баек в любой час (инцидент «байка при 23:36»)
+        self.hour = 12.0          # 25.11: неизвестное время = день (active()/on_shift не падают до первого update)
         self.met = {}                 # key -> {"count": encounters with you, "last": game minute}
         self.arcs = {}                # 22.11: арки/поломки/новости (см. save/_load; пишет только код)
         try:
@@ -195,6 +197,8 @@ class World:
         рассвет/закат по широте и реальной дате: зимой на севере (Исландия, Скандинавия) светлого
         часа мало, летом — белые ночи. Инцидент 22.11: «как погода?» в 8:00 в Исландии в ноябре
         отвечало «солнышко», хотя за окном темно."""
+        if game_min is None:              # 25.11: время неизвестно — НОЧНЫЕ поведения запрещены (считаем днём)
+            return False
         h = (game_min % 1440) / 60
         if z is None:
             return h >= 21.5 or h < 6
@@ -768,7 +772,8 @@ class World:
 
     def met_before(self, key):
         m = self.met.get(key)
-        return bool(m) and m.get("count", 0) >= 1 and self.game_min - m.get("last", -1e9) > 60
+        return (bool(m) and self.game_min is not None
+                and m.get("count", 0) >= 1 and self.game_min - m.get("last", -1e9) > 60)
 
     def _save_hazards(self):
         try:

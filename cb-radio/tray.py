@@ -128,6 +128,27 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
 
     vol = Menu(*[Item(f"{p}%", set_vol(p), checked=lambda i, p=p: round(float(cfg["volume"]) * 100) == p, radio=True)
                  for p in (25, 50, 80, 100)])
+    # 24.11 (заказ Дмитрия «меню уже огромное»): журнал и стрим — в подменю, поведение пунктов не меняется
+    journal = Menu(
+        # 22.11 (стрим #13): полный журнал эфира (страница /journal оверлея) — отдельно от лог-файла
+        Item("Журнал эфира (веб)…", open_url("http://127.0.0.1:47823/journal")),
+        Item("Журнал эфира (файл)…", open_file(log_file)),
+        # 19.11: callback исполняется ВНУТРИ message-loop потока pystray сразу из TrackPopupMenuEx —
+        # модальное окно (MessageBox) из него зависает: кнопки не отвечают. send_report гоним
+        # в свежий поток, из callback только запуск.
+        Item("Отправить журнал разработчикам…",
+             lambda icon, item: threading.Thread(target=hook("report"), daemon=True).start()),
+    )
+    stream = Menu(
+        # 24.11 (заказ Дмитрия): тумблер дублирует голосовые «мы на стриме»/«стрим закончен» — тот же
+        # сеттер через заявку в главный цикл; галочка читается при построении меню (= актуальное STREAM_ON)
+        Item("Режим стримера", lambda icon, item: hook("stream_toggle")(),
+             checked=lambda i: bool(hook("stream_on", False)())),
+        Item("Оверлей для стрима", lambda icon, item: hook("overlay_toggle")(),
+             checked=lambda i: bool(hook("overlay_on", False)())),
+        Item(lambda i: "  OBS → Браузер: " + str(hook("overlay_url", "")() or ""), None, enabled=False,
+             visible=lambda i: bool(hook("overlay_on", False)())),
+    )
     menu = Menu(
         Item(lambda i: f"Канал 15 v{version} · {STATE['status']}", None, enabled=False),
         Item(inside_text, None, enabled=False),
@@ -148,14 +169,10 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
         Item("Помехи", Menu(static_items)),
         Item("Микрофон", Menu(mic_items)),
         Item("Тишина в эфире", toggle_mute, checked=lambda i: STATE["muted"]),
-        Item("Оверлей для стрима", lambda icon, item: hook("overlay_toggle")(),
-             checked=lambda i: bool(hook("overlay_on", False)())),
-        # 22.11 (стрим #13): полный журнал эфира (страница /journal оверлея) — отдельно от «Журнал эфира…» (лог-файл)
-        Item("Журнал эфира (веб)…", open_url("http://127.0.0.1:47823/journal")),
         Item("Онлайн-конвой (гость в эфире)", lambda icon, item: hook("guest_toggle")(),
              checked=lambda i: bool(hook("guest_on", False)())),
-        Item(lambda i: "  OBS → Браузер: " + str(hook("overlay_url", "")() or ""), None, enabled=False,
-             visible=lambda i: bool(hook("overlay_on", False)())),
+        Item("Стрим", stream),
+        Item("Журнал", journal),
         Item("Обновления", Menu(
             Item(lambda i: str(hook("upd_status", "—")() or "—")[:60], None, enabled=False),
             Item(lambda i: f"Установить обновление {hook('upd_inst_ver', '')() or '…'}…",
@@ -168,12 +185,6 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
             Item("Обновлять автоматически", lambda icon, item: hook("upd_auto")(),
                  checked=lambda i: bool(hook("upd_auto_on", True)())),
             Item("Что нового…", lambda icon, item: hook("changelog")()))),
-        Item("Журнал эфира…", open_file(log_file)),
-        # 19.11: callback исполняется ВНУТРИ message-loop потока pystray сразу из TrackPopupMenuEx —
-        # модальное окно (MessageBox) из него зависает: кнопки не отвечают. send_report гоним
-        # в свежий поток, из callback только запуск.
-        Item("Отправить журнал разработчикам…",
-             lambda icon, item: threading.Thread(target=hook("report"), daemon=True).start()),
         Menu.SEPARATOR,
         # 2026-11-07 (user): a quiet voluntary donation link, nothing more - no pop-ups, no reminders, ever
         Item("☕ На токены и хлебушек", open_url(cfg.get("donate_url") or DONATE_URL)),

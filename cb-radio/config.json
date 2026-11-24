@@ -59,6 +59,10 @@
   "stream_news_pilot": true,
   "stream_viewers_pilot": true,
   "stream_donate_pitch_pilot": true,
+  "voicedsp_pilot": false,
+  "streambot_pilot": true,
+  "gigaam_pilot": true,
+  "foreign_per_hour": 9.45,
   "stream_banter_min_s": 90,
   "stream_banter_max_s": 150,
   "stream_banter_cool_s": [
