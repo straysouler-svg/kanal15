@@ -16,8 +16,8 @@ import soundfile as sf
 ROOT = Path(__file__).resolve().parents[1]
 OUT_BASE = ROOT.parent / "release"
 PERSONAL = {"soroka"}
-CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tray.py", "mic.py", "gamecheck.py",
-        "updater.py", "ed25519.py", "launcher.py", "tainik.py", "report_log.py"]
+CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tools/asr_gigaam.py", "tray.py", "mic.py",
+        "gamecheck.py", "updater.py", "ed25519.py", "launcher.py", "tainik.py", "report_log.py"]
 HANDLE = {"kirill": "Сиди-Посиди", "alive": "Пятьдесят пятый", "neutral": ""}   # alive = blogger TheAlive55 (Алексей)
 README = r"""# CB-рация для Euro Truck Simulator 2
 
@@ -41,6 +41,7 @@ README = r"""# CB-рация для Euro Truck Simulator 2
 ## Благодарности
 Музыка в кабинах: см. CREDITS.md. Карта городов: координаты из игры и © участники OpenStreetMap.
 Голоса сгенерированы ИИ (ElevenLabs, OpenAI gpt-audio), песни — Google Lyria.
+Распознавание речи — Whisper (MIT, OpenAI) и GigaAM v3 (MIT, © GigaChat Team / Сбер); рантайм sherpa-onnx — Apache-2.0 (k2-fsa).
 Только для личного некоммерческого использования.
 """
 
@@ -241,6 +242,12 @@ def main(variant):
     for c in CODE:
         (out / c).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / c, out / c)
+    # 24.11 (решение Дмитрия): zip-вариант остаётся ЛЁГКИМ и whisper-only — модель GigaAM (222 МБ) в zip НЕ
+    # идёт (кандидат models/gigaam-v3 в pack_release не копируется нигде). gigaam_pilot=True в дефолте безопасен:
+    # стартовая самопроверка Ears._bench (нужен этот bench-файл!) не находит модель и сама переключает рацию на
+    # whisper. Файл README zip-варианта ниже честно говорит, что скачивание модели — при первом нажатии тангенты.
+    (out / "bench").mkdir(exist_ok=True)
+    shutil.copy2(ROOT / "bench" / "stt_bench.wav", out / "bench" / "stt_bench.wav")
     (out / "map").mkdir()
     shutil.copy2(ROOT / "map" / "cities_full.json", out / "map" / "cities_full.json")
     shutil.copy2(ROOT / "music" / "CREDITS.md", out / "CREDITS.md")

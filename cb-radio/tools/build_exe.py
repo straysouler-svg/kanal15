@@ -31,7 +31,7 @@ README = """# Канал 15 — мультиплеер для интроверт
 Проект бесплатный. Если захочется поддержать — пункт «☕ На токены и хлебушек» в меню значка рации.
 
 Музыка в кабинах: см. CREDITS.md. Карта городов: координаты из игры и © участники OpenStreetMap.
-Голоса сгенерированы ИИ (ElevenLabs, OpenAI gpt-audio), песни — Google Lyria. Распознавание речи — Whisper (MIT).
+Голоса сгенерированы ИИ (ElevenLabs, OpenAI gpt-audio), песни — Google Lyria. Распознавание речи — Whisper (MIT) и GigaAM (MIT, Сбер).
 Только для личного некоммерческого использования.
 """
 
@@ -72,6 +72,15 @@ def build_app(variant):
                 "bonds", "tainik", "report_log"):
         shutil.copy2(CB / f"{mod}.py", app / "app" / f"{mod}.py")
     shutil.copy2(CB / "tools" / "savegame.py", app / "app" / "savegame.py")
+    shutil.copy2(CB / "tools" / "asr_gigaam.py", app / "app" / "asr_gigaam.py")   # 24.11: GigaAM — обёртка рядом с savegame
+    # 24.11 (решение Дмитрия): GigaAM v3 в поставке (MIT, Сбер) + эталон для стартовой самопроверки (без него
+    # _bench молча пропускается и при отсутствующей модели пилот не отключится — только нужные файлы модели)
+    giga_src = BUILD / "sherpa-onnx-nemo-transducer-punct-giga-am-v3-russian-2025-12-16"
+    giga_dst = app / "models" / "gigaam-v3"
+    giga_dst.mkdir(parents=True)
+    for f in ("encoder.int8.onnx", "decoder.onnx", "joiner.onnx", "tokens.txt", "LICENSE", "README.md"):
+        shutil.copy2(giga_src / f, giga_dst / f)
+    shutil.copytree(CB / "bench", app / "bench")
     for part in ("audio", "phrases", "map", "config.json", "CREDITS.md"):
         src = rel / part
         (shutil.copytree if src.is_dir() else shutil.copy2)(src, app / part)

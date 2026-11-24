@@ -36,6 +36,12 @@
 - `*_lyria_*.wav`: сгенерированы моделью google/lyria-3-pro-preview по нашим оригинальным текстам (tools/make_songs.py), имён артистов в запросах нет. Перед продажей проверить условия Google на коммерческое использование вывода Lyria (preview) и метку SynthID.
 
 
+## Распознавание речи (24.11)
+
+- Whisper small — модель OpenAI, код faster-whisper (Guillaume Klein / SYSTRAN): лицензия MIT.
+- GigaAM v3 — модель команды GigaChat (Сбер): лицензия MIT (текст — models/gigaam-v3/LICENSE).
+- Рантайм sherpa-onnx (k2-fsa) — Apache-2.0 (бинарники в составе CB-Radio.exe); onnxruntime — MIT.
+
 ## Плагин телеметрии
 `ets2-telemetry.dll` — плагин из Funbit ETS2 Telemetry Web Server (https://github.com/Funbit/ets2-telemetry-server), лицензия GPL-3.0; исходный код — по этой ссылке. Рация только читает данные, которые он выкладывает в общую память, и не содержит его кода.
 Рядом с игрой может быть положен `msvcr110.dll` — среда выполнения Microsoft Visual C++ 2012 (распространяется по лицензии Microsoft).

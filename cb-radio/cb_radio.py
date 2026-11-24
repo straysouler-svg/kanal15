@@ -191,9 +191,11 @@ DEFAULT_CFG = {
     # этап 2 (21.11, решение пользователя): bind — адрес приёма хозяина (0.0.0.0 = проброс порта на роутере),
     # pin — ОБЯЗАТЕЛЕН для внешних подключений (пустой = только localhost, как этап 1); host — адрес хозяина у гостя
     "update": {"url": "", "channel": "public", "auto": True},   # tools/pack_release.py fills url + channel per build
-    "gigaam_pilot": False,         # 24.11: GigaAM v3 — первый движок русского STT (A/B: build/gigaam_ab/report.md, ~25× быстрее);
-                                   # фолбэк в whisper только: латиница / пусто / обрывок <3 слов без интента. Вкл — по слову пользователя
-    "gigaam_model_dir": "",        # путь к модели GigaAM; пусто = искать cb-radio/models/gigaam-v3, затем build/sherpa-onnx-...
+    "gigaam_pilot": True,          # 24.11: GigaAM v3 — первый движок русского STT (A/B: build/gigaam_ab/report.md, ~25× быстрее);
+                                   # фолбэк в whisper: латиница / пусто / обрывок <3 слов без интента.
+                                   # Решение Дмитрия 24.11: дефолт ВКЛ, модель идёт в установщике.
+                                   # Без модели стартовая самопроверка (Ears._bench) сама выключает пилот — остаётся whisper
+    "gigaam_model_dir": "",        # путь к модели GigaAM; пусто = искать models/gigaam-v3 (рядом с рацией), затем build/sherpa-onnx-...
 }
 
 
@@ -1693,7 +1695,18 @@ class Ears:
         """24.11 (gigaam_pilot): самопроверка при старте — эталонный клип через оба движка, строки
         «бенч: gigaam X.XX с» / «бенч: whisper X.XX с» — базовая линия по дням в логе. GigaAM после
         бенча выгружаем: штатная загрузка — ленивая, на первое нажатие тангенты."""
-        import asr_gigaam
+        # 24.11: предохранитель НЕ зависит от эталонного клипа — модуля или модели нет (zip/обновление без
+        # модели) -> пилот выключаем сразу, рация живёт на whisper (иначе каждое нажатие падало бы в except)
+        try:
+            import asr_gigaam
+            if asr_gigaam.find_model_dir(self.gigaam_dir) is None:
+                log("бенч: модель GigaAM не найдена — пилот выключен, остаёмся на whisper")
+                self.gigaam_pilot = False
+                return
+        except Exception as e:
+            log(f"бенч: GigaAM недоступен ({e!r}) — пилот выключен, остаёмся на whisper")
+            self.gigaam_pilot = False
+            return
         clip = ROOT / "bench" / "stt_bench.wav"
         if not clip.exists():
             log("бенч: нет эталонного клипа cb-radio/bench/stt_bench.wav — пропускаю")
