@@ -29,12 +29,13 @@ eval/exec — только json. Логики эфира здесь нет: ре
 """
 
 import hashlib
+import hmac
 import json
 import queue
 import socket
 import threading
 import time
-from pathlib import PurePosixPath, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 MAX_MSG_BYTES = 64 * 1024
 MAX_TEXT = 500                 # «said»: фраза длиннее — обрезаем
@@ -78,12 +79,15 @@ def _check_hello(ev):
 def audio_manifest_hash(root):
     """mhash: sha256 по отсортированному списку 'относительный путь<TAB>размер' всех .wav/.ogg под root.
     Устойчив к mtime, чувствителен к набору файлов. root — папка audio/."""
-    root = PurePosixPath(str(root).replace("\\", "/"))
+    # 25.11: обход — конкретным Path (Pure* не умеет rglob — host_start падал AttributeError),
+    # а в строку манифеста пути нормализуем в ПРЯМЫЕ слэши, чтобы хэш совпадал на разных ОС.
+    base = Path(str(root).replace("\\", "/"))
     lines = []
     try:
-        for p in sorted(root.rglob("*")):
+        for p in sorted(base.rglob("*")):
             if p.suffix.lower() in OK_SUFFIX and p.is_file():
-                lines.append(f"{p.relative_to(root)}\t{p.stat().st_size}")
+                rel = PurePosixPath(str(p.relative_to(base)).replace("\\", "/"))
+                lines.append(f"{rel}\t{p.stat().st_size}")
     except OSError:
         return "-"
     return hashlib.sha256("\n".join(lines).encode("utf-8", "replace")).hexdigest()[:16]
@@ -270,7 +274,8 @@ class Host:
                 try:
                     if remote and not self.pin:
                         raise BadEvent(f"подключение не с localhost при пустом pin ({addr[0]})")
-                    if self.pin and pin != self.pin:
+                    # CONVOY-SEC-1 (ревизия v1.41): сравнение пина в постоянное время — против тайминг-атаки
+                    if self.pin and not hmac.compare_digest(str(pin), self.pin):
                         raise BadEvent(f"неверный pin (с {addr[0]})")
                 except BadEvent as e:
                     why = "remote" if "localhost" in str(e) else "pin"

@@ -53,6 +53,13 @@ def host_start(port, log, cfg=None, on_guest=None):
     if HOST:
         return True
     cc = convoy_cfg(cfg or {})
+    # CONVOY-SEC-1 (ревизия v1.41, стадия A): слабый/дефолтный pin при интернет-bind = открытая дверь.
+    # Не роняем старт (хозяин решает), но предупреждаем ЯРКО. Пустой pin при bind 127.0.0.1 — норма (этап 1).
+    _weak = {"", "1234", "1111", "0000", "1212", "7777", "5555", "pass", "password", "qwerty",
+             "radio", "radio15", "kanal15", "kanal", "convoy", "гость", "пароль", "пин"}
+    if cc["pin"].lower() in _weak and cc["bind"] not in ("127.0.0.1", "::1", "localhost", ""):
+        log(f"конвой: ВНИМАНИЕ — pin «{cc['pin']}» слабый/дефолтный при внешнем bind {cc['bind']}: "
+            "подбор за секунды. Придумай длинный pin в config.json → convoy.pin")
     try:
         HOST = transport.Host(port, bind=cc["bind"], pin=cc["pin"],
                               mhash=transport.audio_manifest_hash(Path(__file__).resolve().parent / "audio"),
