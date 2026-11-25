@@ -4,24 +4,110 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Скачать рацию «Канал 15» для ETS2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, sans-serif; background: #101510; color: #e8e4da; margin: 0; }
-  main { max-width: 720px; margin: 0 auto; padding: 48px 20px; }
-  h1 { font-size: 2rem; margin: 16px 0 8px; }
-  p, li { line-height: 1.6; }
-  a { color: #d8b13c; }
-  a.btn { display: inline-block; background: #d8b13c; color: #101510; font-weight: 700;
-          font-size: 1.2rem; padding: 16px 40px; border-radius: 12px; text-decoration: none;
-          margin: 16px 0; }
-  a.btn:hover { background: #e8c452; }
-  a.btn.ghost { background: transparent; color: #d8b13c; border: 2px solid #d8b13c; }
-  a.btn.ghost:hover { background: #d8b13c; color: #101510; }
-  .feedback { margin: 24px 0; }
-  ol li { margin-bottom: 10px; }
-  .shots { display: grid; gap: 20px; margin: 24px 0; }
-  .shot { padding: 0; text-align: center; color: #9aa392; }
-  .shot .cap { margin-top: 12px; font-size: .95rem; color: #c9c4b6; text-align: left; }
-  footer { margin-top: 48px; font-size: .9rem; opacity: .75; }
+  :root {
+    --bg: #F2EFE7; --edge: #EAE5D8; --ink: #16181D; --muted: #5A5E66;
+    --accent: #FFC400; --accent-soft: rgba(255,196,0,.18);
+    --card: #FFFFFF; --line: rgba(22,24,29,.07); --shadow: 0 8px 24px rgba(22,24,29,.06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--edge); color: var(--ink);
+         font-family: "Rubik", system-ui, sans-serif; font-size: 17px; line-height: 1.55; }
+  .wrap { max-width: 1440px; margin: 0 auto; background: var(--bg); }
+
+  h1, h2, h3, .brand { font-family: "Unbounded", sans-serif; }
+  h1 { font-size: 44px; line-height: 1.15; margin: 22px 0 18px; font-weight: 700; }
+  h2 { font-size: 24px; margin: 0 0 8px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 16px; max-width: 640px; margin: 0 auto; }
+  section { padding: 0 140px; margin: 90px 0; }
+  .center { text-align: center; }
+
+  /* ---------- шапка ---------- */
+  header { display: flex; align-items: center; justify-content: space-between;
+           padding: 26px 140px; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; }
+  .brand .logo { width: 42px; height: 42px; border-radius: 12px; background: var(--ink); color: #fff;
+                 display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  nav a { color: var(--ink); text-decoration: none; font-size: 15px; margin-left: 28px; font-weight: 500; }
+  nav a:hover { text-decoration: underline; }
+
+  /* ---------- хиро ---------- */
+  .hero { text-align: center; margin-top: 40px; }
+  .badge { display: inline-block; border: 1.5px solid var(--ink); border-radius: 999px;
+           padding: 8px 20px; font-size: 13px; font-weight: 500; letter-spacing: .04em; }
+  .cta { display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+         width: 480px; max-width: 100%; height: 64px; border-radius: 999px;
+         background: var(--ink); color: #fff; text-decoration: none; font-size: 17px; font-weight: 500;
+         box-shadow: 0 8px 20px rgba(22,24,29,.15); margin: 34px 0 14px; }
+  .cta:hover { background: #2A2E36; }
+  .cta svg { flex: none; }
+  .tg-link { color: var(--ink); font-size: 15px; }
+  .hero-shot { position: relative; margin: 56px auto 0; max-width: 1160px; }
+  .hero-shot img { width: 100%; height: 400px; object-fit: cover; border-radius: 24px;
+                   box-shadow: 0 16px 40px rgba(22,24,29,.12); display: block; }
+  .chip { position: absolute; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 500;
+          box-shadow: 0 8px 20px rgba(22,24,29,.12); }
+  .chip.white { background: #fff; color: var(--ink); left: 24px; bottom: 24px; display: flex; align-items: center; gap: 8px; }
+  .chip.yellow { background: var(--accent); color: var(--ink); right: 24px; top: 24px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #2FA84F; display: inline-block; }
+
+  /* ---------- карточки ---------- */
+  .grid3 { display: grid; grid-template-columns: repeat(3, 424px); gap: 20px; justify-content: center; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+          box-shadow: var(--shadow); padding: 32px; }
+  .ico { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft);
+         display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+  .card h3 { font-size: 17px; margin: 0 0 8px; font-weight: 700; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff;
+              display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
+              font-family: "Unbounded", sans-serif; margin-bottom: 18px; }
+  .card.yellow .step-num { background: var(--accent); color: var(--ink); }
+  .card.dark { background: var(--ink); border-color: var(--ink); }
+  .card.dark h3 { color: #fff; }
+  .card.dark p { color: rgba(255,255,255,.7); }
+
+  /* ---------- кнопки-секции ---------- */
+  .btn-row { display: flex; gap: 16px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 56px;
+         padding: 0 34px; border-radius: 999px; text-decoration: none; font-size: 16px; font-weight: 500; }
+  .btn.dark { background: var(--ink); color: #fff; box-shadow: 0 8px 20px rgba(22,24,29,.15); }
+  .btn.dark:hover { background: #2A2E36; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+  .btn.ghost:hover { background: var(--ink); color: #fff; }
+
+  /* ---------- скриншоты ---------- */
+  .shots { display: grid; grid-template-columns: repeat(3, 424px); gap: 20px; justify-content: center; }
+  .shot img { width: 424px; height: 160px; object-fit: cover; border-radius: 12px; display: block; }
+  .shot .cap { margin: 10px 2px 0; font-size: 12px; color: var(--muted); }
+
+  /* ---------- соцсети ---------- */
+  .social { max-width: 1000px; margin: 0 auto; }
+  .srow { display: flex; align-items: center; gap: 16px; padding: 14px 0; text-decoration: none; color: var(--ink); }
+  .srow + .srow { border-top: 1px solid var(--line); }
+  .srow .ico { margin: 0; flex: none; }
+  .srow b { font-weight: 700; }
+  .srow span.d { color: var(--muted); font-size: 15px; }
+  .srow:hover b { text-decoration: underline; }
+
+  /* ---------- футер ---------- */
+  footer { background: var(--ink); color: #fff; margin-top: 90px; }
+  .foot-in { max-width: 1440px; margin: 0 auto; padding: 44px 140px; display: flex;
+             justify-content: space-between; gap: 40px; align-items: flex-start; }
+  .foot-in .left { max-width: 560px; font-size: 15px; color: rgba(255,255,255,.85); }
+  .foot-in .right { font-size: 13px; color: rgba(255,255,255,.55); text-align: right; }
+  .foot-in a { color: rgba(255,255,255,.85); }
+
+  /* ---------- адаптив 768–1024 ---------- */
+  @media (max-width: 1330px) {
+    section, header, .foot-in { padding-left: 48px; padding-right: 48px; }
+    .grid3, .shots { grid-template-columns: 1fr; max-width: 640px; margin-left: auto; margin-right: auto; }
+    .shot img { width: 100%; height: 200px; }
+    .social { max-width: 640px; }
+  }
 </style>
 <!-- Яндекс.Метрика: UTM-воронка + цель download_click (решение 19.11, метод А) -->
 <script type="text/javascript">
@@ -29,57 +115,168 @@
    m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],
    k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
    (window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
-   ym(114361078, "init", { clickmap:false, trackLinks:true, accurateTrackBounce:true });
+   ym(114361078, "init", { clickmap:false, trackLinks:true, accurateBounce:true });
 </script>
 </head>
 <body>
-<main>
-  <h1>Рация «Канал 15» для ETS2</h1>
-  <p>Выдуманные друзья-дальнобойщики в кабине. Не мод — файлы игры не трогает.
-     Работает офлайн, ставится за пару минут.</p>
+<div class="wrap">
 
-  <p><a class="btn" href="https://github.com/straysouler-svg/kanal15/releases/latest/download/Kanal15-Setup.exe"
-     onclick="ym(114361078,'reachGoal','download_click'); return true;">⬇ Скачать «Канал 15» (Windows, бесплатно)</a></p>
+  <header id="top">
+    <a class="brand" href="#top"><span class="logo">15</span>Канал 15</a>
+    <nav>
+      <a href="#install">Установка</a>
+      <a href="#shots">Скриншоты</a>
+      <a href="#contacts">Контакты</a>
+      <a href="https://github.com/straysouler-svg/kanal15" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
 
-  <h2>Как установить</h2>
-  <ol>
-    <li><strong>Скачал</strong> — кнопка выше, файл Kanal15-Setup.exe.</li>
-    <li><strong>Запустил</strong> — обычный установщик: далее, далее, готово.</li>
-    <li><strong>Windows ругнулся?</strong> Это SmartScreen: кнопка «Подробнее» → «Всё равно запустить».
-        Установщик не подписан дорогим сертификатом — не потому что в нём вирус, а потому что проект
-        делает один человек в гараже, а не корпорация. Исходники открыты, можно проверить.</li>
-  </ol>
+  <section class="hero">
+    <span class="badge">Не мод · Офлайн · Бесплатно</span>
+    <h1>Рация «Канал 15»<br>для ETS2</h1>
+    <p class="sub">Выдуманные друзья-дальнобойщики в кабине. Не мод — файлы игры не трогает.
+       Работает офлайн, ставится за пару минут.</p>
+    <div>
+      <a class="cta" href="https://github.com/straysouler-svg/kanal15/releases/latest/download/Kanal15-Setup.exe"
+         onclick="ym(114361078,'reachGoal','download_click'); return true;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Скачать «Канал 15» (Windows, бесплатно)
+      </a>
+    </div>
+    <a class="tg-link" href="https://t.me/kanal15_ets2">или написать в Telegram</a>
 
-  <h2>Есть что сказать?</h2>
-  <div class="feedback">
-  <p>Нашёл баг, есть идея — или просто хочется рассказать, как она вам? Пишите, читаю сам и отвечаю
-     лично. Баги по журналу рации нахожу и чиню сам, без бюрократии.</p>
-  <p><a class="btn" href="https://t.me/kanal15_publisher_bot"
-     onclick="ym(114361078,'reachGoal','feedback_tg'); return true;">✈ Написать нам в Telegram</a>
-     <a class="btn ghost" href="https://github.com/straysouler-svg/kanal15/discussions"
-     onclick="ym(114361078,'reachGoal','feedback_gh'); return true;">Обсудить на GitHub</a></p>
-  </div>
+    <div class="hero-shot">
+      <img src="shot1.jpg" alt="Эфир «Канала 15» в кабине фуры">
+      <span class="chip white"><span class="dot"></span>Водители сами заводят разговор</span>
+      <span class="chip yellow">100% офлайн</span>
+    </div>
+  </section>
 
-  <h2>Так это выглядит</h2>
-  <div class="shots">
-    <div class="shot"><img src="shot1.jpg" alt="Кабина фуры на закате, вебкамера автора в углу" style="max-width:100%; border-radius:8px;">
-      <p class="cap">Эфир прямо в кабине — водители сами заводят разговор и не молчат всю дорогу.</p></div>
-    <div class="shot"><img src="shot2.jpg" alt="Заправка на закате, красное небо" style="max-width:100%; border-radius:8px;">
-      <p class="cap">Заправка на закате. Голоса живут у тебя на компьютере — интернет не нужен, всё офлайн.</p></div>
-    <div class="shot"><img src="shot3.jpg" alt="Ночная трасса, фары, остановка" style="max-width:100%; border-radius:8px;">
-      <p class="cap">Ночное плечо. Говоришь в микрофон при нажатой тангенте — отвечают по характеру.</p></div>
-  </div>
+  <section>
+    <h2 class="center">Что умеет рация</h2>
+    <div class="grid3" style="margin-top:36px">
+      <div class="card">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2a3 3 0 013 3v6a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#16181D" stroke-width="2"/>
+          <path d="M5 11a7 7 0 0014 0M12 18v4m-4 0h8" stroke="#16181D" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Говоришь — отвечают</h3>
+        <p>Говоришь в микрофон при нажатой тангенте — отвечают по характеру.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7l7-4z" stroke="#16181D" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M4 4l16 16" stroke="#16181D" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Всё офлайн</h3>
+        <p>Голоса живут у тебя на компьютере — интернет не нужен.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="12" rx="2" stroke="#16181D" stroke-width="2"/>
+          <path d="M8 20h8m-4-4v4" stroke="#16181D" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Не мод</h3>
+        <p>Файлы игры не трогает. Обычная программа-компаньон для Windows.</p>
+      </div>
+    </div>
+  </section>
 
-  <h2>Где нас найти</h2>
-  <p>💬 <a href="https://t.me/kanal15_ets2">Telegram-канал</a> — новости, голоса водителей, анонсы стримов.<br>
-  ▶ <a href="https://www.youtube.com/@kanal15_ets2">YouTube</a> — стримы и шортсы из эфира.<br>
-  🔵 <a href="https://vk.ru/club243244739">ВКонтакте</a> — зеркало новостей и роликов.<br>
-  📷 <a href="https://www.instagram.com/jeleziaaka/">Instagram</a> — шортсы и закулисье.<br>
-  ☕ <a href="https://boosty.to/kanal15">Boosty</a> — поддержать проект: закулисье разработки и камео в эфире.</p>
-  <p>Пишу это один, глазами не всё вижу — если установщик капризничает, напишите, кнопки выше. Починим.</p>
+  <section id="install">
+    <h2 class="center">Как установить</h2>
+    <div class="grid3" style="margin-top:36px">
+      <div class="card">
+        <div class="step-num">1</div>
+        <h3>Скачай</h3>
+        <p>Кнопка выше — файл Kanal15-Setup.exe.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">2</div>
+        <h3>Запусти</h3>
+        <p>Обычный установщик: далее, далее, готово.</p>
+      </div>
+      <div class="card dark">
+        <div class="step-num" style="background:#FFC400;color:#16181D">3</div>
+        <h3>Windows ругнулся?</h3>
+        <p>Это SmartScreen: «Подробнее» → «Всё равно запустить». Установщик не подписан
+           дорогим сертификатом — проект делает один человек в гараже. Исходники открыты.</p>
+      </div>
+    </div>
+  </section>
 
-  <footer><a href="https://github.com/straysouler-svg/kanal15">Исходный код на GitHub</a> — для разработчиков и любопытных.<br>
-  «Канал 15» — программа-компаньон, не мод. Файлы игры не трогает.</footer>
-</main>
+  <section>
+    <h2 class="center">Есть что сказать?</h2>
+    <p class="sub">Нашёл баг, есть идея — или просто хочется рассказать, как она вам? Пишите, читаю сам
+       и отвечаю лично. Баги по журналу рации нахожу и чиню сам, без бюрократии.</p>
+    <div class="btn-row">
+      <a class="btn dark" href="https://t.me/kanal15_publisher_bot"
+         onclick="ym(114361078,'reachGoal','feedback_tg'); return true;">Написать в Telegram</a>
+      <a class="btn ghost" href="https://github.com/straysouler-svg/kanal15/discussions"
+         onclick="ym(114361078,'reachGoal','feedback_gh'); return true;">Обсудить на GitHub</a>
+    </div>
+  </section>
+
+  <section id="shots">
+    <h2 class="center">Так это выглядит</h2>
+    <div class="shots" style="margin-top:36px">
+      <div class="shot">
+        <img src="shot1.jpg" alt="Кабина фуры на закате, вебкамера автора в углу">
+        <p class="cap">Эфир прямо в кабине — водители сами заводят разговор и не молчат всю дорогу.</p>
+      </div>
+      <div class="shot">
+        <img src="shot2.jpg" alt="Заправка на закате, красное небо">
+        <p class="cap">Заправка на закате. Голоса живут у тебя на компьютере — интернет не нужен, всё офлайн.</p>
+      </div>
+      <div class="shot">
+        <img src="shot3.jpg" alt="Ночная трасса, фары, остановка">
+        <p class="cap">Ночное плечо. Говоришь в микрофон при нажатой тангенте — отвечают по характеру.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacts">
+    <h2 class="center">Где нас найти</h2>
+    <div class="social card" style="margin-top:36px; padding:18px 32px">
+      <a class="srow" href="https://t.me/kanal15_ets2">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 4L3 11.5l5.5 2L12 19l2.5-5L21 4z" stroke="#16181D" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+        <span><b>Telegram-канал</b> — <span class="d">новости, голоса водителей, анонсы стримов.</span></span>
+      </a>
+      <a class="srow" href="https://www.youtube.com/@kanal15_ets2">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke="#16181D" stroke-width="1.8"/>
+          <path d="M10.5 9.5l5 2.5-5 2.5v-5z" fill="#16181D"/></svg></span>
+        <span><b>YouTube</b> — <span class="d">стримы и шортсы из эфира.</span></span>
+      </a>
+      <a class="srow" href="https://vk.ru/club243244739">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 7h4.5c.5 3 2 5.5 4.5 6.5M12 13.5c2.5-1 4-3.5 4.5-6.5H21m-16 9c2 0 3-.7 4-2m12 2c-2 0-3-.7-4-2m-8 0c1.2 1.3 2.6 2 4 2s2.8-.7 4-2" stroke="#16181D" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <span><b>ВКонтакте</b> — <span class="d">зеркало новостей и роликов.</span></span>
+      </a>
+      <a class="srow" href="https://www.instagram.com/jeleziaaka/">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5" stroke="#16181D" stroke-width="1.8"/>
+          <circle cx="12" cy="12" r="4" stroke="#16181D" stroke-width="1.8"/>
+          <circle cx="17.2" cy="6.8" r="1.2" fill="#16181D"/></svg></span>
+        <span><b>Instagram</b> — <span class="d">шортсы и закулисье.</span></span>
+      </a>
+      <a class="srow" href="https://boosty.to/kanal15">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M17 8h1.5a3.5 3.5 0 010 7H17m-1 0H7V4h9l-3.5 6L16 16z" stroke="#16181D" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+        <span><b>Boosty</b> — <span class="d">поддержать проект: закулисье разработки и камео в эфире.</span></span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-in">
+      <div class="left">Пишу это один, глазами не всё вижу — если установщик капризничает, напишите, кнопки выше. Починим.</div>
+      <div class="right">
+        <a href="https://github.com/straysouler-svg/kanal15">Исходный код на GitHub</a> — для разработчиков и любопытных.<br>
+        «Канал 15» — программа-компаньон, не мод. Файлы игры не трогает.
+      </div>
+    </div>
+  </footer>
+
+</div>
 </body>
 </html>
