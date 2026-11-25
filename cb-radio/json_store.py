@@ -7,9 +7,10 @@ JSON, и прогресс тихо обнулялся (load ловил ValueErro
 Контракт:
 - save_json: временный файл в ТОМ ЖЕ каталоге -> flush + os.fsync ->
   os.replace. Старая валидная копия сохраняется как <имя>.bak.
-- load_json: читает основной файл; при повреждении (OSError/ValueError)
-  пробует .bak и пишет ПОНЯТНУЮ диагностику — не молчаливое обнуление.
-  Возвращает None, если валидных данных нет нигде.
+- load_json: читает основной файл; при повреждении (OSError/ValueError) ИЛИ
+  отсутствии основного файла (при живом .bak) пробует .bak и пишет ПОНЯТНУЮ
+  диагностику — не молчаливое обнуление. Нет ни файла, ни backup — тихий None
+  (первый запуск). Возвращает None, если валидных данных нет нигде.
 """
 import json
 import os
@@ -55,7 +56,12 @@ def load_json(path, *, log=_default_log):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return None
+        # 25.11 (STATE-1, ревизия v1.41): основного файла нет (удалён/переименован) — backup
+        # читался ТОЛЬКО при повреждении, при отсутствии — тихое обнуление. Если backup есть —
+        # читаем его с диагностикой; если нет ни того ни другого (первый запуск) — тишина.
+        if not bak.exists():
+            return None
+        log(f"json_store: {path.name} не найден — восстанавливаю из {bak.name}")
     except (OSError, ValueError) as e:
         log(f"json_store: {path.name} повреждён ({e!r}) — пробую {bak.name}")
     try:
