@@ -169,8 +169,8 @@ def start(cfg, cfg_file, log_file, root, names, version="?"):
         Item("Помехи", Menu(static_items)),
         Item("Микрофон", Menu(mic_items)),
         Item("Тишина в эфире", toggle_mute, checked=lambda i: STATE["muted"]),
-        Item("Онлайн-конвой (гость в эфире)", lambda icon, item: hook("guest_toggle")(),
-             checked=lambda i: bool(hook("guest_on", False)())),
+        # 25.11 (решение Дмитрия): онлайн-конвой ВРЕМЕННО убран из меню — ждёт защиты канала
+        # (ревизия v1.41 CONVOY-SEC-1: пин ходил открытым текстом, дефолтный пин был слабым).
         Item("Стрим", stream),
         Item("Журнал", journal),
         Item("Обновления", Menu(

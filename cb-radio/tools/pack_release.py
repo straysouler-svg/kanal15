@@ -254,6 +254,21 @@ def main(variant):
     (out / "map").mkdir()
     shutil.copy2(ROOT / "map" / "cities_full.json", out / "map" / "cities_full.json")
     shutil.copy2(ROOT / "music" / "CREDITS.md", out / "CREDITS.md")
+    # 25.11: music/ в поставку уходит сжатым (opus 56k mono, как audio/, но битрейт под «фон
+    # под тангентой» — радио-цепочка cab_bed всё равно режет полосу 300–3000 Гц). wav — в git,
+    # ogg — в установщик и канал обновлений (updater MANAGED music/ уже есть).
+    (out / "music").mkdir(exist_ok=True)
+    import subprocess as _sp
+    for m_f in sorted((ROOT / "music").glob("*.wav")):
+        ogg = out / "music" / (m_f.stem + ".ogg")
+        if not ogg.exists():
+            r = _sp.run(["ffmpeg", "-v", "error", "-y", "-i", str(m_f),
+                         "-ac", "1", "-c:a", "libopus", "-b:a", "56k", str(ogg)],
+                        capture_output=True, text=True)
+            if r.returncode != 0:
+                raise SystemExit(f"music: не смог сжать {m_f.name}: {r.stderr[:200]}")
+    # 25.11: реклама — сразу ogg (сжато при подготовке роликов), копируем как есть
+    shutil.copytree(ROOT / "ads", out / "ads")
     cfg = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
     cfg["ptt"] = {"device": "", "button": None}
     cfg["mic"] = {"enabled": True, "device": "", "model": "small"}

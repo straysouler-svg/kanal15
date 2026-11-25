@@ -21,7 +21,7 @@ import ed25519
 
 PUBLIC_KEY = "1b4d3f6abe5bf516a16a51c86a881e7a4556af50b10de03a71f39dd7746170d0"          # hex, вписывается tools/publish_update.py --init (ключ подписи хранится только у автора)
 UA = "Kanal15-Radio-Updater"
-MANAGED = ("app/", "audio/", "phrases/", "map/", "installer/", "README.md", "CHANGELOG.md", "CREDITS.md",
+MANAGED = ("app/", "audio/", "music/", "ads/", "phrases/", "map/", "installer/", "README.md", "CHANGELOG.md", "CREDITS.md",
            "version.json")
 NEVER = ("config.json", "state.json", "world_state.json", "install.json")
 

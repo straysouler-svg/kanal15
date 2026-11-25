@@ -342,6 +342,10 @@ def main():
     steps = json.loads(script_path.read_text(encoding="utf-8"))["steps"] if script_path.exists() else []
     # 22.11: мини-экзамен в КАЖДОМ прогоне — репрезентативные вопросы по основным (озвученным) интентам
     # должны получать ответ из своего пула, а не «не знаю». Шаги идут ДО сценария, адресат вызывается summon.
+    
+
+
+
     MINI_EXAM = [
         {"id": "mini_road", "summon": "boroda", "text": "Борода, как там дорога впереди, что слышно?",
          "expect_rel": "reactions/intent/road"},
@@ -358,8 +362,11 @@ def main():
         {"id": "mini_weather", "text": "Мужики, как погода впереди?",
          "expect_rel": "reactions/weather/"},
         {"id": "mini_police", "text": "Парни, полиция впереди стоит или чисто?",
-         "expect_rel": "reactions/intent/police"},
+         "expect_rel": ["reactions/intent/police", "reactions/world/police_"]},
     ]
+
+
+
     if not os.environ.get("K15_NO_MINI"):
         steps = MINI_EXAM + steps
     corpus_path = Path(args.corpus)
@@ -610,7 +617,10 @@ def main():
         window = played[t0:]
         step_desc = desc or text[:40]
         # 12 (ревью Клода 15.11): явные ожидания сценария — expect_rel/forbid_rel/expect_answer
-        if expect_rel and not any(expect_rel in (r["rel"] or "") for r in window):
+        # expect_rel — строка или список: честные ответы (world/police_no и т.п.) считаются (25.11:
+        # после смены пауз сработал designed-путь _honest, а стенд знал только про intent/police)
+        wants = expect_rel if isinstance(expect_rel, (list, tuple)) else (expect_rel,)
+        if expect_rel and not any(w in (r["rel"] or "") for r in window for w in wants):
             fail(12, f"ожидали «{expect_rel}» в ответе, прозвучало: "
                      f"{[r['rel'] for r in window]} ({step_desc})")
         if forbid_rel and any(forbid_rel in (r["rel"] or "") for r in window):
@@ -621,6 +631,8 @@ def main():
             missed[text] = missed.get(text, 0) + 1
         check_played(step_desc, who, is_q, greetq, expect_silence, window)
 
+    if not os.environ.get("K15_NO_ADS"):
+        ads_scenarios(fail)
     # ---------- главный цикл ----------
     log(f"[сим] старт: seed={args.seed} маршрут={args.route} {args.minutes} игр.мин, "
         f"сценариев={len(steps)}, корпус={len(corpus)}")
@@ -845,5 +857,84 @@ def main():
     return 1 if fails else 0
 
 
+
+# ---------- 13 (25.11, ads_pilot): сценарии местной рекламы — гоняют РОДНОЙ модуль cb-radio/ads.py
+def ads_scenarios(fail):
+    """Правила вентиля живут в ads.py (1:1 из build/ads150/sim_ads.py, одобрено Испытателем);
+    здесь — только подстановка координат и проверка решений."""
+    import math
+    import ads
+    cities = json.loads((ROOT / "map" / "cities_full.json").read_text(encoding="utf-8"))
+    cafes = json.loads((ROOT / "ads" / "cafes.json").read_text(encoding="utf-8"))["cafes"]
+    plays = []
+    ads.reset()
+    ads.init(cities, play_fn=lambda path: plays.append(path.name))
+    ev = ads.events
+    T0 = 1_000_000.0
+
+    def tick(dt, x, z, busy=False, speed=20.0):
+        ads.tick(T0 + dt, x, z, speed, True, busy)
+
+    # 1) вход в зону: рядом с кафе №1 (вне городского мьюта) — ролик в эфире
+    c1 = next(c for c in cafes if c["n"] == 1)
+    plays.clear(); ads.reset()
+    tick(0, c1["x"] + 3000, c1["z"], speed=20.0)
+    if plays != ["001.ogg"]:
+        fail(13, f"вход в зону: ожидали 001.ogg, звучало {plays}")
+    # 2) каденс/мин.пауза: сразу повторно — подавлено
+    tick(60, c1["x"] + 3000, c1["z"], speed=20.0)
+    if plays != ["001.ogg"]:
+        fail(13, f"каденс: второй ролик подряд без паузы {plays}")
+    # 3) диалог выше рекламы (D2): очередь 1, лишняя отброшена
+    plays.clear(); ads.reset()
+    tick(0, c1["x"] + 3000, c1["z"], busy=True)
+    if "queued:1" not in ev():
+        fail(13, f"D2: реклама не встала в очередь при занятом эфире: {ev()}")
+    tick(30, c1["x"] + 3000, c1["z"], busy=True)      # очередь занята -> dropped
+    if "dropped:1" not in ev():
+        fail(13, f"D2: вторая подряд не отброшена: {ev()}")
+    tick(60, c1["x"] + 3000, c1["z"], busy=False)     # эфир свободен — ждущая играет
+    if plays != ["001.ogg"] or "dequeued:1" not in ev():
+        fail(13, f"D2: очередь не отыгралась после освобождения: {plays} {ev()}")
+    # 4) анти-повтор: выход из зоны <2 ч — свежесть FRESH_NEW, цена падает, без повтора
+    plays.clear(); ads.reset()
+    tick(0, c1["x"] + 3000, c1["z"])
+    tick(3600 * 1.5, c1["x"] + 3000, c1["z"])          # не выходили из зоны, прошло 1.5 ч
+    if plays.count("001.ogg") != 1:
+        fail(13, f"анти-повтор: ролик повторился внутри зоны/2 ч: {plays}")
+    # 5) кластер зон: между двумя ближайшими кафе — играет ближнее (цена выше)
+    best = None
+    for a in cafes:
+        for b in cafes:
+            if a["n"] < b["n"]:
+                d = math.hypot(a["x"] - b["x"], a["z"] - b["z"])
+                mx_, mz_ = (a["x"] + b["x"]) / 2, (a["z"] + b["z"]) / 2
+                dc = min(math.hypot(c["x"] - mx_, c["z"] - mz_) for c in cities.values())
+                if dc > 2000 and (best is None or d < best[0]):   # середина вне городского мьюта
+                    best = (d, a, b)
+    if best and best[0] <= 50000:
+        _, a, b = best
+        plays.clear(); ads.reset()
+        mx, mz = (a["x"] + b["x"]) / 2, (a["z"] + b["z"]) / 2
+        tick(0, mx, mz)
+        near = f"{min(a, b, key=lambda c: math.hypot(c['x'] - mx, c['z'] - mz))['n']:03d}.ogg"
+        if not plays or plays[0] != near:
+            fail(13, f"кластер: ожидали ближнее {near}, звучало {plays}")
+    # 6) городской мьют 2 км: в центре Берлина реклама молчит
+    plays.clear(); ads.reset()
+    ber = cities["berlin"]
+    tick(0, ber["x"], ber["z"])
+    if plays:
+        fail(13, f"город-глушение: реклама в центре города {plays}")
+    # 7) стоянка: скорость ~0 — реклама молчит
+    plays.clear(); ads.reset()
+    tick(0, c1["x"] + 3000, c1["z"], speed=0.0)
+    if plays:
+        fail(13, f"стоянка: реклама на парковке {plays}")
+    print("[сим] реклама: сценарии 1-7 проверены (родной ads.py)", flush=True)
+
 if __name__ == "__main__":
     sys.exit(main())
+
+
+

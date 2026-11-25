@@ -70,10 +70,15 @@ def forced_cab(c, force):
     return c
 
 
-def render(x, actor, far, rng, use_cab=True, force=None):
+def render(x, actor, far, rng, use_cab=True, force=None, no_music=False):
     if actor.get("fx") == "phone":
         return phone(x)
-    x2 = cab.with_bed(x, forced_cab(actor.get("cab"), force) if use_cab else None, rng)
+    cab_spec = forced_cab(actor.get("cab"), force) if use_cab else None
+    if no_music and cab_spec:
+        # 25.11 (cab_bed_pilot): music-экстра уходит в движковый бед — в wet её не запекаем (иначе двойная музыка)
+        cab_spec = dict(cab_spec)
+        cab_spec["extras"] = [e for e in cab_spec.get("extras", []) if e.get("kind") != "music"]
+    x2 = cab.with_bed(x, cab_spec, rng)
     return g.radio(x2, dict(actor.get("radio", {}), far=far), rng)
 
 

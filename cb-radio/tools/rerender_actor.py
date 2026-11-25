@@ -16,18 +16,19 @@ import remix  # noqa: E402
 ROOT = g.ROOT
 
 
-def one(base, actor, far, rng, force, out):
+def one(base, actor, far, rng, force, out, no_music=False):
     src = remix.src(base, actor)
     if src is None:
         return False
     x = remix.dry(src) if src.suffix == ".mp3" else sf.read(src, dtype="float32")[0]
-    sf.write(out, remix.render(x, actor, far, rng, force=force), g.SR)
+    sf.write(out, remix.render(x, actor, far, rng, force=force, no_music=no_music), g.SR)
     return True
 
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
-    who = set(sys.argv[1:])
+    no_music = "--nomusic" in sys.argv
+    who = set(a for a in sys.argv[1:] if not a.startswith("--"))
     data = json.loads((ROOT / "phrases" / "level3_eleven.json").read_text(encoding="utf-8"))
     n = 0
     for key in who:
@@ -37,7 +38,7 @@ def main():
             nn = f"{i:02d}"
             force = it.get("cab") if isinstance(it, dict) else None
             n += one(ROOT / "audio" / "level3_clean" / key / nn, a, False, rng, force,
-                     ROOT / "audio" / "level3" / key / f"{nn}.wav")
+                     ROOT / "audio" / "level3" / key / f"{nn}.wav", no_music=no_music)
 
     def lines(d, ls):
         nonlocal n
@@ -45,7 +46,7 @@ def main():
             if ln["actor"] in who:
                 rng = np.random.default_rng(abs(hash((str(d), i))) % 2**32)
                 n += one(d / f"{i:02d}", data["actors"][ln["actor"]], ln.get("far", False), rng, ln.get("cab"),
-                         d / f"{i:02d}.wav")
+                         d / f"{i:02d}.wav", no_music=no_music)
     for sid, ls in data["scenes"].items():
         lines(ROOT / "audio" / "scenes" / sid, ls)
     for grp, kinds in data["reactions"].items():

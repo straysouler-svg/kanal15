@@ -196,6 +196,11 @@ DEFAULT_CFG = {
                                    # Решение Дмитрия 24.11: дефолт ВКЛ, модель идёт в установщике.
                                    # Без модели стартовая самопроверка (Ears._bench) сама выключает пилот — остаётся whisper
     "gigaam_model_dir": "",        # путь к модели GigaAM; пусто = искать models/gigaam-v3 (рядом с рацией), затем build/sherpa-onnx-...
+    "ads_pilot": False,            # 25.11: местная реклама в эфире (ads.py) — вентиль по гео из
+                                   # build/ads150 (одобрено Испытателем); живой диалог всегда выше (D2)
+    "cab_bed_pilot": False,        # 25.11: непрерывный фон кабины у водителей (cab_bed.py) — зацикленная музыка
+                                   # стиля актёра / дорожный эмбиент, дакинг под голос. Пилотные актёры — с wet-рендером
+                                   # БЕЗ music-экстры (rerender_actor.py --nomusic), иначе двойная музыка
 }
 
 
@@ -1446,6 +1451,16 @@ class Player:
             rel = _rel(path)
             if rel:
                 convoy.host_send_play(rel, actor, dist)
+            # 25.11 (cab_bed_pilot): непрерывный фон за говорящим — узкий вызов, никогда не роняет эфир
+            if (self.cfg or {}).get("cab_bed_pilot"):
+                try:
+                    import cab_bed
+                    if not cab_bed._wd_started:
+                        cab_bed.init(self, load_phrases().get("actors") or {})
+                        cab_bed.start_watchdog()
+                    cab_bed.line(actor, len(data) / sr)
+                except Exception as e:
+                    log(f"cab_bed: {e!r}")
         except Exception as e:  # missing file, busy/unplugged device: skip, keep the radio alive
             log(f"не смог проиграть {Path(path).name}: {e}")
             return "error"
@@ -4633,9 +4648,9 @@ def main(argv):
 
         def guest_hook(edge):
             convoy.host_send_ptt(edge == "down")
-    if (cfg.get("guest") or {}).get("enabled"):
-        convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log, cfg=cfg)
-    if "--guest-host" in argv:            # приёмка этапа 1: принимать гостя без правки config
+    # 25.11 (решение Дмитрия): конвой выключен до защиты канала (ревизия v1.41 CONVOY-SEC-1) —
+    # автостарт по guest.enabled убран, пункт меню тоже; обратно — вместе с TLS/пином (CONVOY_GUEST.md).
+    if "--guest-host" in argv:            # приёмка этапа 1: принимать гостя без правки config (dev-флаг)
         convoy.host_start(int((cfg.get("guest") or {}).get("port", convoy.GUEST_PORT)), log, cfg=cfg)
     GUEST_HOOK = guest_hook               # PTT зовёт это на нажатие/отпускание (только когда хозяин принимает гостя)
     w_acc, w_saved = 0.0, time.monotonic()
@@ -5496,6 +5511,18 @@ def main(argv):
                                               lang, foreign_type(lang, wav))
                         next_at = max(next_at, driving_s + 15)
                         continue
+            # 25.11 (ads_pilot): местная реклама — тот же вентиль, что стенд build/ads150/sim_ads.py;
+            # живой диалог/тангента выше (D2 — очередь длиной 1 внутри ads.tick)
+            if cfg.get("ads_pilot") and world and world.px is not None and st == "driving":
+                try:
+                    import ads
+                    if not ads._state["_inited"]:
+                        ads.init(world.cities)
+                    air_busy = bool(op.pending or op.waiting or PLAYER.playing or ptt.down)
+                    ads.tick(time.monotonic(), world.px, world.pz, world.pspeed, True, air_busy)
+                except Exception as e:
+                    log(f"ads: {e!r}")
+
             # 22.11 (foreign80): наш отвечает проезжему — знает язык, в зоне, кулдаун
             if FOREIGN_ANS[1] and time.monotonic() >= FOREIGN_ANS[1][0] and world and not hush:
                 _, lang, ft = FOREIGN_ANS[1]

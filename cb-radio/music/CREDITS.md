@@ -42,6 +42,24 @@
 - GigaAM v3 — модель команды GigaChat (Сбер): лицензия MIT (текст — models/gigaam-v3/LICENSE).
 - Рантайм sherpa-onnx (k2-fsa) — Apache-2.0 (бинарники в составе CB-Radio.exe); onnxruntime — MIT.
 
+## Музыка ElevenLabs Music (25.11, два тиража по заказу, добро правообладателя проекта)
+
+Сгенерировано моделью ElevenLabs Music (music_v2_5) по промптам проекта, тексты — оригинальные
+(Летописец/Gemini). Лицензия — подписка ElevenLabs платная; коммерческое использование вывода
+разрешено условиями подписки. Композиции выдуманные, исполнители выдуманные, совпадения случайны.
+
+Тираж 1 — общая фонотека «эфира трасс» (17 треков, build/fonoteka):
+  fonoteka_03/05/06/07/08/09/10/11/12/14/15.wav — общая библиотека;
+  roadall_01/02/04/13/16/17.wav — «звучит у всех, включая проезжих».
+
+Тираж 2 — личные песни актёров «Канала 15» (40 треков, build/fonoteka/actors):
+  personal_<actor>_NN.wav — личная магнитола актёра (kardan, mihalych, stas, yanek,
+  lastochka, boroda, student, professor, petrovna, ten, vitek, sova, ment, lisa, rustam,
+  bahti, vera — по 1–4 трека на актёра);
+  night_01..06.wav — общий ночной пул ночной лирики (время суток в эфире — отдельной задачей).
+
+Скрипты генерации и логи: build/fonoteka/gen_music.py, gen_actors_music.py, *_gen_log.json.
+
 ## Плагин телеметрии
 `ets2-telemetry.dll` — плагин из Funbit ETS2 Telemetry Web Server (https://github.com/Funbit/ets2-telemetry-server), лицензия GPL-3.0; исходный код — по этой ссылке. Рация только читает данные, которые он выкладывает в общую память, и не содержит его кода.
 Рядом с игрой может быть положен `msvcr110.dll` — среда выполнения Microsoft Visual C++ 2012 (распространяется по лицензии Microsoft).

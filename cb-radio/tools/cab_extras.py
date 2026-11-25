@@ -107,35 +107,46 @@ MUSIC_DIR = __import__("pathlib").Path(__file__).resolve().parents[1] / "music"
 # real recordings (Wikimedia Commons, Public domain / CC0, see music/CREDITS.md) - user 2026-11-04:
 # the synthesised tunes sounded like a toy ("тутуту"), wants guitar or classical
 POOLS = {
-    "classic": ["piano_"],                                         # Профессор, Сорока
+    "classic": ["piano_", "personal_professor_",],                                         # Профессор, Сорока
     "romance": ["guitar_gymnopedie", "guitar_romance"],
-    "ten": ["ten_lyria_"],                                         # Тень: уральский рок / новая волна 80-х
-    "romance_sova": ["romance_lyria_", "guitar_gymnopedie", "guitar_romance"],            # Сова, Тень
+    "ten": ["ten_lyria_", "personal_ten_",],                                         # Тень: уральский рок / новая волна 80-х
+    "romance_sova": ["romance_lyria_", "guitar_gymnopedie", "guitar_romance", "personal_sova_",],            # Сова, Тень
     "retro": ["guitar_gran_vals", "guitar_romance", "piano_chopin_n16"],
     "chanson": ["chanson_"],                                       # Михалыч, Палыч: Лещенко, Вавич, Плевицкая
     "folk_ru": ["folk_", "chanson_plevitskaya"],                   # Петровна (до своей «эстрады» на ElevenLabs)
     "folk": ["guitar_gran_vals", "strum_"],
-    "folk_yanek": ["yanek_lyria_med", "guitar_gran_vals", "strum_"],                        # Янек
-    "pop": ["pop_lyria_lastochka", "guitar_romance", "guitar_leyenda", "folk_vyaltseva"],   # Ласточка
-    "dance": ["dance_lyria_lisa", "strum_", "guitar_leyenda", "rock_rust_rebellion"],
+    "folk_yanek": ["yanek_lyria_med", "guitar_gran_vals", "strum_", "personal_yanek_",],                        # Янек
+    "pop": ["pop_lyria_lastochka", "guitar_romance", "guitar_leyenda", "folk_vyaltseva", "personal_lastochka_",],   # Ласточка
+    "dance": ["dance_lyria_lisa", "strum_", "guitar_leyenda", "rock_rust_rebellion", "personal_lisa_",],
     "vitek": ["svadba_lyria_vitek", "rock_light_", "rock_rockenergy"],  # Лиса
-    "rock_light": ["rock_light_", "rock_modernrockboy", "rock_take_the_lead", "rock_rockenergy"],  # Стас, Витёк, Студент
-    "hiphop": ["rock_light_", "rock_modernrockboy", "rock_take_the_lead"],
-    "rock": ["rock_rockenergy", "rock_grunge", "rock_hard", "rock_rust", "rock_cool", "rock_lyria_"],  # Борода
-    "rock_kardan": ["rock_lyria_kardan", "rock_grunge", "rock_hard", "rock_lyria_"],     # Кардан: его группа чаще
+    "rock_light": ["rock_light_", "rock_modernrockboy", "rock_take_the_lead", "rock_rockenergy", "personal_vitek_", "personal_student_",],  # Стас, Витёк, Студент
+    "hiphop": ["rock_light_", "rock_modernrockboy", "rock_take_the_lead", "personal_stas_",],
+    "rock": ["rock_rockenergy", "rock_grunge", "rock_hard", "rock_rust", "rock_cool", "rock_lyria_", "personal_boroda_",],  # Борода
+    "rock_kardan": ["rock_lyria_kardan", "rock_grunge", "rock_hard", "rock_lyria_", "personal_kardan_",],     # Кардан: его группа чаще
     "drums": ["drums_"],                                          # закреплённые барабанные нарезки (12.11: «Это барабанное соло!»)
-    "chanson_mih": ["chanson_lyria_kilometry", "chanson_lyria_starushka", "chanson_leshchenko", "chanson_vavich"],
-    "chanson_palych": ["chanson_lyria_shlagbaum", "chanson_leshchenko", "chanson_plevitskaya"],
-    "estrada": ["folk_lyria_", "folk_"],                           # Петровна
-    "dutar": ["dutar_lyria_", "strum_"],                           # Рустам «Самарканд»: дутар, своя песня «Оппок»
-    "uzpop": ["uzpop_lyria_", "dance_lyria_lisa"],                 # Бахтияр «Ковбой»: узбекская попса
-    "course": ["course_en_"],                                      # Бахтияр: аудиокурс английского бормочет
+    "chanson_mih": ["chanson_lyria_kilometry", "chanson_lyria_starushka", "chanson_leshchenko", "chanson_vavich", "personal_mihalych_",],
+    "chanson_palych": ["chanson_lyria_shlagbaum", "chanson_leshchenko", "chanson_plevitskaya", "personal_ment_",],
+    "estrada": ["folk_lyria_", "folk_", "personal_petrovna_",],                           # Петровна
+    "dutar": ["dutar_lyria_", "strum_", "personal_rustam_",],                           # Рустам «Самарканд»: дутар, своя песня «Оппок»
+    "uzpop": ["uzpop_lyria_", "dance_lyria_lisa", "personal_bahti_",],                 # Бахтияр «Ковбой»: узбекская попса
+    "course": ["course_en_"],
+
+# 25.11 (тираж 2, EL Music, добро Шефа «вкатывай в билд»): личные песни актёров
+# (personal_<actor>_NN.wav), общая фонотека эфира и ночной пул. Файлы — в music/.
+# "quiet_vera" — у Веры музыка редкая и тихая (profil: «чтобы Граф спал»), раньше был эмбиент.
+# "night" — время суток в движке НЕ решено (радио-программа не утверждена): пул доступен стилю.
+    "quiet_vera": ["personal_vera_"],
+    "night": ["night_"],
+    "road_all": ["roadall_"],      # 6 треков «всем, включая проезжих» — музыкальная кабина проезжих
+    "fonoteka": ["fonoteka_"],     # остальная общая библиотека «эфира трасс»                                      # Бахтияр: аудиокурс английского бормочет
 }
 _REC = {}
 
 
 def _recordings(style):
-    files = sorted(f for f in MUSIC_DIR.glob("*.wav") if any(f.stem.startswith(p) for p in POOLS.get(style, [])))
+    # 25.11: в поставке music/ идёт сжатым (opus .ogg, как audio/) — ищем оба расширения
+    files = sorted(f for f in list(MUSIC_DIR.glob("*.wav")) + list(MUSIC_DIR.glob("*.ogg"))
+                   if any(f.stem.startswith(p) for p in POOLS.get(style, [])))
     return files
 
 

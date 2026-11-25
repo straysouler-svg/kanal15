@@ -85,7 +85,7 @@ def build_app(variant):
     for f in ("encoder.int8.onnx", "decoder.onnx", "joiner.onnx", "tokens.txt", "LICENSE", "README.md"):
         shutil.copy2(giga_src / f, giga_dst / f)
     shutil.copytree(CB / "bench", app / "bench")
-    for part in ("audio", "phrases", "map", "config.json", "CREDITS.md"):
+    for part in ("audio", "music", "ads", "phrases", "map", "config.json", "CREDITS.md"):   # ads/ — реклама, уже ogg   # 25.11: music/ — движковый бед
         src = rel / part
         (shutil.copytree if src.is_dir() else shutil.copy2)(src, app / part)
     (app / "installer" / "plugins").mkdir(parents=True)
