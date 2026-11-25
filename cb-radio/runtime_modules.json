@@ -1,0 +1,8 @@
+{
+ "v": 1,
+ "_comment": "RELEASE-PACK-1 (ревизия v1.41): единый manifest runtime-модулей рации. Источник правды для build/radio.spec (OURS), tools/build_exe.py (app/*.py установщика) и tools/pack_release.py (CODE zip-варианта). Правило: модуль, импортируемый в рантайме, ОБЯЗАН быть здесь — иначе tools/check_release_modules.py краснеет.",
+ "root": ["cb_radio", "world", "intents", "company", "convoy", "ed25519", "gamecheck", "horn",
+          "json_store", "launcher", "mic", "overlay", "report_log", "roadlife", "streampeek",
+          "tainik", "transport", "tray", "updater", "voicedsp", "bonds"],
+ "tools": ["savegame", "asr_gigaam", "cab", "cab_extras"]
+}

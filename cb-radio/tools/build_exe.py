@@ -68,11 +68,15 @@ def build_app(variant):
         shutil.rmtree(app)
     shutil.copytree(BUILD / "dist" / "CB-Radio", app)
     (app / "app").mkdir()                       # the radio's own code: plain .py, updated without touching any exe
-    for mod in ("cb_radio", "world", "intents", "company", "tray", "mic", "gamecheck", "updater", "ed25519", "overlay",
-                "bonds", "tainik", "report_log"):
+    # RELEASE-PACK-1 (ревизия v1.41): состав модулей — из единого manifest (cb-radio/runtime_modules.json),
+    # ручные списки запрещены (контроль: tools/check_release_modules.py)
+    sys.path.insert(0, str(CB / "tools"))
+    import release_manifest
+    _root_mods, _tools_mods = release_manifest.load()
+    for mod in _root_mods:
         shutil.copy2(CB / f"{mod}.py", app / "app" / f"{mod}.py")
-    shutil.copy2(CB / "tools" / "savegame.py", app / "app" / "savegame.py")
-    shutil.copy2(CB / "tools" / "asr_gigaam.py", app / "app" / "asr_gigaam.py")   # 24.11: GigaAM — обёртка рядом с savegame
+    for mod in _tools_mods:
+        shutil.copy2(CB / "tools" / f"{mod}.py", app / "app" / f"{mod}.py")
     # 24.11 (решение Дмитрия): GigaAM v3 в поставке (MIT, Сбер) + эталон для стартовой самопроверки (без него
     # _bench молча пропускается и при отсутствующей модели пилот не отключится — только нужные файлы модели)
     giga_src = BUILD / "sherpa-onnx-nemo-transducer-punct-giga-am-v3-russian-2025-12-16"

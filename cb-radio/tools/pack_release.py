@@ -16,8 +16,11 @@ import soundfile as sf
 ROOT = Path(__file__).resolve().parents[1]
 OUT_BASE = ROOT.parent / "release"
 PERSONAL = {"soroka"}
-CODE = ["cb_radio.py", "world.py", "intents.py", "company.py", "tools/savegame.py", "tools/asr_gigaam.py", "tray.py", "mic.py",
-        "gamecheck.py", "updater.py", "ed25519.py", "launcher.py", "tainik.py", "report_log.py"]
+# RELEASE-PACK-1 (ревизия v1.41): состав кода — из единого manifest (runtime_modules.json), ручные списки запрещены
+sys.path.insert(0, str(ROOT / "tools"))
+import release_manifest  # noqa: E402
+_root_mods, _tools_mods = release_manifest.load()
+CODE = [f"{m}.py" for m in _root_mods] + [f"tools/{m}.py" for m in _tools_mods]
 HANDLE = {"kirill": "Сиди-Посиди", "alive": "Пятьдесят пятый", "neutral": ""}   # alive = blogger TheAlive55 (Алексей)
 README = r"""# CB-рация для Euro Truck Simulator 2
 

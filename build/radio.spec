@@ -5,7 +5,12 @@ from PyInstaller.utils.hooks import collect_all
 SRC = os.path.abspath(os.path.join(SPECPATH, "..", "cb-radio"))
 # 2026-11-05: CB-Radio.exe is a STABLE launcher (launcher.py). Our own modules live as .py files in app/ (copied by
 # build_exe.build_app) so updates never replace an exe. They are analysed here for their dependencies, then dropped from PYZ.
-OURS = ["cb_radio", "world", "intents", "company", "savegame", "tray", "mic", "gamecheck", "updater", "ed25519", "overlay", "bonds", "tainik", "report_log", "asr_gigaam"]
+# RELEASE-PACK-1 (ревизия v1.41): список — из единого manifest (cb-radio/runtime_modules.json), ручные списки запрещены.
+import sys as _sys
+_sys.path.insert(0, SRC + r"\tools")
+from release_manifest import load as _load_manifest          # noqa: E402
+_ROOT_MODS, _TOOLS_MODS = _load_manifest()
+OURS = [*_ROOT_MODS, *_TOOLS_MODS]
 datas, binaries, hidden = [], [], OURS + ["runpy", "pystray._win32", "pystray._base", "PIL.Image", "PIL.ImageDraw", "pynput.keyboard", "pynput.mouse", "pynput._util.win32"]
 for pkg in ("faster_whisper", "ctranslate2", "sounddevice", "soundfile", "_sounddevice_data", "_soundfile_data", "onnxruntime", "tokenizers", "av", "pynput", "sherpa_onnx"):
     try:
