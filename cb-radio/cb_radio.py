@@ -3991,6 +3991,43 @@ def _hide_speech(data):
     return NL.join(out).encode("utf-8")
 
 
+# REPORT-SEC-1 (ревизия v1.41): диагностический ZIP уходил человеку в чат — config.json попадал
+# целиком и тянул за собой convoy.pin и любые будущие секреты. Ключи, похожие на секретные, гасим.
+_SECRET_KEY = re.compile(r"pin|token|secret|password|passwd|key", re.IGNORECASE)
+_SECRET_LINE = re.compile(
+    r'(?i)("(?:[^"]*?(?:pin|token|secret|password|passwd|key)[^"]*?)"\s*:\s*)"[^"]*"'
+    r'|(\b[\w.-]*(?:pin|token|secret|password|passwd|key)[\w.-]*\s*[=:]\s*)([^\s,;]+)')
+
+
+def _redact_json(obj):
+    """-> копия obj, где значения ключей с подстроками pin/token/secret/password/key (любой регистр) —
+    '<redacted>'. Структура и прочие значения не тронуты."""
+    if isinstance(obj, dict):
+        return {k: ("<redacted>" if _SECRET_KEY.search(str(k)) else _redact_json(v)) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_redact_json(v) for v in obj]
+    return obj
+
+
+def _redact_secrets(data, name):
+    """JSON-файлы чистятся рекурсивно (читаемость структуры сохраняется); логи и прочее — построчным
+    regex вида \"pin\": \"…\" / pin=… . Не-JSON / битое — без изменений."""
+    if name.endswith(".json"):
+        try:
+            obj = json.loads(data.decode("utf-8", "replace"))
+        except ValueError:
+            pass
+        else:
+            return json.dumps(_redact_json(obj), ensure_ascii=False, indent=1).encode("utf-8")
+
+    def _repl(m):
+        if m.group(1):
+            return m.group(1) + '"<redacted>"'
+        return m.group(2) + "<redacted>"
+
+    return _SECRET_LINE.sub(_repl, data.decode("utf-8", "replace")).encode("utf-8")
+
+
 def make_report(show=True, hide_speech=False):
     """«Сообщить о проблеме» (2026-11-05): журналы и версия в один zip, показать его в папке и открыть чат
     с ботом. Ничего не отправляется само: человек сам перетаскивает файл в чат."""
@@ -4012,6 +4049,7 @@ def make_report(show=True, hide_speech=False):
             p = ROOT / name
             if p.exists():
                 data = p.read_bytes()
+                data = _redact_secrets(data, name)               # REPORT-SEC-1: pin/token/secret/key → <redacted>
                 if name == "cb_radio.log":
                     data = pick_log_fragment(data, hide_speech)     # свежий хвост в хронологии (report_log.py, P0-3)
                 elif name == "cb_radio_errors.log" and hide_speech:
