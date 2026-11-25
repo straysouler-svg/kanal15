@@ -1388,6 +1388,39 @@ def degrade(x, sr, d):
     return np.clip(y, -1, 1).astype(np.float32)
 
 
+def _voice_end_s(data, sr):
+    """25.11 (указание Шефа «обрыв музыки ровно с концом голоса, точно в 0 0»): длительность
+    реплики по КОНЦУ РЕЧИ, не по длине файла — в хвостах wet-файлов лежит до ~1 с запечённой
+    тишины (паддинг генерации), и магнитола cab_bed играла её. Радио-шум в wet держится
+    ~−25…−30 дБ от пика на всём файле, поэтому порог — от пика (−20 дБ): речь держится выше,
+    мёртвый хвост — ниже. Окна 10 мс; отступ 40 мс на естественное затухание последнего слова.
+    Детектор не уверен (тихий/пустой файл) — старая длина по файлу."""
+    try:
+        x = np.asarray(data, dtype=np.float32)
+        if x.ndim > 1:
+            x = x.mean(axis=1)
+        n = len(x)
+        if n == 0:
+            return 0.0
+        dur = n / float(sr)
+        win = max(1, int(0.01 * float(sr)))
+        peak = float(np.max(np.abs(x)))
+        if peak <= 0:
+            return dur
+        thr = peak * 10 ** (-20 / 20)
+        last = 0
+        for i in range(0, n - win + 1, win):
+            if float(np.sqrt((x[i:i + win] ** 2).mean())) > thr:
+                last = i + win
+        end = last / float(sr) + 0.04
+        return min(end, dur) if end > 0.2 else dur     # не уверены — не режем
+    except Exception:
+        try:
+            return float(len(data)) / float(sr)
+        except Exception:
+            return 0.0
+
+
 class Player:
     """Plays files one at a time (never two at once). Stops when the game pauses or you press PTT."""
 
@@ -1458,7 +1491,7 @@ class Player:
                     if not cab_bed._wd_started:
                         cab_bed.init(self, load_phrases().get("actors") or {})
                         cab_bed.start_watchdog()
-                    cab_bed.line(actor, len(data) / sr)
+                    cab_bed.line(actor, _voice_end_s(data, sr))
                 except Exception as e:
                     log(f"cab_bed: {e!r}")
         except Exception as e:  # missing file, busy/unplugged device: skip, keep the radio alive
@@ -1476,11 +1509,23 @@ class Player:
                     self.ptt.poll()
                     if self.ptt.down:            # poll() already stopped the channel and beeped
                         convoy.host_send_stop()      # онлайн-конвой: реплика оборвана — у гостя тоже
+                        if (self.cfg or {}).get("cab_bed_pilot"):
+                            try:
+                                import cab_bed
+                                cab_bed.cut()        # гейт беда закрыть: реплика оборвана, музыка не ждёт её конца
+                            except Exception:
+                                pass
                         return "ptt"
                 time.sleep(0.02)
                 if self.game and self.game.state(self.cfg["require_engine_on"]) != "driving":
                     sd.stop()
                     convoy.host_send_stop()
+                    if (self.cfg or {}).get("cab_bed_pilot"):
+                        try:
+                            import cab_bed
+                            cab_bed.cut()            # пауза игры — гейт беда закрыть
+                        except Exception:
+                            pass
                     return "paused"
             if actor:
                 self.spoke.add(actor)

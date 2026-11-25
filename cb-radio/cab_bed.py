@@ -227,9 +227,11 @@ def line(actor, dur=0.0):
     with _lock:
         same = _state["owner"] == owner_key
         _state["owner"] = owner_key
-        # длительность реплики + небольшой хвост, чтобы рамп не резал хвосты слов
-        _state["gate_until"] = time.monotonic() + max(dur, 0.3) + 0.10
+        # 25.11 (указание Шефа «в жесткую, точно в 0 0»): гейт закрывается РОВНО с концом
+        # звука реплики — без хвоста +0.10 и без минимума max(dur, 0.3); обрыв — через cut()
+        _state["gate_until"] = time.monotonic() + dur
         _event(f"tx:{owner_key}" if same else f"switch:{owner_key}")
+        log(f"{'tx' if same else 'switch'} {owner_key} {dur:.1f} с")   # вживую видно, кто держит гейт
         if _state["stream"] is None:
             try:
                 _state["stream"] = _Bed()
@@ -238,6 +240,13 @@ def line(actor, dur=0.0):
                 _state["disabled"] = True
                 log(f"выключен ({e!r}) — дальше без движкового фона")
                 return
+
+
+def cut():
+    """Реплика оборвана досрочно (тангента игрока / пауза игры): закрываем гейт НЕМЕДЛЕННО,
+    иначе музыка играет до конца рассчитанной длительности оборванной реплики."""
+    with _lock:
+        _state["gate_until"] = 0.0
 
 
 def _watchdog():
