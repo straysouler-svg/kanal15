@@ -1,0 +1,17 @@
+{
+ "_comment": "26.11 (стрим #17, разбор старого падения): в errors-логе лежали UnboundLocalError 'intent' и TypeError line_of() missing 'actor' — архив рации ДО 10.11 (строки без суффикса ' @ file:line', суффикс добавлен коммитом 5785336). Корни: (1) в старом _decide две строки knows_target/if intent == 'knows' стояли ДО 'intent, who = intents.understand(...)' — intent читался до присвоения на любом PTT; (2) старая сигнатура line_of(group, kind) — вызовы без actor в фоновом обходе (teleport/world/first_air/calm_vityok). В текущем коде оба корня закрыты; сценарий держит путь открытым: PTT с knows-вопросом (knows_target раньше understand -> был UnboundLocalError) + фон с телепорт-свидетелем/погодой (двухаргументный line_of -> был TypeError каждые секунды).",
+ "steps": [
+  {"id": "knows_question_first", "summon": "mihalych", "who": "mihalych",
+   "text": "Михалыч, ты знаешь Бороду?",
+   "expect_rel": "knows/mihalych__boroda",
+   "_note": "стрим-#17: «ты знаешь <X>?» — _decide обязан дойти до understand без UnboundLocalError; отвечает пул knows/<кто>__<про кого>, не адресат"},
+  {"id": "teleport_witness_bg", "summon": "boroda", "place": {"boroda": 600}, "minutes": 6,
+   "_note": "Борода в зоне: фоновый обход каждый тик идёт по веткам line_of('teleport', k, k) / line_of('world', 'clear', k) — трёхаргументные вызовы, без TypeError (сим не ставит teleport_witness, но обход гоняется)"},
+  {"id": "weather_bg", "summon": "sova", "place": {"sova": 700}, "minutes": 4,
+   "_note": "фон погоды/дороги: line_of('weather', wk, k) и line_of('world', 'clear', k) с actor — путь старого двухаргументного TypeError"},
+  {"id": "thanks_after_bg", "who": "mihalych",
+   "text": "Михалыч, спасибо, брат.",
+   "expect_answer": true,
+   "_note": "после фона — обычный ответ на благодарность: эфир жив, регрессий нет (второй knows подряд законно ловит «уже говорил» — в стенд не берём)"}
+ ]
+}

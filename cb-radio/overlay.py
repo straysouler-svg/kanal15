@@ -181,7 +181,7 @@ PAGE = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>К�
  --chipbrd:color-mix(in srgb,var(--gold) 55%,transparent)}
 html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent;
  font-family:"Segoe UI","Montserrat",Arial,sans-serif;color:var(--text)}
-.bar{position:absolute;left:0;width:1920px;height:138px;background:var(--bar);display:flex;align-items:center;box-sizing:border-box}
+.bar{position:absolute;left:0;width:1920px;height:auto;min-height:138px;background:var(--bar);display:flex;align-items:center;box-sizing:border-box}
 #top{top:0;padding:0 56px;justify-content:space-between;border-bottom:2px solid var(--line)}
 #bottom{bottom:0;padding:14px 56px;flex-direction:column;justify-content:center;align-items:flex-start;border-top:2px solid var(--line)}
 .logo{display:flex;align-items:baseline;gap:22px}
@@ -193,7 +193,8 @@ html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transpa
 .chip{background:var(--chipbg);border:1px solid var(--chipbrd);color:var(--text);
  padding:6px 16px;border-radius:22px;font-size:26px;white-space:nowrap}
 .chip.talk{background:var(--gold);color:#111;font-weight:700}
-.line{font-size:30px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:1808px;
+.line{font-size:30px;line-height:1.35;max-width:1808px;overflow:hidden;text-overflow:ellipsis;
+ display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word;
  transition:opacity .6s}
 .line .who{color:var(--gold);font-weight:700;margin-right:12px}
 .line.you .who{color:var(--you)}
@@ -242,10 +243,12 @@ let NOSUBS=false;
 })();
 let last=-1, lasttxt="", talker=null;
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+/* 26.11: длинные реплики живут дольше — базовые 45 с + 35 мс за символ сверх ~90 */
+function dwell(l){return 45+Math.max(0,(l.text||"").length-90)*0.035}
 async function tick(){
  try{
   const s=await (await fetch('/state',{cache:'no-store'})).json();
-  const lines=s.lines.filter(l=>l.kind!=='sys'&&s.now-l.t<45);   /* 22.11: sys — только в /journal, не в эфир */
+  const lines=s.lines.filter(l=>l.kind!=='sys'&&s.now-l.t<dwell(l));   /* 22.11: sys — только в /journal; dwell — ниже */
   const cur=lines.length?lines[lines.length-1]:null;
   talker=(cur&&cur.kind==='radio'&&s.now-cur.t<8)?cur.who:null;
   const z=document.getElementById('zone');
@@ -304,10 +307,12 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transpa
 <script>
 let last=-1, lasttxt="", talker=null;
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+/* 26.11: длинные реплики живут дольше — базовые 45 с + 35 мс за символ сверх ~90 */
+function dwell(l){return 45+Math.max(0,(l.text||"").length-90)*0.035}
 async function tick(){
  try{
   const s=await (await fetch('/state',{cache:'no-store'})).json();
-  const lines=s.lines.filter(l=>l.kind!=='sys'&&s.now-l.t<45);   /* 22.11: sys — только в /journal, не в эфир */
+  const lines=s.lines.filter(l=>l.kind!=='sys'&&s.now-l.t<dwell(l));   /* 22.11: sys — только в /journal; dwell — ниже */
   const cur=lines.length?lines[lines.length-1]:null;
   talker=(cur&&cur.kind==='radio'&&s.now-cur.t<8)?cur.who:null;
   document.getElementById('zone').innerHTML=s.inside.length?s.inside.map(c=>'<span class="chip'+(c.n===talker?' talk':'')+'">'+esc(c.n)+(c.s?'<span class="s">'+esc(c.s)+'</span>':'')+'</span>').join('')

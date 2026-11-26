@@ -60,9 +60,11 @@
   "stream_viewers_pilot": true,
   "stream_donate_pitch_pilot": true,
   "voicedsp_pilot": false,
+  "cab_bed_pilot": true,
+  "ads_pilot": true,
   "streambot_pilot": true,
   "gigaam_pilot": true,
-  "foreign_per_hour": 9.45,
+  "foreign_per_hour": 16.0,
   "stream_banter_min_s": 90,
   "stream_banter_max_s": 150,
   "stream_banter_cool_s": [
@@ -70,8 +72,8 @@
     240
   ],
   "convoy": {
-    "bind": "0.0.0.0",
-    "pin": "radio15",
+    "bind": "127.0.0.1",
+    "pin": "",
     "host": "127.0.0.1:47821"
   }
 }
