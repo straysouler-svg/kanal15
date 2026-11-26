@@ -30,10 +30,10 @@
   header { display: flex; align-items: center; justify-content: space-between;
            padding: 26px 140px; }
   .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; }
-  .brand .logo { width: 42px; height: 42px; border-radius: 12px; background: var(--ink); color: #fff;
-                 display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .brand img.logo { width: 42px; height: 42px; border-radius: 12px; display: block; }
   nav a { color: var(--ink); text-decoration: none; font-size: 15px; margin-left: 28px; font-weight: 500; }
   nav a:hover { text-decoration: underline; }
+  nav a.lang { border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 14px; }
 
   /* ---------- хиро ---------- */
   .hero { text-align: center; margin-top: 40px; }
@@ -123,12 +123,13 @@
 <div class="wrap">
 
   <header id="top">
-    <a class="brand" href="#top"><span class="logo">15</span>Канал 15</a>
+    <a class="brand" href="#top"><img class="logo" src="icon.png" alt="Канал 15">Канал 15</a>
     <nav>
       <a href="#install">Установка</a>
       <a href="#shots">Скриншоты</a>
       <a href="#contacts">Контакты</a>
       <a href="https://github.com/straysouler-svg/kanal15" target="_blank" rel="noopener">GitHub</a>
+      <a class="lang" href="index.html">English</a>
     </nav>
   </header>
 
@@ -270,7 +271,10 @@
 
   <footer>
     <div class="foot-in">
-      <div class="left">Пишу это один, глазами не всё вижу — если установщик капризничает, напишите, кнопки выше. Починим.</div>
+      <div class="left">Пишу это один, глазами не всё вижу — если установщик капризничает, напишите, кнопки выше. Починим.
+        <br><br>
+        <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Service</a> · <a href="index.html">English version</a>
+      </div>
       <div class="right">
         <a href="https://github.com/straysouler-svg/kanal15">Исходный код на GitHub</a> — для разработчиков и любопытных.<br>
         «Канал 15» — программа-компаньон, не мод. Файлы игры не трогает.

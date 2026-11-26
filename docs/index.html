@@ -5,41 +5,296 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kanal 15 — CB radio companion for Euro Truck Simulator 2</title>
 <link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, sans-serif; background: #101510; color: #e8e4da; margin: 0; }
-  main { max-width: 720px; margin: 0 auto; padding: 48px 20px; }
-  img.icon { width: 96px; border-radius: 20px; }
-  h1 { font-size: 2rem; margin: 16px 0 8px; }
-  p, li { line-height: 1.6; }
-  a { color: #d8b13c; }
-  a.btn { display: inline-block; background: #d8b13c; color: #101510; font-weight: 700;
-          font-size: 1.1rem; padding: 12px 28px; border-radius: 12px; text-decoration: none;
-          margin: 8px 0 16px; }
-  a.btn:hover { background: #e8c452; }
-  footer { margin-top: 48px; font-size: .9rem; opacity: .75; }
+  :root {
+    --bg: #F2EFE7; --edge: #EAE5D8; --ink: #16181D; --muted: #5A5E66;
+    --accent: #FFC400; --accent-soft: rgba(255,196,0,.18);
+    --card: #FFFFFF; --line: rgba(22,24,29,.07); --shadow: 0 8px 24px rgba(22,24,29,.06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--edge); color: var(--ink);
+         font-family: "Rubik", system-ui, sans-serif; font-size: 17px; line-height: 1.55; }
+  .wrap { max-width: 1440px; margin: 0 auto; background: var(--bg); }
+
+  h1, h2, h3, .brand { font-family: "Unbounded", sans-serif; }
+  h1 { font-size: 44px; line-height: 1.15; margin: 22px 0 18px; font-weight: 700; }
+  h2 { font-size: 24px; margin: 0 0 8px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 16px; max-width: 640px; margin: 0 auto; }
+  section { padding: 0 140px; margin: 90px 0; }
+  .center { text-align: center; }
+
+  /* ---------- header ---------- */
+  header { display: flex; align-items: center; justify-content: space-between;
+           padding: 26px 140px; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; }
+  .brand img.logo { width: 42px; height: 42px; border-radius: 12px; display: block; }
+  nav a { color: var(--ink); text-decoration: none; font-size: 15px; margin-left: 28px; font-weight: 500; }
+  nav a:hover { text-decoration: underline; }
+  nav a.lang { border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 14px; }
+
+  /* ---------- hero ---------- */
+  .hero { text-align: center; margin-top: 40px; }
+  .badge { display: inline-block; border: 1.5px solid var(--ink); border-radius: 999px;
+           padding: 8px 20px; font-size: 13px; font-weight: 500; letter-spacing: .04em; }
+  .cta { display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+         width: 480px; max-width: 100%; height: 64px; border-radius: 999px;
+         background: var(--ink); color: #fff; text-decoration: none; font-size: 17px; font-weight: 500;
+         box-shadow: 0 8px 20px rgba(22,24,29,.15); margin: 34px 0 14px; }
+  .cta:hover { background: #2A2E36; }
+  .cta svg { flex: none; }
+  .tg-link { color: var(--ink); font-size: 15px; }
+  .hero-shot { position: relative; margin: 56px auto 0; max-width: 1160px; }
+  .hero-shot img { width: 100%; height: 400px; object-fit: cover; border-radius: 24px;
+                   box-shadow: 0 16px 40px rgba(22,24,29,.12); display: block; }
+  .chip { position: absolute; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 500;
+          box-shadow: 0 8px 20px rgba(22,24,29,.12); }
+  .chip.white { background: #fff; color: var(--ink); left: 24px; bottom: 24px; display: flex; align-items: center; gap: 8px; }
+  .chip.yellow { background: var(--accent); color: var(--ink); right: 24px; top: 24px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #2FA84F; display: inline-block; }
+
+  /* ---------- cards ---------- */
+  .grid3 { display: grid; grid-template-columns: repeat(3, 424px); gap: 20px; justify-content: center; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+          box-shadow: var(--shadow); padding: 32px; }
+  .ico { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft);
+         display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+  .card h3 { font-size: 17px; margin: 0 0 8px; font-weight: 700; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff;
+              display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
+              font-family: "Unbounded", sans-serif; margin-bottom: 18px; }
+  .card.dark { background: var(--ink); border-color: var(--ink); }
+  .card.dark h3 { color: #fff; }
+  .card.dark p { color: rgba(255,255,255,.7); }
+
+  /* ---------- buttons ---------- */
+  .btn-row { display: flex; gap: 16px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 56px;
+         padding: 0 34px; border-radius: 999px; text-decoration: none; font-size: 16px; font-weight: 500; }
+  .btn.dark { background: var(--ink); color: #fff; box-shadow: 0 8px 20px rgba(22,24,29,.15); }
+  .btn.dark:hover { background: #2A2E36; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+  .btn.ghost:hover { background: var(--ink); color: #fff; }
+
+  /* ---------- publisher note ---------- */
+  .note { max-width: 1000px; margin: 0 auto; }
+
+  /* ---------- screenshots ---------- */
+  .shots { display: grid; grid-template-columns: repeat(3, 424px); gap: 20px; justify-content: center; }
+  .shot img { width: 424px; height: 160px; object-fit: cover; border-radius: 12px; display: block; }
+  .shot .cap { margin: 10px 2px 0; font-size: 12px; color: var(--muted); }
+
+  /* ---------- social ---------- */
+  .social { max-width: 1000px; margin: 0 auto; }
+  .srow { display: flex; align-items: center; gap: 16px; padding: 14px 0; text-decoration: none; color: var(--ink); }
+  .srow + .srow { border-top: 1px solid var(--line); }
+  .srow .ico { margin: 0; flex: none; }
+  .srow b { font-weight: 700; }
+  .srow span.d { color: var(--muted); font-size: 15px; }
+  .srow:hover b { text-decoration: underline; }
+
+  /* ---------- footer ---------- */
+  footer { background: var(--ink); color: #fff; margin-top: 90px; }
+  .foot-in { max-width: 1440px; margin: 0 auto; padding: 44px 140px; display: flex;
+             justify-content: space-between; gap: 40px; align-items: flex-start; }
+  .foot-in .left { max-width: 560px; font-size: 15px; color: rgba(255,255,255,.85); }
+  .foot-in .right { font-size: 13px; color: rgba(255,255,255,.55); text-align: right; }
+  .foot-in a { color: rgba(255,255,255,.85); }
+
+  /* ---------- adaptive 768–1024 ---------- */
+  @media (max-width: 1330px) {
+    section, header, .foot-in { padding-left: 48px; padding-right: 48px; }
+    .grid3, .shots { grid-template-columns: 1fr; max-width: 640px; margin-left: auto; margin-right: auto; }
+    .shot img { width: 100%; height: 200px; }
+    .social, .note { max-width: 640px; }
+  }
 </style>
+<!-- Yandex.Metrika: UTM funnel + download_click goal (decision 19.11, method A) -->
+<script type="text/javascript">
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],
+   k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
+   ym(114361078, "init", { clickmap:false, trackLinks:true, accurateBounce:true });
+</script>
 </head>
 <body>
-<main>
-  <img class="icon" src="icon.png" alt="Kanal 15">
-  <h1>Kanal 15</h1>
-  <p><a class="btn" href="https://github.com/straysouler-svg/kanal15/releases/latest/download/Kanal15-Setup.exe">Download</a></p>
-  <p><strong>A free companion app for Euro Truck Simulator 2 that simulates a truckers' CB radio channel.</strong>
-  Eighteen fictional drivers with their own voices, characters, shifts and routes talk on the air.
-  Press the push-to-talk key, speak out loud — and they answer you. You only hear drivers who are
-  nearby: the farther one is, the worse the signal.</p>
-  <h2>kanal15-publisher</h2>
-  <p>A small personal command-line tool used by the author of Kanal 15 to upload his own gameplay
-  highlight videos from his PC to his own TikTok account via the official TikTok Content Posting API.
-  It uses Login Kit only to authorize the author's own account. It does not interact with any other
-  TikTok users and does not collect any data.</p>
-  <h2>Links</h2>
-  <ul>
-    <li><a href="https://github.com/straysouler-svg/kanal15">Source code on GitHub</a></li>
-    <li><a href="privacy.html">Privacy Policy</a></li>
-    <li><a href="terms.html">Terms of Service</a></li>
-  </ul>
-  <footer>Kanal 15 is a fan-made companion app. Not affiliated with SCS Software or TikTok.</footer>
-</main>
+<div class="wrap">
+
+  <header id="top">
+    <a class="brand" href="#top"><img class="logo" src="icon.png" alt="Kanal 15">Kanal 15</a>
+    <nav>
+      <a href="#install">Install</a>
+      <a href="#shots">Screenshots</a>
+      <a href="#contacts">Contact</a>
+      <a href="https://github.com/straysouler-svg/kanal15" target="_blank" rel="noopener">GitHub</a>
+      <a class="lang" href="download.html">Русская версия</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="badge">Not a mod · Offline · Free</span>
+    <h1>Kanal 15 CB radio<br>for ETS2</h1>
+    <p class="sub">Fictional trucker friends in your cab. Not a mod — it never touches game files.
+       Works fully offline and installs in a couple of minutes.</p>
+    <div>
+      <a class="cta" href="https://github.com/straysouler-svg/kanal15/releases/latest/download/Kanal15-Setup.exe"
+         onclick="ym(114361078,'reachGoal','download_click'); return true;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Download Kanal 15 (Windows, free)
+      </a>
+    </div>
+    <a class="tg-link" href="https://t.me/kanal15_ets2">or message us on Telegram</a>
+
+    <div class="hero-shot">
+      <img src="shot1.jpg" alt="Kanal 15 live radio chatter in a truck cab">
+      <span class="chip white"><span class="dot"></span>Drivers start conversations themselves</span>
+      <span class="chip yellow">100% offline</span>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="center">What the radio does</h2>
+    <div class="grid3" style="margin-top:36px">
+      <div class="card">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2a3 3 0 013 3v6a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#16181D" stroke-width="2"/>
+          <path d="M5 11a7 7 0 0014 0M12 18v4m-4 0h8" stroke="#16181D" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>You talk — they answer</h3>
+        <p>Hold the push-to-talk key and speak into your mic — drivers answer in character.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3l7 4v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V7l7-4z" stroke="#16181D" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M4 4l16 16" stroke="#16181D" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Fully offline</h3>
+        <p>Every voice lives on your computer — no internet connection needed.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="12" rx="2" stroke="#16181D" stroke-width="2"/>
+          <path d="M8 20h8m-4-4v4" stroke="#16181D" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <h3>Not a mod</h3>
+        <p>It never touches game files. A regular companion app for Windows.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2 class="center">How to install</h2>
+    <div class="grid3" style="margin-top:36px">
+      <div class="card">
+        <div class="step-num">1</div>
+        <h3>Download</h3>
+        <p>The button above gets you Kanal15-Setup.exe.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">2</div>
+        <h3>Run it</h3>
+        <p>A regular installer: next, next, done.</p>
+      </div>
+      <div class="card dark">
+        <div class="step-num" style="background:#FFC400;color:#16181D">3</div>
+        <h3>Windows warns you?</h3>
+        <p>That's SmartScreen: «More info» → «Run anyway». The installer isn't signed with an
+           expensive certificate — the project is made by one person in a garage. Source code is open.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="note card">
+      <h2>kanal15-publisher</h2>
+      <p style="color:var(--muted);font-size:15px;margin:0">A small personal command-line tool used by the author of Kanal 15 to upload his own gameplay
+      highlight videos from his PC to his own TikTok account via the official TikTok Content Posting API.
+      It uses Login Kit only to authorize the author's own account. It does not interact with any other
+      TikTok users and does not collect any data.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="center">Something to say?</h2>
+    <p class="sub">Found a bug, have an idea — or just want to share how it feels on the road? Write me:
+       I read everything myself and answer personally. Bugs get found and fixed from the radio log, no bureaucracy.</p>
+    <div class="btn-row">
+      <a class="btn dark" href="https://t.me/kanal15_publisher_bot"
+         onclick="ym(114361078,'reachGoal','feedback_tg'); return true;">Message on Telegram</a>
+      <a class="btn ghost" href="https://github.com/straysouler-svg/kanal15/discussions"
+         onclick="ym(114361078,'reachGoal','feedback_gh'); return true;">Discuss on GitHub</a>
+    </div>
+  </section>
+
+  <section id="shots">
+    <h2 class="center">This is how it looks</h2>
+    <div class="shots" style="margin-top:36px">
+      <div class="shot">
+        <img src="shot1.jpg" alt="Truck cab at sunset, author's webcam in the corner">
+        <p class="cap">Live radio right in the cab — drivers start conversations themselves and never go quiet for long.</p>
+      </div>
+      <div class="shot">
+        <img src="shot2.jpg" alt="Fuel station at sunset, red sky">
+        <p class="cap">A fuel stop at sunset. Voices live on your computer — no internet needed, everything offline.</p>
+      </div>
+      <div class="shot">
+        <img src="shot3.jpg" alt="Night highway, headlights, a rest stop">
+        <p class="cap">The night shoulder. Hold the push-to-talk key and speak — they answer in character.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacts">
+    <h2 class="center">Where to find us</h2>
+    <div class="social card" style="margin-top:36px; padding:18px 32px">
+      <a class="srow" href="https://t.me/kanal15_ets2">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 4L3 11.5l5.5 2L12 19l2.5-5L21 4z" stroke="#16181D" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+        <span><b>Telegram channel</b> — <span class="d">news, driver voices, stream announcements.</span></span>
+      </a>
+      <a class="srow" href="https://www.youtube.com/@kanal15_ets2">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke="#16181D" stroke-width="1.8"/>
+          <path d="M10.5 9.5l5 2.5-5 2.5v-5z" fill="#16181D"/></svg></span>
+        <span><b>YouTube</b> — <span class="d">streams and shorts from the air.</span></span>
+      </a>
+      <a class="srow" href="https://www.instagram.com/jeleziaaka/">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5" stroke="#16181D" stroke-width="1.8"/>
+          <circle cx="12" cy="12" r="4" stroke="#16181D" stroke-width="1.8"/>
+          <circle cx="17.2" cy="6.8" r="1.2" fill="#16181D"/></svg></span>
+        <span><b>Instagram</b> — <span class="d">shorts and backstage.</span></span>
+      </a>
+      <a class="srow" href="https://boosty.to/kanal15">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M17 8h1.5a3.5 3.5 0 010 7H17m-1 0H7V4h9l-3.5 6L16 16z" stroke="#16181D" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+        <span><b>Boosty</b> — <span class="d">support the project: dev backstage and cameos on the air.</span></span>
+      </a>
+      <a class="srow" href="https://github.com/straysouler-svg/kanal15">
+        <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.1.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.58 9.58 0 015 0c1.91-1.3 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.69 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85V21c0 .27.18.58.69.48A10 10 0 0012 2z" fill="#16181D"/></svg></span>
+        <span><b>GitHub</b> — <span class="d">source code, for developers and the curious.</span></span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-in">
+      <div class="left">I build this alone and can't see everything — if the installer acts up, use the buttons above and write me. We'll fix it.
+        <br><br>
+        <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Service</a> · <a href="download.html">Русская версия</a>
+      </div>
+      <div class="right">
+        <a href="https://github.com/straysouler-svg/kanal15">Source code on GitHub</a> — for developers and the curious.<br>
+        Kanal 15 is a companion app, not a mod. It never touches game files.<br>
+        Fan-made. Not affiliated with SCS Software or TikTok.
+      </div>
+    </div>
+  </footer>
+
+</div>
 </body>
 </html>
