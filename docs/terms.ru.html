@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Условия использования — Канал 15</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2EFE7; --edge: #EAE5D8; --ink: #16181D; --muted: #5A5E66;
+    --accent: #FFC400; --accent-soft: rgba(255,196,0,.18);
+    --card: #FFFFFF; --line: rgba(22,24,29,.07); --shadow: 0 8px 24px rgba(22,24,29,.06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--edge); color: var(--ink);
+         font-family: "Rubik", system-ui, sans-serif; font-size: 17px; line-height: 1.55; }
+  .wrap { max-width: 1440px; margin: 0 auto; background: var(--bg); min-height: 100vh;
+          display: flex; flex-direction: column; }
+
+  h1, h2, .brand { font-family: "Unbounded", sans-serif; }
+  h1 { font-size: 36px; margin: 0 0 6px; font-weight: 700; }
+  h2 { font-size: 20px; margin: 34px 0 10px; font-weight: 700; }
+  p { margin: 0 0 12px; }
+  ul { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--ink); }
+
+  header { display: flex; align-items: center; justify-content: space-between;
+           padding: 26px 140px; }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; }
+  .brand img.logo { width: 42px; height: 42px; border-radius: 12px; display: block; }
+  nav a { color: var(--ink); text-decoration: none; font-size: 15px; margin-left: 28px; font-weight: 500; }
+  nav a:hover { text-decoration: underline; }
+  nav a.on { border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 14px; }
+
+  main { flex: 1; padding: 20px 140px 0; }
+  .doc { max-width: 860px; margin: 0 auto; background: var(--card); border: 1px solid var(--line);
+         border-radius: 20px; box-shadow: var(--shadow); padding: 48px 56px; }
+  .updated { color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+  .scope { color: var(--muted); font-size: 15px; border-left: 3px solid var(--accent);
+           padding: 4px 0 4px 14px; margin: 18px 0 8px; }
+
+  .pdf-row { margin: 22px 0 0; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 26px;
+         border-radius: 999px; text-decoration: none; font-size: 15px; font-weight: 500;
+         background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+  .btn:hover { background: var(--ink); color: #fff; }
+  .btn:hover svg path { stroke: #fff; }
+
+  footer { background: var(--ink); color: #fff; margin-top: 90px; }
+  .foot-in { max-width: 1440px; margin: 0 auto; padding: 36px 140px; display: flex;
+             justify-content: space-between; gap: 40px; align-items: flex-start; }
+  .foot-in .left { max-width: 560px; font-size: 14px; color: rgba(255,255,255,.85); }
+  .foot-in .right { font-size: 13px; color: rgba(255,255,255,.55); text-align: right; }
+  .foot-in a { color: rgba(255,255,255,.85); }
+
+  @media (max-width: 1330px) {
+    header, main, .foot-in { padding-left: 48px; padding-right: 48px; }
+  }
+  @media (max-width: 700px) {
+    .doc { padding: 32px 24px; }
+  }
+  @media print {
+    body { background: #fff; }
+    .wrap { background: #fff; }
+    nav, .pdf-row, footer { display: none; }
+    .doc { box-shadow: none; border: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header id="top">
+    <a class="brand" href="download.html"><img class="logo" src="icon.png" alt="Канал 15">Канал 15</a>
+    <nav>
+      <a href="download.html">Главная</a>
+      <a href="privacy.ru.html">Конфиденциальность</a>
+      <a href="terms.ru.html" class="on">Условия</a>
+      <a href="https://github.com/straysouler-svg/kanal15" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="doc">
+      <h1>Условия использования</h1>
+      <p class="updated">Обновлено: 26 ноября 2026 г.</p>
+      <p class="scope">Эти условия распространяются на приложение <strong>kanal15-publisher</strong> —
+      личную консольную утилиту проекта «Канал 15» («мы», «инструмент»). Используя инструмент,
+      вы принимаете эти условия; если не согласны — не используйте его.</p>
+      <p class="pdf-row">
+        <a class="btn" href="terms.ru.pdf">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16" stroke="#16181D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Скачать в PDF
+        </a>
+      </p>
+
+      <h2>1. Характер сервиса</h2>
+      <p>Инструмент — личная некоммерческая утилита автора. Она загружает записи игрового процесса
+      Euro Truck Simulator 2, созданные автором, на его собственный аккаунт TikTok через официальный
+      TikTok Content Posting API. Инструмент не предлагается публике как сервис и не обрабатывает
+      контент, данные или аккаунты третьих лиц.</p>
+
+      <h2>2. Контент и интеллектуальная собственность</h2>
+      <p>Все видео, загружаемые через инструмент, — оригинальные записи игрового процесса, созданные
+      автором; автор обладает всеми необходимыми правами на них и остаётся их единоличным владельцем.
+      Исходный код инструмента открыт и доступен в публичном репозитории на указанных там условиях
+      лицензии.</p>
+
+      <h2>3. Допустимое использование</h2>
+      <p>Инструмент используется в соответствии с условиями TikTok for Developers, правилами
+      сообщества TikTok и применимым законодательством. Он не используется для спама, автоматической
+      накрутки активности, вводящих в заблуждение действий или распространения чужого контента.
+      Любое использование инструмента за этими рамками запрещено.</p>
+
+      <h2>4. Сторонние платформы</h2>
+      <p>Загруженный контент публикуется в TikTok и подпадает под условия, политики и модерацию
+      TikTok. Мы не отвечаем за доступность, решения и действия платформы TikTok. TikTok может
+      отозвать доступ к API по своему усмотрению; мы можем прекратить использование инструмента
+      в любой момент без уведомления.</p>
+
+      <h2>5. Товарные знаки и аффилированность</h2>
+      <p>«Канал 15» — фанатский проект. Euro Truck Simulator 2 и SCS Software — товарные знаки их
+      правообладателя; TikTok — товарный знак его правообладателя. Этот проект не аффилирован,
+      не одобрен и не спонсируется SCS Software или TikTok.</p>
+
+      <h2>6. Отказ от гарантий</h2>
+      <p>Инструмент предоставляется <strong>«как есть»</strong> и <strong>«как доступно»</strong>,
+      без каких-либо явных или подразумеваемых гарантий, включая, помимо прочего, гарантии
+      товарного состояния, пригодности для конкретной цели и ненарушения прав. Мы не гарантируем,
+      что инструмент будет работать бесперебойно, без ошибок или останется совместимым с будущими
+      изменениями API.</p>
+
+      <h2>7. Ограничение ответственности</h2>
+      <p>В максимальной степени, разрешённой законом, автор не несёт ответственности за любые
+      косвенные, случайные, специальные, последующие или штрафные убытки, а также за любую потерю
+      данных, контента или аккаунтов, возникшие в связи с использованием инструмента. Там, где
+      ответственность не может быть исключена, она ограничена суммой, уплаченной вами за
+      инструмент, — то есть нулём.</p>
+
+      <h2>8. Прекращение действия</h2>
+      <p>Условия действуют до прекращения. Вы можете прекратить использование инструмента в любой
+      момент; авторизацию TikTok можно отозвать в настройках аккаунта. Положения об
+      ответственности, гарантиях и товарных знаках сохраняют силу после прекращения.</p>
+
+      <h2>9. Изменения условий</h2>
+      <p>Мы можем время от времени обновлять эти условия. Актуальная версия всегда опубликована на
+      этой странице с датой «обновлено»; продолжение использования инструмента после изменений
+      означает принятие обновлённых условий.</p>
+
+      <h2>10. Применимое право</h2>
+      <p>Эти условия регулируются законодательством страны проживания автора без учёта норм
+      коллизионного права. Любой спор сначала разрешается добросовестно путём прямого контакта.</p>
+
+      <h2>11. Контакты</h2>
+      <p>Вопросы по этим условиям: создайте issue на
+      <a href="https://github.com/straysouler-svg/kanal15">github.com/straysouler-svg/kanal15</a>
+      или напишите в Telegram: <a href="https://t.me/kanal15_publisher_bot">@kanal15_publisher_bot</a>.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-in">
+      <div class="left">
+        <a href="download.html">Главная</a> · <a href="privacy.ru.html">Политика конфиденциальности</a> · <a href="terms.html">English version</a>
+      </div>
+      <div class="right">
+        Канал 15 — фанатское приложение-компаньон. Не аффилировано с SCS Software и TikTok.
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
