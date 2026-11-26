@@ -31,6 +31,9 @@ SR = 48000
 GATE_RAMP_S = 0.08          # рампы открытия/закрытия «тангенты беда»
 BED_LEVEL = 0.159 / 0.95    # бед относительно голоса 0.95 — выверено пользователем, НЕ менять
 BLOCK = SR // 20            # 50 мс блоки, как везде в рации
+# 26.11 (стрим #16, 21:36 и 21:42 — «Петровне патефон громко»): персональный гейн владельца
+# магнитолы поверх BED_LEVEL. Только тем, кого Шеф назвал по имени; остальные — 1.0.
+OWNER_GAIN = {"petrovna": 0.6}
 
 _HERE = Path(__file__).resolve().parent
 for _cand in (_HERE / "tools", _HERE, _HERE.parent / "tools"):
@@ -151,7 +154,7 @@ class _Bed:
         chunk = _pump(cab, frames)               # курсор идёт ВСЕГДА (магнитола играет в паузах)
         step = 1.0 / (GATE_RAMP_S * SR / frames)
         self.gain += float(np.clip(self.target - self.gain, -step, step))
-        out = chunk * self.gain
+        out = chunk * self.gain * OWNER_GAIN.get(st, 1.0)
         if self.muted:
             out = out * 0.0
         outdata[:, 0] = out
@@ -310,6 +313,7 @@ def render_check(path, plan, actors=None):
         r = int(GATE_RAMP_S * SR)
         seg[:r] *= np.linspace(0, 1, r)
         seg[-r:] *= np.linspace(1, 0, r)
+        seg *= OWNER_GAIN.get(key, 1.0)
         out.append(seg)
     mix = np.concatenate(out)
     sf.write(path, mix, SR)
