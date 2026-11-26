@@ -34,6 +34,12 @@ BLOCK = SR // 20            # 50 мс блоки, как везде в раци�
 # 26.11 (стрим #16, 21:36 и 21:42 — «Петровне патефон громко»): персональный гейн владельца
 # магнитолы поверх BED_LEVEL. Только тем, кого Шеф назвал по имени; остальные — 1.0.
 OWNER_GAIN = {"petrovna": 0.6}
+# 26.11 (стрим #16, 21:38 — «Петровна, убавь музыку», идея Дмитрия): персональный duck —
+# магнитола адресата стихает до DUCK_GAIN. Простая обратимая механика: duck на N минут
+# (по умолчанию) или до «вруби обратно» (unduck). Уровень duck ВЫВЕРЕН на глаз от BED_LEVEL,
+# при прослушке не ноль (приём живой), но близко.
+DUCK_GAIN = 0.12
+DUCK_S = 15 * 60            # duck по умолчанию, настоящие секунды
 
 _HERE = Path(__file__).resolve().parent
 for _cand in (_HERE / "tools", _HERE, _HERE.parent / "tools"):
@@ -45,6 +51,7 @@ _lock = threading.RLock()
 _state = {"disabled": False, "owner": None, "stream": None,
           "cabs": {},                       # owner_key -> {"buf": обработанный зацикленный трек, "pos": курсор}
           "gate_until": 0.0,               # монотоник: до какого момента «тангента беда» нажата
+          "duck_until": {},                # 26.11: owner_key -> монотоник, до какого момента duck
           "events": [], "_player": None, "_actors": {}}
 _AMBIENT = None
 
@@ -154,7 +161,9 @@ class _Bed:
         chunk = _pump(cab, frames)               # курсор идёт ВСЕГДА (магнитола играет в паузах)
         step = 1.0 / (GATE_RAMP_S * SR / frames)
         self.gain += float(np.clip(self.target - self.gain, -step, step))
-        out = chunk * self.gain * OWNER_GAIN.get(st, 1.0)
+        with _lock:
+            duck = DUCK_GAIN if time.monotonic() < _state["duck_until"].get(_state["owner"], 0.0) else 1.0
+        out = chunk * self.gain * OWNER_GAIN.get(st, 1.0) * duck
         if self.muted:
             out = out * 0.0
         outdata[:, 0] = out
@@ -250,6 +259,27 @@ def cut():
     иначе музыка играет до конца рассчитанной длительности оборванной реплики."""
     with _lock:
         _state["gate_until"] = 0.0
+
+
+def duck(owner_key, seconds=DUCK_S):
+    """26.11 (стрим #16, 21:38): «убавь музыку» — магнитола owner_key стихает до DUCK_GAIN
+    на seconds настоящих секунд. Без cab_bed_pilot/стрима — тихий no-op (не роняет эфир)."""
+    if not owner_key:
+        return
+    with _lock:
+        _state["duck_until"][owner_key] = time.monotonic() + seconds
+    _event(f"duck:{owner_key}:{seconds:.0f}")
+    log(f"duck {owner_key} на {seconds / 60:.0f} мин")
+
+
+def unduck(owner_key):
+    """«Вруби обратно» — снять duck раньше времени."""
+    if not owner_key:
+        return
+    with _lock:
+        _state["duck_until"].pop(owner_key, None)
+    _event(f"unduck:{owner_key}")
+    log(f"unduck {owner_key}")
 
 
 def _watchdog():

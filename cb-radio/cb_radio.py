@@ -2057,6 +2057,10 @@ class Operator:
             group, kind = "intent", "calm_down"           # «успокойся» — да/нет по настроению, с последствием
         elif intent == "hush":
             group, kind = "intent", "hush"                # «помолчим» — один отвечает, эфир стихает
+        elif intent in ("music_down", "music_up"):
+            # 26.11 (стрим #16, 21:38, идея Дмитрия): «убавь музыку» — cab_bed duck личной
+            # магнитолы адресата; ответ-подтверждение — _music_down_answer (фолбэк на player/ack)
+            group, kind = "intent", intent
         elif intent == "sorry":
             group, kind = "intent", "sorry"               # извинение — обидевшемуся, не случайному адресату
         elif intent == "swear":
@@ -2590,6 +2594,30 @@ class Operator:
             self.deck.on_air.add(pick[0])
             self.on_air = True
 
+    def _music_down_answer(self, who, prefer, up=False):
+        """26.11 (стрим #16, 21:38): «Петровна, убавь музыку» — cab_bed приглушает магнитолу
+        адресата (duck на 15 минут или до «вруби обратно»), актёр подтверждает голосом.
+        Свой пул reactions/intent/music_down пока не озвучен (черновики phrases/drafts_music_down_*
+        на одобрении) — фолбэк на player/ack, тишины в ответ на просьбу нет.
+        Без cab_bed_pilot duck — тихий no-op: подтверждение звучит, эфир не роняем."""
+        here = [a for a in (self.deck.allowed or ()) if not self.deck.offline(a)]
+        if who and who not in here and self.deck.allowed is not None:
+            log(f"{who} не в зоне — {'врубить' if up else 'убавить'} музыку некому")
+            return
+        try:
+            import cab_bed
+            target = who or cab_bed.owner()          # без имени — у кого магнитола сейчас слышна
+            cab_bed.unduck(target) if up else cab_bed.duck(target)
+        except Exception as e:
+            log(f"cab_bed duck не вышел: {e!r}")
+        pool = [x for x in reaction_pool("intent", "music_down" if not up else "music_up") if x[0] in here] \
+            or [x for x in reaction_pool("player", "ack") if x[0] in here]
+        pick = self.deck.choose([x for x in pool if x[0] == who] or pool, prefer=who or prefer) if pool else None
+        log(f"ответ: музыку {'врубил обратно' if up else 'убавил'} ({pick[0] if pick else 'молча'})")
+        if pick and PLAYER.file(pick[1], pick[0]) == "ok":
+            self.deck.on_air.add(pick[0])
+            self.on_air = True
+
     def _care_answer(self, text):
         """Ответ на «ты как, не спишь?» (3.1): любой честный ответ +2 дружбы; «устал» — спросивший
         десять минут остаётся рядом (вес в болтовне выше). Реплика не про сон — False, обычный разбор."""
@@ -2853,6 +2881,8 @@ class Operator:
             return self._calm_down_answer(who, prefer)
         if group == "intent" and kind == "hush":
             return self._hush_answer(who, prefer)
+        if group == "intent" and kind in ("music_down", "music_up"):
+            return self._music_down_answer(who, prefer, up=(kind == "music_up"))
         if group == "intent" and kind == "sorry":
             return self._sorry_answer(who, prefer)
         if self._errand_deliver(who, kind):          # «передай»: встреча с адресатом закрывает поручение
@@ -3035,6 +3065,15 @@ class Operator:
             self.deck.on_air.add(actor)
             if kind != "bye":
                 self.on_air = True           # the channel knows you're here now
+            if kind == "bye":
+                # 26.11 (стрим #16, 21:41, заметка Дмитрия): ответил «пока» игроку — САМ подписался
+                # с эфира (как deck signoff, OFFLINE_S). Иначе через минуту тот же голос отвечает
+                # за другого («Вера, а ты откуда графа взяла?» озвучила только что попрощавшаяся
+                # Петровна — «откуда ни возьмись появляется»).
+                self.deck.signed_off[actor] = time.monotonic()
+                self.deck.off_until[actor] = time.monotonic() + OFFLINE_S
+                self.deck.on_air.discard(actor)
+                log(f"  {actor} попрощался — молчит {OFFLINE_S / 60:.0f} мин")
             if multi and kind not in ("rude", "mock"):
                 # 12.11 «по одному, рация не телеграф»: ответили на первый вопрос — тот же водитель добродушно
                 # отбивает остальные (пул player/one_at_a_time, выбор по текущему настроению через mood_pick)
