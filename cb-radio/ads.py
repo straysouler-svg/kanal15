@@ -44,6 +44,7 @@ _state = {"cafes": None, "cities": None, "radius": RADIUS_M, "play_fn": None,
           "play_log": [],         # monotonic звучаний за последний час
           "next_allowed": 0.0,
           "queued": None,         # D2: одна ждущая реклама (n кафе)
+          "_playing": False,      # 27.11: играет напрямую через sd.play (мимо PLAYER) — пауза обрывает
           "events": [], "_inited": False, "disabled": False}
 
 
@@ -65,12 +66,30 @@ def events():
         return list(_state["events"])
 
 
+def stop():
+    """27.11 (стрим #18, 12:14): реклама играет напрямую через sounddevice, мимо PLAYER, поэтому
+    гашение эфира на паузе её не доставало. Обрываем сами — как PLAYER.file «прервано (пауза)».
+    Вентиль (пороги/каденс) не трогаем — старт по-прежнему только по driving из cb_radio."""
+    with _lock:
+        playing = _state["_playing"]
+        _state["_playing"] = False
+    if not playing:
+        return
+    try:
+        import sounddevice as sd
+        sd.stop()                     # в момент перехода в паузу PLAYER молчит — обрываем только рекламу
+        log("реклама прервана (пауза/меню)")
+    except Exception:
+        pass
+
+
 def reset():
     """Для стенда: чистое состояние вентиля."""
     with _lock:
         for k in ("played_at", "inside", "play_log", "events"):
             _state[k] = set() if k == "inside" else ([] if k in ("play_log", "events") else {})
         _state["next_allowed"], _state["queued"] = 0.0, None
+        _state["_playing"] = False
 
 
 def init(cities, play_fn=None):
@@ -171,6 +190,7 @@ def tick(now, px, pz, speed_m_s, driving, air_busy):
             st["disabled"] = True
             log(f"выключен ({e!r}) — дальше без рекламы")
             return
+        st["_playing"] = True
         st["play_log"] = log_hour + [now]
         st["played_at"][n] = now
         st["next_allowed"] = now + max(MIN_GAP_S, random.uniform(*CADENCE_S))

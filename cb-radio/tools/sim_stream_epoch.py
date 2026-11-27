@@ -59,7 +59,9 @@ SUBS_AT = {50: 111, 100: 112}                          # subscriberCount по м
 def make_fetches():
     def chat(endpoint, params):
         if endpoint == "liveBroadcasts":
-            return {"items": [{"snippet": {"liveChatId": "LC1"}}]}
+            return {"items": [{"id": "B1", "snippet": {"liveChatId": "LC1"}}]}
+        if endpoint == "videos":
+            return {"items": [{"liveStreamingDetails": {"activeLiveChatId": "LC1"}}]}
         m = cur[0]
         return {"items": [{"snippet": {"textMessageText": f"msg{i}"}} for i in range(CHAT_WAVES.get(m, 0))]}
 

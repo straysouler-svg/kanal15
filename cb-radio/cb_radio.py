@@ -169,8 +169,9 @@ DEFAULT_CFG = {
     "arcs_pilot": False,           # 22.11: арка «Ковбой->Сова на кофе», поломки по времени, news_followup, «Кто такая Муся»
     "voicedsp_pilot": False,       # 22.11: DSP-модуль голосов проезжих (voicedsp.py, dsp_profiles.json) — только foreign.*/streambot/night_mystic
     "streambot_pilot": False,      # 22.11: проезжий x_ru (streambot/ru) частично заменяет бантер в режиме стрима
-    "foreign_per_hour": 9.45,      # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме);
-                                   # 24.11: 9.0 -> 9.45 — распоряжение Дмитрия, +5%
+    "foreign_per_hour": 14.0,      # 23.11: целевая плотность проезжих за РЕАЛЬНЫЙ час (вентиль на time.monotonic; регулируется на стриме);
+                                   # 24.11: 9.0 -> 9.45 — распоряжение Дмитрия, +5%;
+                                   # 27.11: 9.45->14 — решение Дмитрия (дефолт; живой config.json не трогаем)
     "foreign_night_factor": 0.85,  # 25.11: множитель вентиля в ночном окне 23–05 игр. (решение Дмитрия):
                                    # ночь чуть спокойнее дня, но не мёртвая, как при старых 0.5
     "bus_ids": ["vehicle.man.lions_24", "vehicle.scania.touring_23", "vehicle.volvo.9700_23"],   # 23.11: паттерны vehicle id автобусов (RenCloud @2428; полный список моделей из dlc_bus.scs: def/vehicle/bus/)
@@ -825,6 +826,21 @@ def actors_of(item):
 import collections  # noqa: E402
 
 RECENT = collections.deque(maxlen=20)   # reaction files heard lately: one driver must not repeat himself
+# 26.11 (стрим #17, 21:46 — заметка Шефа «Студент противоречит сам себе»): одна шутка — «задом
+# с N-го раза» — живёт сразу в нескольких пулах с разными числами (news: «со второго!»,
+# how_are_you: «сегодня с первого… ну со второго», stream_greet: «с первого. Ну, с третьего»).
+# fresh_first тут бессилен: пулы разные. Сыграна любая вариация — остальные блокируем до конца сессии.
+_CONTRA_BLOCKED = set()
+
+
+def _contra_groups():
+    """Группы взаимоисключающих реплик (пути wav одной шутки из разных пулов). Кэш на сессию."""
+    if not hasattr(_contra_groups, "_g"):
+        grp = []
+        for g, k in (("player", "news"), ("intent", "how_are_you"), ("stream_greet", "student")):
+            grp += [str(w) for a, w in reaction_pool(g, k) if a == "student"]
+        _contra_groups._g = [grp] if len(grp) > 1 else []
+    return _contra_groups._g
 FOREIGN = {p.name for p in (ROOT / "audio" / "reactions" / "foreign").glob("*") if p.is_dir()}
 FOREIGN_LAST = [None, -1e9, 0]   # (language, monotonic end of his last line, replies so far) of the passing foreigner
 FOREIGN_HEARS_S = 20          # small talk right after him is for him
@@ -891,7 +907,7 @@ foreign_valve = {"heat": 0.0, "last_s": None, "last_our_s": -1e9,
 FV_IDLE_MAX = 1.0        # предел «роста при молчании» (+60% к шансу)
 FV_REFRACT_S = 900.0     # рефрактерность: полное восстановление за 15 реальных минут
 FV_IDLE_TAU_S = 3600.0   # рост при молчании: +60% за час реальной тишины
-FV_OUR_GAP_S = 60.0      # анти-какофония: пауза после наших, реальные секунды
+FV_OUR_GAP_S = 45.0      # анти-какофония: пауза после наших, реальные секунды (27.11: 60→45 — решение Дмитрия)
 _fv_rng = None           # ленивый rng вентиля (numpy — нужен выбор с весами)
 
 
@@ -972,7 +988,7 @@ def secret_texts():
 
 def fresh_first(cands):
     """From (actor, wav) candidates keep the ones not heard lately (if any are left)."""
-    new = [c for c in cands if str(c[1]) not in RECENT]
+    new = [c for c in cands if str(c[1]) not in RECENT and str(c[1]) not in _CONTRA_BLOCKED]
     return new or cands
 
 
@@ -1208,6 +1224,10 @@ CARE_STAY = {}                 # actor -> monotonic: после честного
 CARE_REST = [None]             # игровые минуты последнего отдыха (стоянка/выключенный двигатель)
 ERRAND_DAYS = 3                # срок поручения, игровых дней
 CARE_NIGHT_MIN = 180           # ночной непрерывный ход до вопроса, игровых минут (3 часа)
+CARE_ASK_COOLDOWN_S = 1800.0   # 27.11 (стрим #18): «не спишь?» — не чаще раза в 30 реальных минут
+                               # (смена игровых суток в полночь обнуляла старый заслон care_day —
+                               # вопрос звучал дважды за 2,5 минуты); сброс при отдыхе — как у CARE_REST
+CARE_LAST = [0.0]              # monotonic последней постановки вопроса (для кулдауна выше)
 
 
 def quest_st_load():
@@ -1370,10 +1390,21 @@ STATIC = {
 STATIC_NOW = {"k": 0.5}
 
 
-def degrade(x, sr, d):
+def far_static_floor(d):
+    """27.11 (зритель стрима #17, решение Шефа): за пределами радиуса рации (d > 1) помехи всегда
+    заметные — иначе на «Помехах: Слабые» дальний ответ/прощалка звучит как ближний и рация
+    кажется глючной. В зоне (d <= 1) и без дистанции настройка «Помехи» действует как раньше."""
+    if d is not None and d > 1.0:
+        return max(STATIC_NOW["k"], 0.7)
+    return None
+
+
+def degrade(x, sr, d, f=None):
     """Signal by distance: d = distance / radio range. Near: as recorded. Towards the edge: more hiss,
-    weaker voice, short drop-outs ("пропадаешь"). Scaled by the «Помехи» setting."""
-    f = STATIC_NOW["k"]
+    weaker voice, short drop-outs ("пропадаешь"). Scaled by the «Помехи» setting.
+    f=None: take the «Помехи» setting; callers may pass a floor for out-of-range transmissions."""
+    if f is None:
+        f = STATIC_NOW["k"]
     if d is None or d < 0.55 or f <= 0:
         return x
     k = min(2.0, (d - 0.55) / 0.45)              # 1 = edge of range, up to 2 = the far side of a talk
@@ -1464,9 +1495,9 @@ class Player:
         try:
             data, sr = sf.read(path, dtype="float32")
             if self.world and actor:
-                data = degrade(data, sr, dist)
+                data = degrade(data, sr, dist, far_static_floor(dist))
             elif self.guest_dist is not None and actor:
-                data = degrade(data, sr, self.guest_dist)      # гость: эффект по дистанции хозяина
+                data = degrade(data, sr, self.guest_dist, far_static_floor(self.guest_dist))      # гость: эффект по дистанции хозяина
             if not actor and Path(path).name.startswith(("kerchunk_", "enter_")):
                 if STATIC_NOW["k"] <= 0:                 # «Помехи: без помех» - no clicks / crackles at all
                     return "ok"
@@ -1485,7 +1516,13 @@ class Player:
             if rel:
                 convoy.host_send_play(rel, actor, dist)
             # 25.11 (cab_bed_pilot): непрерывный фон за говорящим — узкий вызов, никогда не роняет эфир
-            if (self.cfg or {}).get("cab_bed_pilot"):
+            # 26.11 (стрим #17, 21:23 — «в эфир вылетают обрывки, не понимаю, кто это»): гейт беда
+            # открывался и под FX без говорящего (enter_*-треск при въезде в зону, phone_ping бухгалтерии)
+            # — на 0.4–0.8 с в эфир рвала проезжая «магнитола» чужой кабины. Гейт — только под голоса,
+            # правило то же, что у счётчика voices ниже.
+            _nm = Path(path).name
+            if (self.cfg or {}).get("cab_bed_pilot") and \
+                    (actor or _nm in ("_foreign.wav", "_murmur.wav") or "buh" in str(path)):
                 try:
                     import cab_bed
                     if not cab_bed._wd_started:
@@ -1532,6 +1569,9 @@ class Player:
                 self.spoke_at[actor] = time.monotonic()
             if actor or Path(path).name in ("_foreign.wav", "_murmur.wav") or "buh" in str(path):
                 self.voices += 1
+            for grp in _contra_groups():          # шутка сыграна — вариации с другими числами молчат
+                if str(path) in grp:
+                    _CONTRA_BLOCKED.update(grp)
             return "ok"
         finally:
             self.playing = False
@@ -1840,6 +1880,18 @@ class Ears:
     langs = {}            # job -> язык распознанной фразы (20.11, foreign_warm)
 
 
+def note_of(text):
+    """27.11 (стрим #18, 12:58, прямое требование Шефа): слово «заметка» в ЛЮБОМ месте реплики
+    («Э-э, заметка:…», «спасибо, что отметил. Заметка, а-а…») — вся реплика уходит в notes.log,
+    в эфир НЕ идёт. -> текст заметки или None."""
+    import intents
+    if not text:
+        return None
+    if re.search(r"(?<![а-яa-z0-9])заметк[а-я]*", intents.norm(text)):
+        return re.sub(r"^\s*заметка[,:.\s]*", "", text, flags=re.IGNORECASE).strip() or text
+    return None
+
+
 class Operator:
     """Reacts to the player's push-to-talk: recognises what was said (Ears + intents.py) and lets the right
     person answer with a pre-voiced line. Without a microphone it falls back to press length and timing."""
@@ -1863,6 +1915,7 @@ class Operator:
         self.guest_pending = False   # «онлайн-конвой»: отвечаем гостю — дружба и настроение не меняются
         self.multi = False           # в реплике несколько вопросов — после ответа играем отбивку «по одному»
         self._hooked = set()         # hooks_pilot: зацепка — не чаще одной на актёра за сессию (ревью 15.11)
+        self._paused = None          # 27.11 (стрим #18): нажатие на паузе — (job, monotonic) до конца STT
     REPEAT_MAX = 2
 
     def press(self, dur, interrupted, cut_speaker, job=None):
@@ -1907,23 +1960,50 @@ class Operator:
         elif OVERLAY:
             OVERLAY.you(text, time.time() - (time.monotonic() - t_rel))
 
+    def _write_note(self, note, text, t_rel=None, lid=None):
+        """Запись заметки в notes.log (в эфир не идёт). 27.11 (стрим #18): общая точка для _decide
+        и нажатия на паузе."""
+        try:
+            with open(ROOT / "notes.log", "a", encoding="utf-8") as f:
+                f.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} {note}\n")
+        except OSError:
+            pass
+        log(f"заметка записана (не в эфир): «{note}»")
+        if OVERLAY:
+            OVERLAY.sys(f"заметка записана: «{note}»")     # 22.11: системное событие — в /journal
+            self._you_final(lid, text, t_rel)
+
+    def paused(self, job):
+        """27.11 (стрим #18, 12:14): нажатие на паузе — в эфир не отвечаем, но STT дожидаемся:
+        заметка всё равно пишется в notes.log, остальное честно выбрасывается."""
+        self._paused = (job, time.monotonic()) if (job is not None and self.ears) else None
+
+    def poll_paused(self):
+        if not self._paused:
+            return
+        job, t0 = self._paused
+        if job in self.ears.results:
+            self._paused = None
+            text = self.ears.results.pop(job)
+            self.ears.langs.pop(job, None)
+            note = note_of(text)
+            if note is not None:
+                self._write_note(note, text)
+            else:
+                log(f"тангента (стт) на паузе — «{text[:50]}» выброшено (не в эфир)")
+        elif time.monotonic() - t0 > self.STT_WAIT_S:
+            self._paused = None
+
     def _decide(self, text, interrupted, prefer, t_rel, heard, lang=None, lid=None):
         import intents
         now = time.monotonic()
         self.heard_text = text
         # 15.11 (user): «Заметка: …» — служебная диктовка себе: пишется в notes.log, в эфир НЕ идёт,
-        # дружбу не трогает (случай 15.11: надиктованные задачи ушли Сове и дали +2 дружбы)
-        if text and intents.norm(text).strip().startswith("заметка"):
-            note = re.sub(r"^\s*заметка[,:.\s]*", "", text, flags=re.IGNORECASE).strip() or text
-            try:
-                with open(ROOT / "notes.log", "a", encoding="utf-8") as f:
-                    f.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} {note}\n")
-            except OSError:
-                pass
-            log(f"заметка записана (не в эфир): «{note}»")
-            if OVERLAY:
-                OVERLAY.sys(f"заметка записана: «{note}»")     # 22.11: системное событие — в /journal
-                self._you_final(lid, text, t_rel)
+        # дружбу не трогает (случай 15.11: надиктованные задачи ушли Сове и дали +2 дружбы).
+        # 27.11 (стрим #18): детект — по слову «заметка» в любом месте реплики, не только в начале
+        note = note_of(text)
+        if note is not None:
+            self._write_note(note, text, t_rel, lid)
             self.multi = False
             self.support = False
             return
@@ -3014,7 +3094,9 @@ class Operator:
                 pick = self.deck.choose(mine(reaction_pool("player", alt_kind)), prefer=who or prefer)
                 if pick:
                     log(f"  на {group}/{kind} ответа нет — {alt_kind}")
-        if not pick and who and self.deck.allowed is not None and (
+        # 27.11 (стрим #18, 12:48): «пока» игроку подписал актёра с эфира (OFFLINE_S) — дальний
+        # за него больше НЕ отвечает (иначе «отвечает дальний» через 44 с после прощания)
+        if not pick and who and not self.deck.offline(who) and self.deck.allowed is not None and (
                 who in self.deck.allowed_far or time.monotonic() - self.deck.left_at.get(who, -1e9) < 120):
             # called BY NAME and he is just out of range (or left the zone seconds ago, 3.2): he answers
             # through the noise. Without a name nobody far answers (2026-11-06, Kirill: «ты ненастоящий»
@@ -3534,7 +3616,12 @@ def _horn_pick(mouth, who, ignore_done=False):
     for a in list(HORN_DONE):                        # ушёл из зоны — «встреча» кончилась
         if a not in here:
             HORN_DONE.pop(a, None)
-    order = ([who] if who in here else []) + here    # прямой адресат первым, дальше вся колода в зоне
+    # 27.11 (стрим #18, 12:40: «Кардана бибикни» прогудел Витёк): прямая просьба с именем — гудит
+    # АДРЕСАТ (если он на связи), а не ближайший к нам из зоны
+    if who and who in here:
+        dd = w.distance(who)
+        return who, None if dd is None else dd * w.range
+    order = [who] if who in here else here           # прямой адресат первым, дальше вся колода в зоне
     best = None
     for a in dict.fromkeys(order):
         if a not in here or (a in HORN_DONE and not ignore_done):
@@ -4816,6 +4903,7 @@ def main(argv):
             st = game.state(cfg["require_engine_on"])
             if st != "driving":
                 CARE_REST[0] = None                  # стоянка/пауза — отдых: ночной счётчик «не спишь?» сбрасывается
+                CARE_LAST[0] = 0.0                   # 27.11: и кулдаун постановки — после отдыха заслон не держит
             if now >= GSEEN.get("ev_next", 0.0):         # 1.26: the fines plugin goes into the game quietly, no prompts
                 GSEEN["ev_next"] = now + 60
                 try:
@@ -4875,6 +4963,14 @@ def main(argv):
                 log({"no_game": "игры нет", "paused": "пауза/меню", "engine_off": "мотор выключен",
                      "driving": "едем"}[st])
                 prev = st
+                if st in ("paused", "no_game"):
+                    # 27.11 (стрим #18, 12:14): местная реклама играет мимо PLAYER (sd.play напрямую) —
+                    # на паузе/в меню гасим её отсюда; старт всё равно только при st == "driving"
+                    try:
+                        import ads
+                        ads.stop()
+                    except Exception:
+                        pass
                 if tray:
                     tray.set_state(st, {"no_game": "игра в меню или загружается" if GSEEN["diag"] == "menu" or game._p
                                         else "жду игру", "paused": "пауза", "engine_off": "мотор выключен",
@@ -4918,7 +5014,8 @@ def main(argv):
                         if (st == "driving" and world and BONDS and world.night_now()
                                 and gmin - CARE_REST[0] >= CARE_NIGHT_MIN
                                 and QUEST_ST.get("care_day") != gday and not CARE_Q
-                                and not (CARE_WIN[0] > time.monotonic())):
+                                and not (CARE_WIN[0] > time.monotonic())
+                                and time.monotonic() - CARE_LAST[0] >= CARE_ASK_COOLDOWN_S):
                             cands = [a for a in world.inside if not deck.offline(a)
                                      and BONDS.level(a) >= 2
                                      and any(x[0] == a for x in reaction_pool("care", "ask"))]
@@ -4926,6 +5023,7 @@ def main(argv):
                                 a_ = max(cands, key=BONDS.level)
                                 QUEST_ST["care_day"] = gday
                                 quest_st_save()
+                                CARE_LAST[0] = time.monotonic()
                                 CARE_Q.append((time.monotonic() + random.uniform(5, 15), a_))
                                 log(f"«не спишь?»: ночь, без отдыха {(gmin - CARE_REST[0]) // 60} ч — спросит {a_}")
                         if time.monotonic() >= job_t:          # your job: where the navigator takes you
@@ -5149,7 +5247,9 @@ def main(argv):
                     hint("no_game", "Рация не видит игру, поэтому не отвечает. Если игра запущена — через минуту "
                                     "рация подскажет причину (она же в меню значка).")
                 else:
+                    op.paused(job)               # 27.11: STT на паузе дожидаемся — заметка не теряется
                     log("тангента на паузе — не отвечаю")
+            op.poll_paused()
             if ptt.down or convoy.GUEST_PTT_DOWN[0]:     # тангента любой стороны обрывает эфир
                 op.pending = None            # nobody talks over you
                 op.waiting = None

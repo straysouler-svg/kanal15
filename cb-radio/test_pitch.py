@@ -31,12 +31,14 @@ def env(mod, tmp, seed=7):
 
 
 def chat_fetch(broadcast_id, messages):
-    """fetch(endpoint, params): сначала liveBroadcasts -> liveChatId, дальше списки сообщений."""
+    """fetch(endpoint, params): liveBroadcasts -> id эфира, videos -> activeLiveChatId, дальше сообщения."""
     state = {"msgs": list(messages)}
 
     def f(endpoint, params):
         if endpoint == "liveBroadcasts":
-            return {"items": [{"snippet": {"liveChatId": broadcast_id}}]}
+            return {"items": [{"id": "B1", "snippet": {"liveChatId": broadcast_id}}]}
+        if endpoint == "videos":
+            return {"items": [{"liveStreamingDetails": {"activeLiveChatId": broadcast_id}}]}
         return {"items": [{"snippet": {"textMessageText": m}} for m in state["msgs"].pop(0)]}
     return f
 
@@ -72,6 +74,24 @@ def test_chat(tmp):
     assert ev5 is None, ev5
     assert any("liveChatId получен" in s for s in logs)
     print("1) чат first/active/quiet: OK")
+
+
+def test_chat_snippet_fallback(tmp):
+    """27.11: videos.list без activeLiveChatId (эфир без чата) -> фолбэк snippet.liveChatId; разрешение id идёт."""
+    mod = load_mod()
+    logs, st_f = env(mod, tmp)
+
+    def f(endpoint, params):
+        if endpoint == "liveBroadcasts":
+            return {"items": [{"id": "B1", "snippet": {"liveChatId": "LC_SNIPPET"}}]}
+        if endpoint == "videos":
+            return {"items": [{"liveStreamingDetails": {}}]}    # activeLiveChatId отсутствует
+        return {"items": []}
+    ev = mod.chat_tick(now=100000.0, log=logs.append, state_f=st_f, fetch=f)
+    assert ev is None, ev
+    st = mod.load_state()
+    assert st["chat_id"] == "LC_SNIPPET", st
+    print("2) чат: фолбэк snippet.liveChatId: OK")
 
 
 def test_subs(tmp):
@@ -166,6 +186,8 @@ def main():
     with tempfile.TemporaryDirectory() as td:
         test_chat(td)
     with tempfile.TemporaryDirectory() as td:
+        test_chat_snippet_fallback(td)
+    with tempfile.TemporaryDirectory() as td:
         test_subs(td)
     with tempfile.TemporaryDirectory() as td:
         test_superchat(td)
@@ -173,7 +195,7 @@ def main():
         test_pitch_cycle(td)
     with tempfile.TemporaryDirectory() as td:
         test_pitch_norm_and_viewers(td)
-    print("ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ: 5/5")
+    print("ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ: 6/6")
 
 
 if __name__ == "__main__":

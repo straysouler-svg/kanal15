@@ -26,5 +26,12 @@
   "z": -87920.5390625,
   "until": null,
   "src": "fine:speeding_camera"
+ },
+ {
+  "kind": "camera",
+  "x": 21545.716796875,
+  "z": 28086.609375,
+  "until": null,
+  "src": "fine:speeding_camera"
  }
 ]

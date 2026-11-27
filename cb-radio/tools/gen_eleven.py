@@ -217,7 +217,7 @@ def voice(a, text, rec=None):
             if _or_spent[0] >= budget:
                 print(f"   бюджет {budget}$ исчерпан, беру лучший вариант")
                 break
-            x, cost = _or_tts(text, a)
+            x, cost = _or_tts(xtts_fix_stress(text), a)  # подмена ударений из stress_dict — для всех движков
             _or_spent[0] += cost
             if lang != "ru":                 # our Whisper check is Russian-only: one take, no retries
                 print(f"   ({lang}) ${cost:.4f} (всего ${_or_spent[0]:.3f})")

@@ -15,7 +15,8 @@ tick()/chat_tick()/subs_tick()/superchat_tick()/pitch_tick() и звучит г�
 
 Квота YouTube (сумма на 1 час стрима, считал при вводе): viewers 12×1=12, chat 60×5=300,
 subs 4×1=4, superchat 12×1=12 — итого ~328 ед./час из 10 000/сутки: стрим 8 ч = ~2 600 ед.,
-остаток есть. Интервалы — константы ниже, менять только их.
+остаток есть. Резолв liveChatId — +1 ед. (videos.list) на сессию (27.11). Интервалы — константы
+ниже, менять только их.
 
 Тесты без сети: fetch подменяется в тиках; моки — test_streampeek.py / test_pitch.py.
 """
@@ -300,9 +301,10 @@ def tick(now=None, log=log_default, state_f=None, fetch=None):
     return ev
 
 
-def _api_get(endpoint, params, log, fetch=None):
+def _api_get(endpoint, params, log, fetch=None, raise_http=False):
     """Подписанный (токеном) GET к YouTube Data API -> dict. fetch подменяется в тестах.
-    Сетевые ошибки — в лог, без падения (правило: не долбим API)."""
+    Сетевые ошибки — в лог, без падения (правило: не долбим API). raise_http=True — HTTPError
+    летит наружу (чат: тело ошибки с reason — в лог, кэш liveChatId сбрасывается, 27.11)."""
     if fetch is not None:
         return fetch(endpoint, params)
     token, why = _token(log)
@@ -314,6 +316,11 @@ def _api_get(endpoint, params, log, fetch=None):
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        if raise_http:
+            raise
+        _fail_log(log, f"стрим: {endpoint} не ответил: {e!r}")
+        return None
     except Exception as e:
         _fail_log(log, f"стрим: {endpoint} не ответил: {e!r}")
         return None
@@ -321,23 +328,52 @@ def _api_get(endpoint, params, log, fetch=None):
 
 def chat_tick(now=None, log=log_default, state_f=None, fetch=None):
     """Чат стрима (раз в CHAT_POLL_EVERY_S, только в режиме стримера).
-    -> категория buh/chat (first/active/quiet) или None. liveChatId кэшируется на сессию."""
+    -> категория buh/chat (first/active/quiet) или None. liveChatId кэшируется на сессию,
+    но HTTP 404 от liveChatMessages (протухший id чата) сбрасывает кэш — следующий тик
+    переполучит id заново (стрим #18, 27.11: шесть 404 подряд, чат был жив)."""
     global STATE_F
     if state_f is not None:
         STATE_F = state_f
     now = time.monotonic() if now is None else now
     st = load_state()
     if not st.get("chat_id"):
-        data = _api_get("liveBroadcasts", {"part": "snippet", "broadcastStatus": "active"}, log, fetch)
+        # 27.11 (стрим #18): у переиспользуемой трансляции snippet.liveChatId может указывать на
+        # старый закрытый чат (404 liveChatNotFound); актуальный id — только через
+        # videos.list.liveStreamingDetails.activeLiveChatId (+1 ед. квоты на сессию, допустимо)
+        data = _api_get("liveBroadcasts", {"part": "id", "broadcastStatus": "active"}, log, fetch)
         items = (data or {}).get("items") or []
-        st["chat_id"] = items[0].get("snippet", {}).get("liveChatId") if items else None
+        vid = items[0].get("id") if items else None
+        if not vid:
+            log("чат: активного эфира нет — liveChatId не получен")
+            save_state(st)
+            return None
+        det = _api_get("videos", {"part": "liveStreamingDetails", "id": vid}, log, fetch)
+        v_items = (det or {}).get("items") or []
+        st["chat_id"] = v_items[0].get("liveStreamingDetails", {}).get("activeLiveChatId") if v_items else None
+        if not st["chat_id"]:
+            # фолбэк: старый путь через snippet.liveChatId
+            data = _api_get("liveBroadcasts", {"part": "snippet", "broadcastStatus": "active"}, log, fetch)
+            items = (data or {}).get("items") or []
+            st["chat_id"] = items[0].get("snippet", {}).get("liveChatId") if items else None
         if not st["chat_id"]:
             log("чат: активного эфира нет — liveChatId не получен")
             save_state(st)
             return None
         log("чат: liveChatId получен (кэш на сессию)")
-    data = _api_get("liveChatMessages", {"part": "snippet", "maxResults": 200,
-                                         "liveChatId": st["chat_id"]}, log, fetch)
+    try:
+        data = _api_get("liveChatMessages", {"part": "snippet", "maxResults": 200,
+                                             "liveChatId": st["chat_id"]}, log, fetch, raise_http=True)
+    except urllib.error.HTTPError as e:
+        try:
+            body = json.loads(e.read().decode("utf-8", "replace"))
+            reason = (body.get("error", {}).get("errors") or [{}])[0].get("reason")
+        except Exception:
+            reason = None
+        log(f"чат: liveChatMessages HTTP {e.code} ({reason or 'reason не разобран'}) — "
+            f"кэш liveChatId сброшен, следующий тик переполучит id")
+        st["chat_id"] = None
+        save_state(st)
+        return None
     if data is None:
         save_state(st)
         return None
